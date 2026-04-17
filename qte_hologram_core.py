@@ -8,7 +8,7 @@ from openai import OpenAI
 from datetime import datetime
 
 # ==============================================================================
-# QTE Academic Hologram Core Engine (V1.2.0 批次觀測版)
+# QTE Academic Hologram Core Engine (V1.2.5 全文重心探針版)
 # ==============================================================================
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -22,7 +22,12 @@ def get_embedding(text):
         print(f"工具調用失敗，原因為 OpenAI API 拒絕連線或超時狀態 ({str(e)})")
         sys.exit(1)
 
-def extract_continuous_fingerprint(source_path):
+def extract_full_text_integral_fingerprint(source_path):
+    """
+    【全文拓樸連續積分與重心提取】
+    揚棄剛性前端切割，將全文視為連續場域。積分出全局指紋後，
+    反向提取與全局重心最接近的片段作為探針。
+    """
     print(f"🌊 [波包坍縮] 正在讀取源碼：{source_path}")
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
@@ -35,14 +40,27 @@ def extract_continuous_fingerprint(source_path):
         print(f"⚠️ {source_path} 文本資訊熵過低，忽略觀測。")
         return None, None
     
-    # 修正：精準對齊白皮書宣告的視窗參數
+    # 拓樸重疊視窗 (Overlap Windows)
     window_size, stride = 1500, 800
     trajectories = [full_text[i:i+window_size] for i in range(0, len(full_text), stride) if len(full_text[i:i+window_size]) > 100]
     
     try:
         response = client.embeddings.create(input=trajectories, model="text-embedding-3-small", timeout=30)
         wave_functions = [np.array(data.embedding) for data in response.data]
-        return full_text[:200], np.mean(wave_functions, axis=0)
+        
+        # 1. 全息積分：生成全局指紋 (Ψ_global)
+        psi_global = np.mean(wave_functions, axis=0)
+        
+        # 2. 語意重心提取：找出最能代表全文核心的片段
+        similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
+        centroid_index = np.argmax(similarities)
+        
+        # 提取該片段的前 150 字作為向傳統網格發射的物理探針
+        semantic_probe = trajectories[centroid_index][:150]
+        
+        print(f"🎯 [重心鎖定] 已提取最高資訊熵片段作為探針。")
+        return semantic_probe, psi_global
+
     except Exception as e:
         print(f"工具調用失敗，原因為 向量轉換過程超時 ({str(e)})")
         sys.exit(1)
@@ -70,7 +88,7 @@ def validate_semantic_coherence(psi_global):
     return True
 
 def calculate_hexagram(psi_global, manifest):
-    # 修正：強制綁定陣列順序，徹底解除 JSON Key 的順序依賴
+    # 強制綁定陣列順序，徹底解除 JSON Key 的順序依賴
     ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
     hex_bits = ""
     
@@ -96,7 +114,7 @@ def generate_hologram_report(target_file, hex_code, energy, manifest):
 #### 🌌 本體論六爻投影 
 * **狀態陣列**：`[{hex_code}]`
 * **物理相變**：**{hex_info['name']}**
-* **初探波包能勢**：`{energy}` *(註：此為基於前端探針的學術場域引用質量，非全文絕對能量)*
+* **重心波包能勢**：`{energy}` *(註：此能勢基於全文語意重心所提取之探針，非局部摘要之檢索)*
 
 #### 🧬 QTE 演化軌跡判讀
 > **{hex_info['desc']}**
@@ -117,7 +135,7 @@ if __name__ == "__main__":
     with open('qte_academic_manifest.json', 'r', encoding='utf-8') as f:
         manifest = json.load(f)
         
-    # 修正：批次讀取，且嚴格排除 README.md 與輸出報告檔
+    # 批次讀取，嚴格排除 README.md 與輸出報告檔
     md_files = [f for f in glob.glob("*.md") if f.lower() not in ['readme.md', 'qte_observation_log.md']]
     
     if not md_files:
@@ -134,7 +152,8 @@ if __name__ == "__main__":
         last_hex_code = ""
         
         for target_source in md_files:
-            probe_text, psi = extract_continuous_fingerprint(target_source)
+            # 使用全新的重心探針函數
+            probe_text, psi = extract_full_text_integral_fingerprint(target_source)
             if psi is None: continue
             
             if not validate_semantic_coherence(psi):
@@ -143,7 +162,7 @@ if __name__ == "__main__":
                 
             bg_energy = scan_background_field(probe_text)
             hex_code = calculate_hexagram(psi, manifest)
-            last_hex_code = hex_code # 供 Github Actions 抓取最後一個處理的狀態
+            last_hex_code = hex_code 
             
             report = generate_hologram_report(target_source, hex_code, bg_energy, manifest)
             log_file.write(report)
@@ -153,4 +172,3 @@ if __name__ == "__main__":
     if last_hex_code:
         with open(os.environ.get('GITHUB_ENV', 'env.tmp'), 'a') as env_file:
             env_file.write(f"HEX_CODE={last_hex_code}\n")
-"""
