@@ -8,7 +8,7 @@ from openai import OpenAI
 from datetime import datetime
 
 # ==============================================================================
-# QTE Academic Hologram Core Engine (V1.2.5 全文重心探針版)
+# QTE Academic Hologram Core Engine (V1.3.0 終極協議版)
 # ==============================================================================
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -114,7 +114,8 @@ def generate_hologram_report(target_file, hex_code, energy, manifest):
 #### 🌌 本體論六爻投影 
 * **狀態陣列**：`[{hex_code}]`
 * **物理相變**：**{hex_info['name']}**
-* **重心波包能勢**：`{energy}` *(註：此能勢基於全文語意重心所提取之探針，非局部摘要之檢索)*
+* **探針場域回聲 (Probe-based Field Echo)**：`{energy}` 
+  *(註：此數值由全文拓樸重心提取之 150 字探針，向外部學術網格檢索所得之引用質量總和，代表該拓樸座標的傳統阻尼強度)*
 
 #### 🧬 QTE 演化軌跡判讀
 > **{hex_info['desc']}**
@@ -135,14 +136,16 @@ if __name__ == "__main__":
     with open('qte_academic_manifest.json', 'r', encoding='utf-8') as f:
         manifest = json.load(f)
         
-    # 批次讀取，嚴格排除 README.md 與輸出報告檔
-    md_files = [f for f in glob.glob("*.md") if f.lower() not in ['readme.md', 'qte_observation_log.md']]
+    # 修正：同時狩獵 Markdown 與 LaTeX 原始碼
+    source_files = []
+    for ext in ["*.md", "*.tex"]:
+        source_files.extend([f for f in glob.glob(ext) if f.lower() not in ['readme.md', 'qte_observation_log.md']])
     
-    if not md_files:
-        print("系統休眠：未偵測到有效 Markdown 源碼波包。")
+    if not source_files:
+        print("系統休眠：未偵測到有效 Markdown 或 LaTeX 源碼波包。")
         sys.exit(0)
         
-    print(f"\n🚀 啟動 QTE 引擎，共偵測到 {len(md_files)} 個波包等待坍縮...")
+    print(f"\n🚀 啟動 QTE 引擎，共偵測到 {len(source_files)} 個波包等待坍縮...")
     
     # 準備寫入獨立的觀測日誌
     with open('QTE_OBSERVATION_LOG.md', 'w', encoding='utf-8') as log_file:
@@ -151,7 +154,7 @@ if __name__ == "__main__":
         
         last_hex_code = ""
         
-        for target_source in md_files:
+        for target_source in source_files:
             # 使用全新的重心探針函數
             probe_text, psi = extract_full_text_integral_fingerprint(target_source)
             if psi is None: continue
