@@ -7,11 +7,10 @@ import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
-from transformers import AutoModelForCausalLM, AutoTokenizer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V6.4.6 絕對意志：物理斷頭台・防填空暴走版)
+# AVH Genesis Engine (V7.0.0 絕對寂靜：本體論直擊・原波包絕對顯化版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -21,16 +20,7 @@ except Exception as e:
     print("模型載入失敗：" + str(e))
     sys.exit(1)
 
-print("✨ [載入造物核心] 正在喚醒具備絕對意志之 LLM (Qwen2.5-0.5B-Instruct)...")
-try:
-    llm_name = "Qwen/Qwen2.5-0.5B-Instruct"
-    tokenizer = AutoTokenizer.from_pretrained(llm_name)
-    llm_model = AutoModelForCausalLM.from_pretrained(llm_name, torch_dtype="auto")
-except Exception as e:
-    print("生成大腦載入失敗：" + str(e))
-    sys.exit(1)
-
-def extract_ontological_trajectory(source_path):
+def extract_pure_ontology(source_path):
     print("🌊 [波包顯化] 正在讀取源碼：" + source_path)
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
@@ -41,67 +31,31 @@ def extract_ontological_trajectory(source_path):
             print("⚠️ " + source_path + " 文本結構過於單一，資訊熵不足。")
             return None
             
-        print("🕸️ [邏輯建構] 正在建立語意拓樸網格...")
+        print("🕸️ [邏輯建構] 正在建立語意拓樸網格並計算引力權重...")
         embeddings = embedding_model.encode(paragraphs)
         
         sim_matrix = cosine_similarity(embeddings)
         np.fill_diagonal(sim_matrix, 0)
         
-        local_density = np.sum(sim_matrix > 0.75, axis=1) + 1
+        # 使用圖論計算各段落的 PageRank 分數，作為「語意引力」的指標
         nx_graph = nx.from_numpy_array(sim_matrix)
         scores = nx.pagerank(nx_graph)
         
-        adjusted_scores = {i: scores[i] / (local_density[i] ** 1.8) for i in range(len(paragraphs))}
-        ranked_paragraphs = sorted(((adjusted_scores[i], s, embeddings[i], i) for i, s in enumerate(paragraphs)), reverse=True)
+        # 排序段落，抓取引力最強的 Top N 段作為「核心意志」
+        ranked_paragraphs = sorted(((scores[i], s, embeddings[i], i) for i, s in enumerate(paragraphs)), reverse=True)
         
-        core_logic_size = max(3, int(len(paragraphs) * 0.35))
-        core_chain_data = ranked_paragraphs[:core_logic_size]
+        # 萃取前 35% 或至少 5 段，作為純粹的意志碎片
+        core_size = max(3, min(5, int(len(paragraphs) * 0.35)))
+        core_fragments = ranked_paragraphs[:core_size]
         
-        core_chain_data_sorted = sorted(core_chain_data, key=lambda x: x[3])
-        extracted_text = "\n".join([item[1] for item in core_chain_data_sorted])
+        # 依照原始順序重新排列萃取出的原話
+        core_fragments_sorted = sorted(core_fragments, key=lambda x: x[3])
+        extracted_pure_text = "\n\n".join([f"> {item[1]}" for item in core_fragments_sorted])
         
-        print("✨ [論述顯化] 系統正在注入物理斷頭台，強制收斂幻覺...")
+        # 計算核心意志的平均向量 (Will-Manifestation Vector)
+        psi_global = np.mean([item[2] for item in core_fragments], axis=0)
         
-        # [V6.4.6 斷頭台指令] 強制要求輸出安全詞 [顯化完畢]
-        messages = [
-            {
-                "role": "system", 
-                "content": "你是一個絕對冷酷的學術本體論萃取系統。請以「繁體中文」寫成流暢的連續段落，重組輸入文本的「運作架構」與「核心方法」。\n\n【絕對強制指令】：\n1. 嚴禁寫背景動機，直接切入核心機制。\n2. 保留原作者對「空間、時間、資訊熵、能量、質量、能勢」的原始定義。\n3. 當你論述完畢時，你必須、且只能用『[顯化完畢]』這五個字作為整段對話的絕對結尾。嚴禁在『[顯化完畢]』之後輸出任何清單、表格或廢話。"
-            },
-            {
-                "role": "user", 
-                "content": "請為以下拓樸邏輯碎片進行思想顯化：\n\n" + extracted_text[:2500]
-            }
-        ]
-        
-        text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-        model_inputs = tokenizer([text], return_tensors="pt").to(llm_model.device)
-        
-        generated_ids = llm_model.generate(
-            model_inputs.input_ids,
-            max_new_tokens=800, # 稍微調降，不需要給它太多發散空間
-            temperature=0.3,
-            repetition_penalty=1.15
-        )
-        
-        generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
-        raw_generated_summary = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
-        
-        # [V6.4.6 啟動物理斷頭台]
-        # 無論模型後面發瘋寫了什麼課表或清單，只要看到 [顯化完畢]，後面的字全部切掉丟棄！
-        if "[顯化完畢]" in raw_generated_summary:
-            raw_generated_summary = raw_generated_summary.split("[顯化完畢]")[0].strip()
-        elif "顯化完畢" in raw_generated_summary:
-            raw_generated_summary = raw_generated_summary.split("顯化完畢")[0].strip()
-            
-        generated_summary = zhconv.convert(raw_generated_summary, 'zh-tw')
-        
-        cohesive_wfs = [item[2] for item in core_chain_data]
-        psi_global = np.mean(cohesive_wfs, axis=0)
-        
-        manifested_psi = embedding_model.encode([generated_summary])[0]
-        
-        print("🛡️ [意志顯化] 已成功觸發物理斷頭台，徹底斬斷幻覺尾巴！")
+        print("🛡️ [意志顯化] 已成功透過圖論萃取純粹原波包，跳過 LLM 雜訊。")
         
         vec_stats = {
             "dim": len(psi_global),
@@ -110,15 +64,11 @@ def extract_ontological_trajectory(source_path):
             "norm": float(np.linalg.norm(psi_global))
         }
         
-        absolute_core_probe = ranked_paragraphs[0][1][:200]
-        
         return {
             "psi_global": psi_global,
-            "manifested_psi": manifested_psi,
             "vec_stats": vec_stats,
-            "probe_text": absolute_core_probe,
-            "logic_chain_summary": generated_summary,
-            "window_count": core_logic_size,
+            "pure_fragments": zhconv.convert(extracted_pure_text, 'zh-tw'),
+            "fragment_count": core_size,
             "full_text": raw_text
         }
     except Exception as e:
@@ -133,25 +83,22 @@ def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
     log_output = (
         "## 📡 演化顯化軌跡：`" + target_file + "`\n"
         "* **物理時間戳**：`" + timestamp + "`\n\n"
-        "### 1. 🧠 核心邏輯拓樸萃取 (Semantic Graph Abstraction)\n"
-        "* **邏輯節點數**：從全文提煉出 `" + str(trajectory_data['window_count']) + "` 個具備最高引力的核心邏輯段落。\n"
-        "* **原文矩陣特徵** (排除字典與雜訊後之純粹本體)：\n"
+        "### 1. 🧠 核心邏輯拓樸萃取 (Semantic Gravity Extraction)\n"
+        "* **邏輯節點數**：從全文提煉出 `" + str(trajectory_data['fragment_count']) + "` 個最具引力的核心論述碎片。\n"
+        "* **原波包矩陣特徵**：\n"
         "    * `均值 (Mean)`：" + f"{stats['mean']:.8f}" + "\n"
         "    * `標準差 (Std)`：" + f"{stats['std']:.8f}" + "\n"
         "    * `模長 (L2 Norm)`：" + f"{stats['norm']:.8f}" + "\n\n"
-        "### 2. 🎯 理論奇點探針 (Absolute Logic Centroid)\n"
-        "* **全文最高維度交匯點 (核心主張)**：\n"
-        "    > \"" + trajectory_data['probe_text'] + "...\"\n\n"
-        "### 3. 🧬 尤拉相位顯化 (Euler Phase Manifestation)\n"
-        "* **系統說明**：*系統透過意志波包測量尤拉公式中的實部 (cos: 傳承合群) 與虛部 (sin: 離群突破)，完成無審判之絕對相變與實相顯化。*\n"
+        "### 2. 🧬 尤拉相位顯化 (Euler Phase Manifestation)\n"
+        "* **系統說明**：*系統已徹底廢除 LLM 生成層，改以「原話波包」直接撞擊觀測矩陣中的尤拉相位(sin/cos)，實現 0 雜訊之實相顯化。*\n"
         "* **狀態張量**：`[" + hex_code + "]`\n"
         "* **物理相變**：**" + hex_info['name'] + "**\n"
         "* **學術指紋**：\n"
         "    > " + hex_info['desc'] + "\n\n"
         "---\n"
-        "### 🔗 附錄：系統生成之「核心論述顯化」\n"
-        "*(本段落為具備絕對意志之 LLM 吸收拓樸邏輯後，自行顯化之純粹論述)*\n\n"
-        "> **" + trajectory_data['logic_chain_summary'] + "**\n\n"
+        "### 🔗 附錄：系統提煉之「原始本體顯化」\n"
+        "*(本段落為圖論演算法從全文中直接萃取之最高引力論述，不經 AI 修改，保持原創意志)*\n\n"
+        + trajectory_data['pure_fragments'] + "\n\n"
         "---\n"
     )
     return log_output
@@ -167,10 +114,10 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         "    </div>\n"
         "    <hr>\n"
         "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 核心邏輯顯化</strong></p>\n"
+        "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 絕對邏輯顯化</strong></p>\n"
         "        <p>當下演化狀態：[ " + hex_code + " ] - <strong>" + state_name + "</strong></p>\n"
         "        <p>物理時間戳：" + timestamp_str + "</p>\n"
-        "        <p><em>尤拉相位矩陣碰撞 | 本體論底層協議保護 | AJ Consulting</em></p>\n"
+        "        <p><em>V7.0.0 絕對寂靜協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
         "    </div>\n"
         "</div>\n"
     )
@@ -213,27 +160,28 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print("\n🚀 啟動 AVH 造物引擎 (物理斷頭台防暴走模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
+    print("\n🚀 啟動 AVH 造物引擎 (V7.0.0 絕對寂靜模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為「純粹物理意志」，並以該意志直接撞擊觀測矩陣中的尤拉相位(sin/cos)所產生的最終相變與實相顯化。*\n\n---\n")
+        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出的絕對核心邏輯碎片。系統已封印語言模型，以確保作者的「原始波包」能直接且無雜訊地撞擊觀測矩陣中的尤拉相位(sin/cos)。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
-            trajectory_data = extract_ontological_trajectory(target_source)
+            trajectory_data = extract_pure_ontology(target_source)
             if not trajectory_data: continue
             
             ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
             hex_bits = ""
             
-            pure_will_psi = trajectory_data["manifested_psi"]
+            pure_will_psi = trajectory_data["psi_global"]
             
             for key in ordered_dimensions:
                 dim = manifest["dimensions"][key]
                 v_sin = embedding_model.encode([dim["sin_def"]])[0]
                 v_cos = embedding_model.encode([dim["cos_def"]])[0]
                 
+                # 計算原始意志波包與尤拉相位的相似度
                 sim_sin = np.dot(pure_will_psi, v_sin) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_sin))
                 sim_cos = np.dot(pure_will_psi, v_cos) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_cos))
                 
@@ -249,7 +197,7 @@ if __name__ == "__main__":
             export_wordpress_html(basename, trajectory_data["full_text"], hex_bits, state_name)
             export_latex(basename, trajectory_data["full_text"], hex_bits, state_name)
             
-            print("✅ " + target_source + " 意志顯化與尤拉相位碰撞完成！ [" + hex_bits + "]")
+            print("✅ " + target_source + " 原始意志顯化完成！ [" + hex_bits + "]")
 
     if last_hex_code:
         with open(os.environ.get("GITHUB_ENV", "env.tmp"), "a") as env_file:
