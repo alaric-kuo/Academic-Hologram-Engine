@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V16.0 霸權回歸：AI 自鎖顯化與全數值儀表板版)
+# AVH Genesis Engine (V17.0 終極干涉儀：三態共振與防爆顯化版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -22,7 +22,7 @@ except Exception as e:
     print("模型載入失敗：" + str(e))
     sys.exit(1)
 
-print("✨ [載入造物核心] 正在喚醒具備全文識讀能力之 LLM (Qwen2.5-0.5B-Instruct)...")
+print("✨ [載入造物核心] 正在喚醒具備防爆機制之 LLM (Qwen2.5-0.5B-Instruct)...")
 try:
     llm_name = "Qwen/Qwen2.5-0.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(llm_name)
@@ -50,21 +50,15 @@ def ask_llm(system_prompt, user_prompt, max_tokens=800, temp=0.3):
     raw_response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
     return zhconv.convert(raw_response, 'zh-tw')
 
-def calculate_euler_parameters(text, manifest):
-    """計算並回傳華麗的數學物理參數儀表板 (僅供觀測，不干涉 AI 決定)"""
+def calculate_euler_math_state(text, manifest):
+    """計算純數學尤拉指紋與數值面板"""
     paragraphs = [p.strip() for p in text.split('\n') if len(p.strip()) > 30]
     if len(paragraphs) < 3:
-        return None
+        return None, None, None
         
     embeddings = embedding_model.encode(paragraphs)
-    sim_matrix = cosine_similarity(embeddings)
-    np.fill_diagonal(sim_matrix, 0)
-    
-    nx_graph = nx.from_numpy_array(sim_matrix)
-    scores = nx.pagerank(nx_graph)
-    
-    # 計算全域矩陣特徵
     psi_global = np.mean(embeddings, axis=0)
+    
     vec_stats = {
         "node_count": len(paragraphs),
         "mean": float(np.mean(psi_global)),
@@ -72,9 +66,9 @@ def calculate_euler_parameters(text, manifest):
         "norm": float(np.linalg.norm(psi_global))
     }
     
-    # 計算尤拉顯化數值 (sin / cos 引力)
     ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
     dim_logs = []
+    math_hex = ""
     
     for key in ordered_dimensions:
         dim = manifest["dimensions"][key]
@@ -84,9 +78,12 @@ def calculate_euler_parameters(text, manifest):
         sim_sin = float(np.dot(psi_global, v_sin) / (np.linalg.norm(psi_global) * np.linalg.norm(v_sin)))
         sim_cos = float(np.dot(psi_global, v_cos) / (np.linalg.norm(psi_global) * np.linalg.norm(v_cos)))
         
-        dim_logs.append(f"* **{dim['layer']}**：`[sin: {sim_sin:+.4f} | cos: {sim_cos:+.4f}]`")
+        bit = "1" if sim_sin > sim_cos else "0"
+        math_hex += bit
+        winner = "離群突破" if bit == "1" else "守成合群"
+        dim_logs.append(f"* **{dim['layer']}**：{winner} `[sin: {sim_sin:+.4f} | cos: {sim_cos:+.4f}]`")
         
-    return vec_stats, dim_logs
+    return math_hex, vec_stats, dim_logs
 
 def process_avh_manifestation(source_path, manifest):
     print(f"\n🌊 [波包掃描] 正在讀取源碼：{source_path}")
@@ -95,22 +92,20 @@ def process_avh_manifestation(source_path, manifest):
             raw_text = file.read()
             
         if len(raw_text) < 100:
-            print(f"⚠️ {source_path} 文本過短。")
             return None
             
         # ---------------------------------------------------------
-        # 步驟 1：取得尤拉數學參數 (還原你最愛的版面數值)
+        # 步驟 1：取得尤拉數學指紋 (Math Baseline)
         # ---------------------------------------------------------
-        print("🕸️ [矩陣測量] 正在計算尤拉相位數值與原波包特徵...")
-        math_data = calculate_euler_parameters(raw_text, manifest)
-        if not math_data:
+        print("🕸️ [矩陣測量] 正在計算尤拉相位數值與純數學指紋...")
+        math_hex, vec_stats, dim_logs = calculate_euler_math_state(raw_text, manifest)
+        if not math_hex:
             return None
-        vec_stats, dim_logs = math_data
 
         # ---------------------------------------------------------
-        # 步驟 2：AI 第一次讀取 -> 產出學術指紋 (上上版的最強邏輯)
+        # 步驟 2：AI 識讀脈絡指紋 (AI Contextual Intent)
         # ---------------------------------------------------------
-        print("👁️ [脈絡識讀] 由 AI 閱讀全文並判定高維價值指紋...")
+        print("👁️ [脈絡識讀] 由 AI 閱讀全文判定靈魂意圖指紋...")
         dimension_prompts = ""
         ordered_keys = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
         for idx, key in enumerate(ordered_keys):
@@ -118,50 +113,67 @@ def process_avh_manifestation(source_path, manifest):
             dimension_prompts += f"維度 {idx+1} ({dim['layer']}):\n - [1] 突破: {dim['sin_def']}\n - [0] 守成: {dim['cos_def']}\n\n"
             
         eval_sys_prompt = (
-            "你是一個高維度觀測儀。閱讀全文，根據以下六個維度判定文章屬性。\n"
+            "你是一個高維度觀測儀。請閱讀全文，根據以下六個維度判定文章屬性。\n"
             f"{dimension_prompts}"
             "【絕對指令】：請在回覆中包含一組 6 個數字的代碼（只包含 0 或 1），例如 111111。"
         )
         
-        raw_source_hex = ask_llm(eval_sys_prompt, f"請判定文本的 6 位元指紋：\n\n{raw_text[:3000]}", max_tokens=30, temp=0.1)
+        raw_ai_hex = ask_llm(eval_sys_prompt, f"請判定文本的 6 位元指紋：\n\n{raw_text[:3000]}", max_tokens=30, temp=0.1)
+        match = re.search(r'[01]{6}', raw_ai_hex)
+        ai_hex = match.group(0) if match else "000000"
+        ai_state_info = manifest["states"].get(ai_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 暴力正則提取，保證絕不出現 000000 崩潰
-        match = re.search(r'[01]{6}', raw_source_hex)
-        source_hex = match.group(0) if match else "000000"
-        state_info = manifest["states"].get(source_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
-        print(f"✅ AI 識讀指紋: [{source_hex}] - {state_info['name']}")
+        # ---------------------------------------------------------
+        # 步驟 3：三態共振分析 (The Interference Delta)
+        # ---------------------------------------------------------
+        baseline_hex = "000000" # 古典學術地圖現況
+        
+        # 找出 AI 突破了哪些傳統基準
+        breakthrough_dims = []
+        for i in range(6):
+            if ai_hex[i] == "1" and baseline_hex[i] == "0":
+                breakthrough_dims.append(manifest["dimensions"][ordered_keys[i]]["layer"])
+        
+        breakthrough_str = "、".join(breakthrough_dims) if breakthrough_dims else "未產生顯著破缺"
+
+        print(f"✅ 古典基準: [{baseline_hex}] | 數學指紋: [{math_hex}] | AI靈魂: [{ai_hex}]")
 
         # ---------------------------------------------------------
-        # 步驟 3：狀態順向自鎖 -> 顯化摘要
+        # 步驟 4：防爆自鎖顯化摘要 (Auto-Locked Synthesis - Safe Mode)
         # ---------------------------------------------------------
-        print(f"🛡️ [自鎖顯化] 注入天命評語，強制 AI 進行方向性論述...")
+        print(f"🛡️ [自鎖顯化] 注入三態干涉結果，引導 AI 進行穩健論述...")
+        
+        # 修改 Prompt：使用正向引導，拔除可能導致腦死的絕對負面詞彙，並要求它解釋「破缺」
         summary_sys_prompt = f"""
-你是一個精準的學術本體論大腦。
-本系統已經判定這篇理論的學術指紋為：[{source_hex}] - {state_info['name']}。
-核心精神評語：「{state_info['desc']}」
+你是一個頂尖的學術本體論論述大腦。
+這篇理論已經經過了嚴格的系統測量與干涉對比：
+1. 傳統學術現況為：[000000] (保守合群)。
+2. 本文的真實靈魂為：[{ai_hex}] - {ai_state_info['name']}。
+3. 本文在以下維度成功打破了傳統框架：【{breakthrough_str}】。
+核心精神評語：「{ai_state_info['desc']}」
 
-【絕對任務】：
-閱讀使用者的全文，寫出一段氣勢磅礴的摘要。
-你必須在摘要中，精準展現上述「核心精神評語」所描述的價值與方向。
-【格式警告】：直接輸出段落文字。嚴禁使用 Markdown 分隔線、嚴禁產生條列式清單。
-論述完畢請強制輸出『[顯化完畢]』。
+任務：
+請寫出一段氣勢磅礴、脈絡連貫的系統摘要（約 300-500 字）。
+請專注於用優美的散文段落，解釋本理論是如何在上述維度打破傳統的。
+請直接給出摘要文字，完成後加上『[顯化完畢]』。
 """
-        generated_summary = ask_llm(summary_sys_prompt, f"請在指紋鎖定下進行思想顯化：\n\n{raw_text[:3000]}", max_tokens=900, temp=0.35)
+        generated_summary = ask_llm(summary_sys_prompt, f"請撰寫突破性摘要：\n\n{raw_text[:3000]}", max_tokens=900, temp=0.35)
         
-        # 清理結尾標記與可能殘留的 Markdown 亂碼
+        # 安全清洗，不再使用容易誤殺正文的正則表達式
         if "[顯化完畢]" in generated_summary:
-            generated_summary = generated_summary.split("[顯化完畢]")[0]
-        elif "顯化完畢" in generated_summary:
-            generated_summary = generated_summary.split("顯化完畢")[0]
+            clean_summary = generated_summary.split("[顯化完畢]")[0].strip()
+        else:
+            clean_summary = generated_summary.strip()
             
-        clean_summary = re.sub(r'^[#*\-\s]+', '', generated_summary)
-        clean_summary = re.sub(r'[#*\-\s]+$', '', clean_summary).strip()
-        print("✅ [顯化完成] AI 已成功在自鎖狀態下完成論述！")
+        print("✅ [顯化完成] AI 已成功防爆並產出干涉對比論述！")
 
         return {
-            "hex_code": source_hex,
-            "state_name": state_info['name'],
-            "state_desc": state_info['desc'],
+            "ai_hex": ai_hex,
+            "math_hex": math_hex,
+            "baseline_hex": baseline_hex,
+            "breakthrough_str": breakthrough_str,
+            "state_name": ai_state_info['name'],
+            "state_desc": ai_state_info['desc'],
             "vec_stats": vec_stats,
             "dim_logs": dim_logs,
             "summary": clean_summary,
@@ -175,26 +187,27 @@ def generate_trajectory_log(target_file, data):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     dim_logs_text = "\n    ".join(data['dim_logs'])
     
+    # 動態產生對比解讀
+    math_ai_diff = "一致" if data['ai_hex'] == data['math_hex'] else f"產生位移 (數學詞彙重力 [{data['math_hex']}] vs AI 靈魂意圖 [{data['ai_hex']}])"
+
     log_output = (
         f"## 📡 演化顯化軌跡：`{target_file}`\n"
         f"* **物理時間戳**：`{timestamp}`\n\n"
-        f"### 1. 🧠 核心邏輯拓樸萃取 (Semantic Graph Abstraction)\n"
-        f"* **邏輯節點數**：從全文提煉出 `{data['vec_stats']['node_count']}` 個核心邏輯段落。\n"
-        f"* **原文矩陣特徵**：\n"
-        f"    * `均值 (Mean)`：{data['vec_stats']['mean']:.8f}\n"
-        f"    * `標準差 (Std)`：{data['vec_stats']['std']:.8f}\n"
-        f"    * `模長 (L2 Norm)`：{data['vec_stats']['norm']:.8f}\n\n"
-        f"### 2. 🧬 尤拉相位顯化 (Euler Phase Manifestation)\n"
-        f"* **系統說明**：系統透過高維神經網絡進行全脈絡識讀，並輔以數學矩陣計算底層尤拉相位的引力數值。\n"
-        f"* **狀態張量**：`[{data['hex_code']}]` (由 AI 識讀定錨)\n"
-        f"* **物理相變**：**{data['state_name']}**\n"
-        f"* **尤拉數值觀測**：\n"
-        f"    {dim_logs_text}\n"
-        f"* **學術指紋評語**：\n"
-        f"    > {data['state_desc']}\n\n"
+        f"### 1. ⚛️ 全像干涉儀：三態共振測量 (Tri-State Resonance)\n"
+        f"*系統同時測量「傳統現況」、「字面數學重力」與「AI 脈絡靈魂」，以揭示理論的真實維度破缺。*\n"
+        f"* 🗺️ **學術地圖現況 (Baseline)**：`[{data['baseline_hex']}]` (古典守成)\n"
+        f"* 🧮 **數學尤拉指紋 (Math Gravity)**：`[{data['math_hex']}]`\n"
+        f"* 🧠 **AI 靈魂指紋 (Neural Intent)**：`[{data['ai_hex']}]` - **{data['state_name']}**\n"
+        f"* 🌌 **干涉解讀**：\n"
+        f"  * 數學與 AI 意圖對比：**{math_ai_diff}**\n"
+        f"  * 成功突破之傳統維度：**【{data['breakthrough_str']}】**\n\n"
+        f"### 2. 🧮 尤拉相位觀測儀表板 (Euler Dashboard)\n"
+        f"* **邏輯節點數**：`{data['vec_stats']['node_count']}` | **模長 (L2 Norm)**：`{data['vec_stats']['norm']:.8f}`\n"
+        f"* **各維度字面引力對決**：\n"
+        f"    {dim_logs_text}\n\n"
         f"---\n"
         f"### 3. 🎯 狀態自鎖顯化摘要 (Auto-Locked Synthesis)\n"
-        f"*(系統將上述測得之絕對指紋化為「鋼鐵模具」，強制約束 AI 進行全脈絡的摘要生成，確保論述與高維價值完美接地。)*\n\n"
+        f"*(系統根據上述【三態共振】得出的突破維度與天命評語：「{data['state_desc']}」，強制引導 AI 寫出以下精準接地之論述：)*\n\n"
         f"> **{data['summary']}**\n\n"
         f"---\n"
     )
@@ -211,36 +224,16 @@ def export_wordpress_html(basename, data):
         "    </div>\n"
         "    <hr>\n"
         "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 狀態自鎖顯化</strong></p>\n"
-        f"        <p>當下演化狀態：[ {data['hex_code']} ] - <strong>{data['state_name']}</strong></p>\n"
+        "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 三態共振觀測</strong></p>\n"
+        f"        <p>突破維度：【 {data['breakthrough_str']} 】</p>\n"
+        f"        <p>最終演化狀態：[ {data['ai_hex']} ] - <strong>{data['state_name']}</strong></p>\n"
         f"        <p>物理時間戳：{timestamp_str}</p>\n"
-        "        <p><em>V16.0 霸權回歸協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
+        "        <p><em>V17.0 干涉儀協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
         "    </div>\n"
         "</div>\n"
     )
     with open("WP_Ready_" + basename + ".html", "w", encoding="utf-8") as f:
         f.write(html_output)
-
-def export_latex(basename, data):
-    tex_content = data['full_text'].replace("#", "\\section")
-    tex_output = (
-        "\\documentclass{article}\n"
-        "\\usepackage[utf8]{inputenc}\n"
-        "\\usepackage{xeCJK}\n"
-        f"\\title{{{basename}}}\n"
-        "\\author{Alaric Kuo}\n"
-        "\\date{\\today}\n"
-        "\\begin{document}\n"
-        "\\maketitle\n"
-        "\\begin{abstract}\n"
-        f"本文章經由 AVH 學術價值全像儀觀測，當下演化狀態顯化為 [{data['hex_code']}] {data['state_name']}。\n\n"
-        f"{data['summary'][:200]}...\n"
-        "\\end{abstract}\n\n"
-        f"{tex_content}\n\n"
-        "\\end{document}\n"
-    )
-    with open(basename + "_Archive.tex", "w", encoding="utf-8") as f:
-        f.write(tex_output)
 
 if __name__ == "__main__":
     if not os.path.exists("avh_manifest.json"):
@@ -256,23 +249,22 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print(f"\n🚀 啟動 AVH 造物引擎 (V16.0 霸權回歸版)，共偵測到 {len(source_files)} 個波包等待觀測...")
+    print(f"\n🚀 啟動 AVH 造物引擎 (V17.0 三態共振防爆版)，共偵測到 {len(source_files)} 個波包等待觀測...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄系統如何利用 AI 進行高維度脈絡識讀定錨，並透過底層尤拉矩陣計算引力數值。系統最終將『學術指紋』轉化為絕對約束枷鎖，強制 AI 產出具備高維度脈絡且邏輯接地的完美摘要。*\n\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：三態干涉觀測軌跡\n")
+        log_file.write("*本文件展示了最高維度的干涉儀邏輯：系統同時測量古典基準(Baseline)、字面數學引力(Math)、與高維上下文意圖(AI)。透過三者的差異，精準定位理論的突破點，並引導大腦產出不崩潰的完美顯化論述。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
             if result_data:
-                last_hex_code = result_data['hex_code']
+                last_hex_code = result_data['ai_hex']
                 report = generate_trajectory_log(target_source, result_data)
                 log_file.write(report)
                 
                 basename = os.path.splitext(target_source)[0]
                 export_wordpress_html(basename, result_data)
-                export_latex(basename, result_data)
 
     if last_hex_code:
         with open(os.environ.get("GITHUB_ENV", "env.tmp"), "a") as env_file:
