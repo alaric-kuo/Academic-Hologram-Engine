@@ -4,32 +4,35 @@ import json
 import glob
 import numpy as np
 import requests
-from openai import OpenAI
 from datetime import datetime
 
+# 導入開源本地端運算模型 (免 API Key)
+from sentence_transformers import SentenceTransformer
+
 # ==============================================================================
-# AVH Genesis Engine (V2.1.1 雲端穩定收斂版)
+# AVH Genesis Engine (V3.0.0 零金鑰・算力解放版)
 # ==============================================================================
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# 初始化本地開源模型 (384維度，極度輕量且適合語意比對)
+print("🧠 [載入核心] 正在啟動開源神經網路模型 (all-MiniLM-L6-v2)...")
+try:
+    embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+except Exception as e:
+    print(f"模型載入失敗：{str(e)}")
+    sys.exit(1)
+
+# Semantic Scholar 免費流 (無 Key 亦可運行)
 S2_API_KEY = os.environ.get("S2_API_KEY", "")
 
 def get_embedding(text):
-    try:
-        response = client.embeddings.create(input=[text], model="text-embedding-3-small", timeout=15)
-        return np.array(response.data[0].embedding)
-    except Exception as e:
-        print(f"工具調用失敗，原因為 OpenAI API 拒絕連線或超時狀態 ({str(e)})")
-        sys.exit(1)
+    """使用本地模型計算向量"""
+    return embedding_model.encode([text])[0]
 
 def extract_ontological_trajectory(source_path):
-    """提取全文連續積分、重心特徵與探針"""
     print(f"🌊 [波包坍縮] 正在讀取源碼：{source_path}")
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
             full_text = " ".join(file.read().split())
-            
-        # 重新讀取一次保留原始換行的文本，供 HTML/LaTeX 輸出使用
         with open(source_path, 'r', encoding='utf-8') as file:
             raw_text = file.read()
     except Exception as e:
@@ -43,37 +46,32 @@ def extract_ontological_trajectory(source_path):
     window_size, stride = 1500, 800
     trajectories = [full_text[i:i+window_size] for i in range(0, len(full_text), stride) if len(full_text[i:i+window_size]) > 100]
     
-    try:
-        response = client.embeddings.create(input=trajectories, model="text-embedding-3-small", timeout=30)
-        wave_functions = [np.array(data.embedding) for data in response.data]
-        
-        psi_global = np.mean(wave_functions, axis=0)
-        
-        vec_stats = {
-            "dim": len(psi_global),
-            "mean": float(np.mean(psi_global)),
-            "std": float(np.std(psi_global)),
-            "norm": float(np.linalg.norm(psi_global))
-        }
-        
-        similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
-        centroid_index = np.argmax(similarities)
-        semantic_probe = trajectories[centroid_index][:200]
-        
-        return {
-            "psi_global": psi_global,
-            "vec_stats": vec_stats,
-            "probe_text": semantic_probe,
-            "window_count": len(trajectories),
-            "centroid_sim": float(similarities[centroid_index]),
-            "full_text": raw_text
-        }
-    except Exception as e:
-        print(f"工具調用失敗，原因為 向量轉換過程超時 ({str(e)})")
-        sys.exit(1)
+    # 讓 GitHub 的 CPU 免費幫我們計算
+    wave_functions = [embedding_model.encode([chunk])[0] for chunk in trajectories]
+    psi_global = np.mean(wave_functions, axis=0)
+    
+    vec_stats = {
+        "dim": len(psi_global),
+        "mean": float(np.mean(psi_global)),
+        "std": float(np.std(psi_global)),
+        "norm": float(np.linalg.norm(psi_global))
+    }
+    
+    similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
+    centroid_index = np.argmax(similarities)
+    semantic_probe = trajectories[centroid_index][:200]
+    
+    return {
+        "psi_global": psi_global,
+        "vec_stats": vec_stats,
+        "probe_text": semantic_probe,
+        "window_count": len(trajectories),
+        "centroid_sim": float(similarities[centroid_index]),
+        "full_text": raw_text
+    }
 
 def scan_background_field(query_text):
-    """掃描背景網格，並回傳【所有】碰撞到的實體標題"""
+    """掃描背景網格 (免費流：無 Key 狀態下依然運作)"""
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
     headers = {"x-api-key": S2_API_KEY} if S2_API_KEY else {}
     params = {"query": query_text[:120], "limit": 10, "fields": "citationCount,title"}
@@ -86,20 +84,18 @@ def scan_background_field(query_text):
         collisions = [p.get('title') for p in data]
         return total_citations, collisions
     except requests.exceptions.RequestException as e:
-        print(f"工具調用失敗，原因為 Semantic Scholar API 阻擋 ({str(e)})")
-        sys.exit(1)
+        print(f"⚠️ Semantic Scholar API 阻擋或超時 (免費流限制)，本次略過場域回聲 ({str(e)})")
+        return 0, []
 
 def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions, hex_code, manifest):
-    """生成包含完整碰撞軌跡的 Log"""
     hex_info = manifest['states'].get(hex_code, {"name": "未定義拓樸", "desc": "未知路徑。"})
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     stats = trajectory_data['vec_stats']
     
-    # 避免在 f-string 內部使用換行符號的邏輯
     collisions_list = []
     for i, title in enumerate(collisions):
         collisions_list.append(f"    {i+1}. {title}")
-    collisions_text = "\n".join(collisions_list) if collisions_list else "    無碰撞紀錄"
+    collisions_text = "\n".join(collisions_list) if collisions_list else "    無碰撞紀錄 (新突破點)"
     
     return f"""
 ## 📡 觀測軌跡：`{target_file}`
@@ -107,7 +103,7 @@ def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions,
 
 ### 1. 🌌 全文能勢集成 (Wave Function Integration)
 * **解析窗格數**：`{trajectory_data['window_count']} 視窗 (1500/800 Overlap)`
-* **1536維重心矩陣特徵**：
+* **384維重心矩陣特徵** (無伺服器開源運算)：
     * `均值 (Mean)`：{stats['mean']:.8f}
     * `標準差 (Std)`：{stats['std']:.8f}
     * `模長 (L2 Norm)`：{stats['norm']:.8f}
@@ -132,7 +128,6 @@ def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions,
 """
 
 def export_wordpress_html(basename, content, hex_code, state_name):
-    # 將換行處理移出 f-string，避免 Python 3.10 語法錯誤
     html_content = content.replace('\n', '<br>')
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -146,7 +141,7 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         <p><strong>📡 本理論已通過 學術價值全像儀 (AVH) 認證</strong></p>
         <p>當下演化狀態：[ {hex_code} ] - <strong>{state_name}</strong></p>
         <p>語意時間戳：{timestamp_str}</p>
-        <p><em>本體論底層協議保護 | 瀚菱管理顧問 AJ Consulting</em></p>
+        <p><em>本體論底層協議保護 | 零金鑰開源實踐 | AJ Consulting</em></p>
     </div>
 </div>
 """
@@ -154,9 +149,7 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         f.write(html_template)
 
 def export_latex(basename, content, hex_code, state_name):
-    # 將替換處理移出，並改用傳統字串拼接，徹底避開 f-string 與 LaTeX 大括號的衝突
     tex_content = content.replace('#', '\\section')
-    
     tex_template = (
         "\\documentclass{article}\n"
         "\\usepackage[utf8]{inputenc}\n"
@@ -191,7 +184,7 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print(f"\n🚀 啟動 AVH 引擎，共偵測到 {len(source_files)} 個波包等待坍縮...")
+    print(f"\n🚀 啟動 AVH 引擎 (零金鑰模式)，共偵測到 {len(source_files)} 個波包等待坍縮...")
     
     with open('AVH_OBSERVATION_LOG.md', 'w', encoding='utf-8') as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：多維觀測實作軌跡\n")
@@ -220,15 +213,11 @@ if __name__ == "__main__":
             last_hex_code = hex_bits
             state_name = manifest['states'][hex_bits]['name']
             
-            # 1. 寫入軌跡 Log
             report = generate_trajectory_log(target_source, trajectory_data, bg_energy, collisions, hex_bits, manifest)
             log_file.write(report)
             
-            # 2. 輸出 WordPress HTML
             basename = os.path.splitext(target_source)[0]
             export_wordpress_html(basename, trajectory_data['full_text'], hex_bits, state_name)
-            
-            # 3. 輸出 LaTeX
             export_latex(basename, trajectory_data['full_text'], hex_bits, state_name)
             
             print(f"✅ {target_source} 理論收斂完成！ [{hex_bits}]")
