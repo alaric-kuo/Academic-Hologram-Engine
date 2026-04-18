@@ -8,9 +8,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
 from transformers import AutoModelForCausalLM, AutoTokenizer
+import opencc
 
 # ==============================================================================
-# AVH Genesis Engine (V6.2.0 絕對意志：繁體約束與純粹意志碰撞版)
+# AVH Genesis Engine (V6.3.0 絕對意志：硬核引導與繁體強制鎮壓版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -29,6 +30,9 @@ except Exception as e:
     print("生成大腦載入失敗：" + str(e))
     sys.exit(1)
 
+# 初始化 OpenCC (簡體轉台灣繁體，包含慣用語轉換)
+cc = opencc.OpenCC('s2twp.json')
+
 def extract_ontological_trajectory(source_path):
     print("🌊 [波包顯化] 正在讀取源碼：" + source_path)
     try:
@@ -46,7 +50,6 @@ def extract_ontological_trajectory(source_path):
         sim_matrix = cosine_similarity(embeddings)
         np.fill_diagonal(sim_matrix, 0)
         
-        # 簡併態重力懲罰 (降低至 0.75，嚴厲粉碎字典檔引力)
         local_density = np.sum(sim_matrix > 0.75, axis=1) + 1
         nx_graph = nx.from_numpy_array(sim_matrix)
         scores = nx.pagerank(nx_graph)
@@ -60,41 +63,43 @@ def extract_ontological_trajectory(source_path):
         core_chain_data_sorted = sorted(core_chain_data, key=lambda x: x[3])
         extracted_text = "\n".join([item[1] for item in core_chain_data_sorted])
         
-        print("✨ [論述顯化] 系統正在注入絕對意志，重構核心邏輯...")
+        print("✨ [論述顯化] 系統正在注入絕對意志，強制提煉硬核方法論...")
         
-        # [V6.2.0 語言約束指令] 強制要求輸出繁體中文
+        # [V6.3.0 系統提示詞升級] 強制要求 LLM 提取「方法」與「實相」，禁止流於哲學背景
         messages = [
             {
                 "role": "system", 
-                "content": "你是一個絕對中立且嚴謹的學術本體論分析系統。你的任務是消化使用者輸入的學術文本，並用一段精煉、具備哲學深度的連續文字，重述該文本的核心邏輯與演化趨勢。\n\n【強制指令】：你必須使用「繁體中文 (Traditional Chinese, zh-TW)」進行輸出，絕對禁止使用簡體字。嚴禁加入任何媒體免責聲明或廢話。只需輸出核心論述本身。"
+                "content": "你是一個絕對中立且嚴謹的學術本體論分析系統。你的任務是消化輸入的學術文本，並重述其核心邏輯。\n\n【強制執行指令】：\n1. 嚴禁只敘述「背景」或「動機」。\n2. 你必須具體摘要出該理論的「運作架構」、「數學/拓樸方法」以及「最終的實體應用或干預手段」。\n3. 必須確保句子完整結束，不可中斷。\n4. 嚴禁包含任何媒體免責聲明。"
             },
             {
                 "role": "user", 
-                "content": "請以繁體中文，為以下拓樸邏輯碎片進行最終的思想顯化：\n\n" + extracted_text[:2500]
+                "content": "請為以下拓樸邏輯碎片進行思想顯化，務必凸顯其具體方法與實體應用：\n\n" + extracted_text[:2500]
             }
         ]
         
         text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         model_inputs = tokenizer([text], return_tensors="pt").to(llm_model.device)
         
+        # 放寬肺活量 (max_new_tokens) 到 600，確保論述不會被腰斬
         generated_ids = llm_model.generate(
             model_inputs.input_ids,
-            max_new_tokens=300,
-            temperature=0.2, # 進一步降低溫度，確保語言輸出的穩定性
-            repetition_penalty=1.1
+            max_new_tokens=600,
+            temperature=0.25,
+            repetition_penalty=1.15
         )
         
         generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
-        generated_summary = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+        raw_generated_summary = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
+        
+        # [V6.3.0 物理鎮壓] 使用 OpenCC 將 LLM 吐出的任何簡體字/大陸慣用語，強制轉為純粹的台灣繁體
+        generated_summary = cc.convert(raw_generated_summary)
         
         cohesive_wfs = [item[2] for item in core_chain_data]
         psi_global = np.mean(cohesive_wfs, axis=0)
         
-        # [V6.2.0 純粹意志顯化] 將 LLM 提煉出的「無雜訊論述」轉化為神經向量
-        # 我們將用這個「純粹意志 (Manifested Will)」，而不是充滿說明的原文，去進行六維度的矩陣碰撞！
         manifested_psi = embedding_model.encode([generated_summary])[0]
         
-        print("🛡️ [意志顯化] 已成功使用 LLM 萃取純粹論述，準備進行最終矩陣碰撞。")
+        print("🛡️ [意志顯化] 已成功強制提取硬核邏輯，並完成繁體物理鎮壓。")
         
         vec_stats = {
             "dim": len(psi_global),
@@ -107,7 +112,7 @@ def extract_ontological_trajectory(source_path):
         
         return {
             "psi_global": psi_global,
-            "manifested_psi": manifested_psi, # 傳遞純粹意志
+            "manifested_psi": manifested_psi,
             "vec_stats": vec_stats,
             "probe_text": absolute_core_probe,
             "logic_chain_summary": generated_summary,
@@ -136,14 +141,14 @@ def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
         "* **全文最高維度交匯點 (核心主張)**：\n"
         "    > \"" + trajectory_data['probe_text'] + "...\"\n\n"
         "### 3. 🧬 純粹意志坍縮 (Will Manifestation Collapse)\n"
-        "* **系統說明**：*系統不再使用充滿雜訊的原波包進行碰撞，而是以大腦顯化出之「純粹論述」直接撞擊觀測刻度，實現真正的實相躍遷。*\n"
+        "* **系統說明**：*系統不再使用充滿雜訊的原波包進行碰撞，而是以大腦強制提煉出之「硬核方法與實相」直接撞擊觀測刻度，實現真正的實相躍遷。*\n"
         "* **狀態張量**：`[" + hex_code + "]`\n"
         "* **物理相變**：**" + hex_info['name'] + "**\n"
         "* **學術指紋**：\n"
         "    > " + hex_info['desc'] + "\n\n"
         "---\n"
         "### 🔗 附錄：系統生成之「核心論述顯化」\n"
-        "*(本段落為具備絕對意志之 LLM 吸收拓樸邏輯後，自行顯化之純粹論述)*\n\n"
+        "*(本段落為具備絕對意志之 LLM 吸收拓樸邏輯後，自行顯化之純粹論述，已完成繁體物理鎮壓)*\n\n"
         "> **" + trajectory_data['logic_chain_summary'] + "**\n\n"
         "---\n"
     )
@@ -206,11 +211,11 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print("\n🚀 啟動 AVH 造物引擎 (純粹意志碰撞模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
+    print("\n🚀 啟動 AVH 造物引擎 (硬核意志碰撞模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為「純粹意志」，並以該意志直接撞擊觀測矩陣所產生的最終物理實相。*\n\n---\n")
+        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為具備實體方法論之「純粹意志」，並以該意志直接撞擊觀測矩陣所產生的最終物理實相。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
@@ -220,7 +225,6 @@ if __name__ == "__main__":
             ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
             hex_bits = ""
             
-            # [核心演化] 不再使用充滿雜訊的原文本波包，改用 LLM 提煉出的純粹意志進行碰撞！
             pure_will_psi = trajectory_data["manifested_psi"]
             
             for key in ordered_dimensions:
@@ -228,7 +232,6 @@ if __name__ == "__main__":
                 v_pos = embedding_model.encode([dim["pos_def"]])[0]
                 v_neg = embedding_model.encode([dim["neg_def"]])[0]
                 
-                # 計算純粹意志與正負極定義的共鳴
                 sim_pos = np.dot(pure_will_psi, v_pos) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_pos))
                 sim_neg = np.dot(pure_will_psi, v_neg) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_neg))
                 hex_bits += "1" if sim_pos > sim_neg else "0"
