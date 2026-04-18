@@ -11,7 +11,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V6.4.0 絕對意志：尤拉相位 Euler Phase 碰撞版)
+# AVH Genesis Engine (V6.4.1 絕對意志：防幻覺・本體論收斂版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -60,34 +60,36 @@ def extract_ontological_trajectory(source_path):
         core_chain_data_sorted = sorted(core_chain_data, key=lambda x: x[3])
         extracted_text = "\n".join([item[1] for item in core_chain_data_sorted])
         
-        print("✨ [論述顯化] 系統正在注入絕對意志，強制提煉硬核方法論...")
+        print("✨ [論述顯化] 系統正在注入防幻覺約束，強制提煉純粹物理實相...")
         
-        # 強制要求 LLM 提取「方法」與「實相」，禁止流於哲學背景
+        # [V6.4.1 防幻覺神經約束] 
+        # 1. 放棄逼迫它尋找「傳統應用」。
+        # 2. 強制它尊重使用者的物理定義，不准亂改詞。
         messages = [
             {
                 "role": "system", 
-                "content": "你是一個絕對中立且嚴謹的學術本體論分析系統。你的任務是消化輸入的學術文本，並重述其核心邏輯。\n\n【強制執行指令】：\n1. 嚴禁只敘述「背景」或「動機」。\n2. 你必須具體摘要出該理論的「運作架構」、「數學/拓樸方法」以及「最終的實體應用或干預手段」。\n3. 必須確保句子完整結束，不可中斷。\n4. 嚴禁包含任何媒體免責聲明。"
+                "content": "你是一個絕對冷酷、中立的學術本體論萃取系統。你的任務是精準重組輸入文本的核心邏輯。\n\n【絕對強制指令】：\n1. 直接切入理論架構與演化法則，嚴禁寫背景動機。\n2. 必須精準保留原作者對「空間、時間、資訊熵、能量、質量、能勢」等專有名詞的定義，絕對禁止竄改或替換詞彙。\n3. 將「建立這套觀測系統」本身視為該理論的實體應用。絕對禁止腦補原文未提及的領域（如教育改革、圖鑑、社會運動等）。\n4. 輸出必須冷靜、斷言、不帶任何情緒。"
             },
             {
                 "role": "user", 
-                "content": "請為以下拓樸邏輯碎片進行思想顯化，務必凸顯其具體方法與實體應用：\n\n" + extracted_text[:2500]
+                "content": "請為以下拓樸邏輯碎片進行純粹的思想顯化，保持其哲學高度與原創物理定義，切勿降維成通俗的社會應用：\n\n" + extracted_text[:2500]
             }
         ]
         
         text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         model_inputs = tokenizer([text], return_tensors="pt").to(llm_model.device)
         
+        # [V6.4.1 絕對低溫] 將 temperature 降至 0.1，徹底凍結神經網路的發散性幻覺
         generated_ids = llm_model.generate(
             model_inputs.input_ids,
             max_new_tokens=600,
-            temperature=0.25,
+            temperature=0.1, 
             repetition_penalty=1.15
         )
         
         generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
         raw_generated_summary = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
         
-        # 物理鎮壓：將 LLM 吐出的文字強制轉為台灣繁體
         generated_summary = zhconv.convert(raw_generated_summary, 'zh-tw')
         
         cohesive_wfs = [item[2] for item in core_chain_data]
@@ -95,7 +97,7 @@ def extract_ontological_trajectory(source_path):
         
         manifested_psi = embedding_model.encode([generated_summary])[0]
         
-        print("🛡️ [意志顯化] 已成功強制提取硬核邏輯，並完成繁體物理鎮壓。")
+        print("🛡️ [意志顯化] 已成功凍結幻覺，完成純粹本體論的繁體物理鎮壓。")
         
         vec_stats = {
             "dim": len(psi_global),
@@ -137,14 +139,14 @@ def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
         "* **全文最高維度交匯點 (核心主張)**：\n"
         "    > \"" + trajectory_data['probe_text'] + "...\"\n\n"
         "### 3. 🧬 尤拉相位坍縮 (Euler Phase Collapse)\n"
-        "* **系統說明**：*系統透過意志波包測量尤拉公式中的實部 (cos: 傳承合群) 與虛部 (sin: 離群突破)，完成無審判之絕對相變。*\n"
+        "* **系統說明**：*系統透過防幻覺萃取之意志波包，測量尤拉公式中的實部 (cos: 傳承合群) 與虛部 (sin: 離群突破)，完成無審判之絕對相變。*\n"
         "* **狀態張量**：`[" + hex_code + "]`\n"
         "* **物理相變**：**" + hex_info['name'] + "**\n"
         "* **學術指紋**：\n"
         "    > " + hex_info['desc'] + "\n\n"
         "---\n"
         "### 🔗 附錄：系統生成之「核心論述顯化」\n"
-        "*(本段落為具備絕對意志之 LLM 吸收拓樸邏輯後，自行顯化之純粹論述，已完成繁體物理鎮壓)*\n\n"
+        "*(本段落為具備絕對意志之 LLM 在絕對低溫下吸收拓樸邏輯後，自行顯化之純粹論述)*\n\n"
         "> **" + trajectory_data['logic_chain_summary'] + "**\n\n"
         "---\n"
     )
@@ -207,11 +209,11 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print("\n🚀 啟動 AVH 造物引擎 (尤拉相位碰撞模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
+    print("\n🚀 啟動 AVH 造物引擎 (尤拉相位防幻覺模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為具備實體方法論之「純粹意志」，並以該意志直接撞擊觀測矩陣中的尤拉相位(sin/cos)所產生的最終物理實相。*\n\n---\n")
+        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦在防幻覺約束下提煉為「純粹物理意志」，並以該意志直接撞擊觀測矩陣中的尤拉相位(sin/cos)所產生的最終相變。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
@@ -225,14 +227,12 @@ if __name__ == "__main__":
             
             for key in ordered_dimensions:
                 dim = manifest["dimensions"][key]
-                # 測量虛部 (sin: Singular 離群突破) 與實部 (cos: Cosplay 合群傳承)
                 v_sin = embedding_model.encode([dim["sin_def"]])[0]
                 v_cos = embedding_model.encode([dim["cos_def"]])[0]
                 
                 sim_sin = np.dot(pure_will_psi, v_sin) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_sin))
                 sim_cos = np.dot(pure_will_psi, v_cos) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_cos))
                 
-                # 若偏向虛部(sin/突破)，賦值為 1；若偏向實部(cos/傳承)，賦值為 0
                 hex_bits += "1" if sim_sin > sim_cos else "0"
             
             last_hex_code = hex_bits
