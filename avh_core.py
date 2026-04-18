@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V7.0.0 絕對寂靜：本體論直擊・原波包絕對顯化版)
+# AVH Genesis Engine (V7.1.0 絕對寂靜：包立不相容・原波包多樣性版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -41,12 +41,37 @@ def extract_pure_ontology(source_path):
         nx_graph = nx.from_numpy_array(sim_matrix)
         scores = nx.pagerank(nx_graph)
         
-        # 排序段落，抓取引力最強的 Top N 段作為「核心意志」
-        ranked_paragraphs = sorted(((scores[i], s, embeddings[i], i) for i, s in enumerate(paragraphs)), reverse=True)
+        # 排序段落，抓取引力最強的節點
+        ranked_paragraphs = sorted(((scores[i], paragraphs[i], embeddings[i], i) for i in range(len(paragraphs))), reverse=True)
         
-        # 萃取前 35% 或至少 5 段，作為純粹的意志碎片
         core_size = max(3, min(5, int(len(paragraphs) * 0.35)))
-        core_fragments = ranked_paragraphs[:core_size]
+        core_fragments = []
+        
+        print("🌌 [相容性檢查] 啟動包立不相容原理，排除語意塌陷黑洞...")
+        # [V7.1.0 包立不相容原理 (Pauli Exclusion Principle)]
+        # 確保萃取出的波包具有多樣性，不掉入同義反覆的字典黑洞
+        for item in ranked_paragraphs:
+            if len(core_fragments) >= core_size:
+                break
+            
+            is_duplicate = False
+            for selected in core_fragments:
+                # 計算與已選波包的餘弦相似度
+                sim = np.dot(item[2], selected[2]) / (np.linalg.norm(item[2]) * np.linalg.norm(selected[2]))
+                if sim > 0.85:  # 相似度 > 85% 視為同一量子態，觸發物理斥力，丟棄！
+                    is_duplicate = True
+                    break
+            
+            if not is_duplicate:
+                core_fragments.append(item)
+                
+        # 萬一斥力太強導致碎片不足，無條件補齊至最低限度 3 段
+        if len(core_fragments) < 3:
+            for item in ranked_paragraphs:
+                if len(core_fragments) >= 3:
+                    break
+                if item not in core_fragments:
+                    core_fragments.append(item)
         
         # 依照原始順序重新排列萃取出的原話
         core_fragments_sorted = sorted(core_fragments, key=lambda x: x[3])
@@ -55,7 +80,7 @@ def extract_pure_ontology(source_path):
         # 計算核心意志的平均向量 (Will-Manifestation Vector)
         psi_global = np.mean([item[2] for item in core_fragments], axis=0)
         
-        print("🛡️ [意志顯化] 已成功透過圖論萃取純粹原波包，跳過 LLM 雜訊。")
+        print("🛡️ [意志顯化] 已成功透過圖論萃取具備全域視野的純粹原波包。")
         
         vec_stats = {
             "dim": len(psi_global),
@@ -68,7 +93,7 @@ def extract_pure_ontology(source_path):
             "psi_global": psi_global,
             "vec_stats": vec_stats,
             "pure_fragments": zhconv.convert(extracted_pure_text, 'zh-tw'),
-            "fragment_count": core_size,
+            "fragment_count": len(core_fragments),
             "full_text": raw_text
         }
     except Exception as e:
@@ -84,20 +109,20 @@ def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
         "## 📡 演化顯化軌跡：`" + target_file + "`\n"
         "* **物理時間戳**：`" + timestamp + "`\n\n"
         "### 1. 🧠 核心邏輯拓樸萃取 (Semantic Gravity Extraction)\n"
-        "* **邏輯節點數**：從全文提煉出 `" + str(trajectory_data['fragment_count']) + "` 個最具引力的核心論述碎片。\n"
-        "* **原波包矩陣特徵**：\n"
+        "* **邏輯節點數**：從全文提煉出 `" + str(trajectory_data['fragment_count']) + "` 個具備相容性之核心論述碎片。\n"
+        "* **原波包矩陣特徵** (經包立不相容原理過濾後之全域本體)：\n"
         "    * `均值 (Mean)`：" + f"{stats['mean']:.8f}" + "\n"
         "    * `標準差 (Std)`：" + f"{stats['std']:.8f}" + "\n"
         "    * `模長 (L2 Norm)`：" + f"{stats['norm']:.8f}" + "\n\n"
         "### 2. 🧬 尤拉相位顯化 (Euler Phase Manifestation)\n"
-        "* **系統說明**：*系統已徹底廢除 LLM 生成層，改以「原話波包」直接撞擊觀測矩陣中的尤拉相位(sin/cos)，實現 0 雜訊之實相顯化。*\n"
+        "* **系統說明**：*系統已徹底廢除 LLM 生成層，改以具備全域多樣性之「原話波包」直接撞擊觀測矩陣中的尤拉相位(sin/cos)，實現 0 雜訊之實相顯化。*\n"
         "* **狀態張量**：`[" + hex_code + "]`\n"
         "* **物理相變**：**" + hex_info['name'] + "**\n"
         "* **學術指紋**：\n"
         "    > " + hex_info['desc'] + "\n\n"
         "---\n"
         "### 🔗 附錄：系統提煉之「原始本體顯化」\n"
-        "*(本段落為圖論演算法從全文中直接萃取之最高引力論述，不經 AI 修改，保持原創意志)*\n\n"
+        "*(本段落為圖論演算法從全文中直接萃取之最高引力論述，已排除同義塌陷，保持原創意志全貌)*\n\n"
         + trajectory_data['pure_fragments'] + "\n\n"
         "---\n"
     )
@@ -117,7 +142,7 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 絕對邏輯顯化</strong></p>\n"
         "        <p>當下演化狀態：[ " + hex_code + " ] - <strong>" + state_name + "</strong></p>\n"
         "        <p>物理時間戳：" + timestamp_str + "</p>\n"
-        "        <p><em>V7.0.0 絕對寂靜協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
+        "        <p><em>V7.1.0 絕對寂靜協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
         "    </div>\n"
         "</div>\n"
     )
@@ -160,11 +185,11 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print("\n🚀 啟動 AVH 造物引擎 (V7.0.0 絕對寂靜模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
+    print("\n🚀 啟動 AVH 造物引擎 (V7.1.0 絕對寂靜模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出的絕對核心邏輯碎片。系統已封印語言模型，以確保作者的「原始波包」能直接且無雜訊地撞擊觀測矩陣中的尤拉相位(sin/cos)。*\n\n---\n")
+        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出的絕對核心邏輯碎片。系統已封印語言模型，並導入量子斥力（包立不相容原理）避免語意塌陷，確保作者的「全域原始波包」能無雜訊地撞擊觀測矩陣中的尤拉相位(sin/cos)。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
