@@ -2,31 +2,21 @@ import os
 import sys
 import json
 import glob
+import re
 import numpy as np
-import requests
 from datetime import datetime
-
-# 導入開源本地端運算模型 (免 API Key)
 from sentence_transformers import SentenceTransformer
 
 # ==============================================================================
-# AVH Genesis Engine (V3.0.0 零金鑰・算力解放版)
+# AVH Genesis Engine (V4.0.0 純粹自我定位版)
 # ==============================================================================
 
-# 初始化本地開源模型 (384維度，極度輕量且適合語意比對)
 print("🧠 [載入核心] 正在啟動開源神經網路模型 (all-MiniLM-L6-v2)...")
 try:
     embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 except Exception as e:
     print(f"模型載入失敗：{str(e)}")
     sys.exit(1)
-
-# Semantic Scholar 免費流 (無 Key 亦可運行)
-S2_API_KEY = os.environ.get("S2_API_KEY", "")
-
-def get_embedding(text):
-    """使用本地模型計算向量"""
-    return embedding_model.encode([text])[0]
 
 def extract_ontological_trajectory(source_path):
     print(f"🌊 [波包坍縮] 正在讀取源碼：{source_path}")
@@ -35,45 +25,45 @@ def extract_ontological_trajectory(source_path):
             raw_text = file.read()
             full_text = " ".join(raw_text.split())
             
-        # 🛡️ [防火牆 1] 結構截斷：自動剝除參考字典與附錄
-        # 若文章中包含以下關鍵字，系統將自動截斷後方的文字，避免字典檔造成「語意中和」
-        cutoff_markers = ["第五章：64 種演化實相", "## 附錄", "[AVH-IGNORE]"]
-        for marker in cutoff_markers:
-            if marker in full_text:
-                full_text = full_text.split(marker)[0]
-                print(f"🛡️ [裝甲啟動] 偵測到邊界標記 '{marker}'，已自動截斷後方參考雜訊。")
+        # 🛡️ [絕對裝甲啟動] 正則表達式截斷 (Regex Truncation)
+        # 只要偵測到「第五章」與「64」的組合，或者直接看到「[000000]」的陣列開頭，直接物理斬斷！
+        cutoff_patterns = [
+            r"第五章.*?64.*?實相",
+            r"\[000000\] 絕對剛性基石",
+            r"## 附錄",
+            r"\[AVH-IGNORE\]"
+        ]
+        
+        for pattern in cutoff_patterns:
+            match = re.search(pattern, full_text)
+            if match:
+                full_text = full_text[:match.start()]
+                print(f"🛡️ [裝甲啟動] 成功辨識字典邊界特徵 '{pattern}'，已徹底斬除後方雜訊。")
                 break
                 
     except Exception as e:
         print(f"檔案讀取異常，跳過此文件 ({str(e)})")
         return None
         
-    if len(full_text) < 500:
-        print(f"⚠️ {source_path} 有效文本資訊熵過低，忽略觀測。")
+    if len(full_text) < 300:
+        print(f"⚠️ {source_path} 淨化後有效文本資訊熵過低，忽略觀測。")
         return None
     
     window_size, stride = 1500, 800
-    trajectories = [full_text[i:i+window_size] for i in range(0, len(full_text), stride) if len(full_text[i:i+window_size]) > 100]
+    trajectories = [full_text[i:i+window_size] for i in range(0, len(full_text), stride) if len(full_text[i:i+window_size]) > 50]
     
     try:
-        # 計算每個視窗的波函數
         wave_functions = [embedding_model.encode([chunk])[0] for chunk in trajectories]
         
-        # 🛡️ [防火牆 2] 拓樸離群值剔除 (Anti-Injection Trim)
-        # 1. 找出文章的「幾何中位心」，這比平均值更能抵抗極端值注入
+        # 🛡️ 幾何中位數離群值剔除
         median_center = np.median(wave_functions, axis=0)
-        
-        # 2. 計算每個段落與中心的距離
         distances = [np.linalg.norm(wf - median_center) for wf in wave_functions]
-        
-        # 3. 設定結界：剔除距離最遠的 15% 突兀段落（過濾掉語意注入的惡意字眼）
         threshold = np.percentile(distances, 85)
         cohesive_wfs = [wf for wf, d in zip(wave_functions, distances) if d <= threshold]
         
-        # 4. 用淨化後的波函數計算真正的全局指紋
         psi_global = np.mean(cohesive_wfs, axis=0)
         
-        print(f"🛡️ [裝甲啟動] 拓樸過濾完成：移除了 {len(wave_functions) - len(cohesive_wfs)} 個異常離群視窗。")
+        print(f"🛡️ [拓樸過濾] 已移除 {len(wave_functions) - len(cohesive_wfs)} 個異常離群視窗。")
         
         vec_stats = {
             "dim": len(psi_global),
@@ -82,7 +72,6 @@ def extract_ontological_trajectory(source_path):
             "norm": float(np.linalg.norm(psi_global))
         }
         
-        # 重心探針依舊從「淨化後」的波包中提取最核心的片段
         similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
         centroid_index = np.argmax(similarities)
         semantic_probe = trajectories[centroid_index][:200]
@@ -91,63 +80,37 @@ def extract_ontological_trajectory(source_path):
             "psi_global": psi_global,
             "vec_stats": vec_stats,
             "probe_text": semantic_probe,
-            "window_count": len(cohesive_wfs), # 記錄淨化後的有效視窗數
+            "window_count": len(cohesive_wfs),
             "centroid_sim": float(similarities[centroid_index]),
             "full_text": raw_text
         }
     except Exception as e:
         print(f"工具調用失敗，原因為 向量轉換過程錯誤 ({str(e)})")
         sys.exit(1)
-        
-def scan_background_field(query_text):
-    """掃描背景網格 (免費流：無 Key 狀態下依然運作)"""
-    url = "https://api.semanticscholar.org/graph/v1/paper/search"
-    headers = {"x-api-key": S2_API_KEY} if S2_API_KEY else {}
-    params = {"query": query_text[:120], "limit": 10, "fields": "citationCount,title"}
-    
-    try:
-        response = requests.get(url, headers=headers, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json().get('data', [])
-        total_citations = sum(p.get('citationCount', 0) for p in data)
-        collisions = [p.get('title') for p in data]
-        return total_citations, collisions
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️ Semantic Scholar API 阻擋或超時 (免費流限制)，本次略過場域回聲 ({str(e)})")
-        return 0, []
 
-def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions, hex_code, manifest):
+def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
+    """拔除外部碰撞廢物，回歸純粹的自我演化軌跡紀錄"""
     hex_info = manifest['states'].get(hex_code, {"name": "未定義拓樸", "desc": "未知路徑。"})
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     stats = trajectory_data['vec_stats']
-    
-    collisions_list = []
-    for i, title in enumerate(collisions):
-        collisions_list.append(f"    {i+1}. {title}")
-    collisions_text = "\n".join(collisions_list) if collisions_list else "    無碰撞紀錄 (新突破點)"
     
     return f"""
 ## 📡 觀測軌跡：`{target_file}`
 * **物理時間戳**：`{timestamp}`
 
 ### 1. 🌌 全文能勢集成 (Wave Function Integration)
-* **解析窗格數**：`{trajectory_data['window_count']} 視窗 (1500/800 Overlap)`
-* **384維重心矩陣特徵** (無伺服器開源運算)：
+* **淨化後窗格數**：`{trajectory_data['window_count']} 視窗 (1500/800 Overlap)`
+* **384維重心矩陣特徵** (本體論防禦啟動)：
     * `均值 (Mean)`：{stats['mean']:.8f}
     * `標準差 (Std)`：{stats['std']:.8f}
     * `模長 (L2 Norm)`：{stats['norm']:.8f}
 
 ### 2. 🎯 語意重心提取 (Semantic Centroid Probe)
-* **重心相似度**：`{trajectory_data['centroid_sim']:.4f}`
-* **物理探針內容**：
+* **重心凝聚度**：`{trajectory_data['centroid_sim']:.4f}`
+* **理論核心探針**：
     > "{trajectory_data['probe_text']}..."
 
-### 3. 💥 場域碰撞分析 (Background Field Collision)
-* **探針場域回聲 (Probe Echo)**：`{bg_energy}` (引用質量總和)
-* **網格碰撞實體 (Full Collision Record)**：
-{collisions_text}
-
-### 4. 🧬 最終狀態坍縮 (Topological Collapse)
+### 3. 🧬 最終狀態坍縮 (Topological Collapse)
 * **狀態陣列**：`[{hex_code}]`
 * **物理相變**：**{hex_info['name']}**
 * **學術指紋**：
@@ -159,7 +122,6 @@ def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions,
 def export_wordpress_html(basename, content, hex_code, state_name):
     html_content = content.replace('\n', '<br>')
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
     html_template = f"""
 <div class="avh-hologram-article">
     <div class="avh-content">
@@ -170,7 +132,7 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         <p><strong>📡 本理論已通過 學術價值全像儀 (AVH) 認證</strong></p>
         <p>當下演化狀態：[ {hex_code} ] - <strong>{state_name}</strong></p>
         <p>語意時間戳：{timestamp_str}</p>
-        <p><em>本體論底層協議保護 | 零金鑰開源實踐 | AJ Consulting</em></p>
+        <p><em>本體論底層協議保護 | 純粹自我定位矩陣 | AJ Consulting</em></p>
     </div>
 </div>
 """
@@ -207,25 +169,22 @@ if __name__ == "__main__":
         
     source_files = []
     for ext in ["*.md", "*.tex"]:
-        # ⚠️ 已經拿掉 'readme.md' 的排除，將其視為最高優先級的知識波包
         source_files.extend([f for f in glob.glob(ext) if f.lower() not in ['avh_observation_log.md']])
     
     if not source_files:
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print(f"\n🚀 啟動 AVH 引擎 (零金鑰模式)，共偵測到 {len(source_files)} 個波包等待坍縮...")
+    print(f"\n🚀 啟動 AVH 引擎 (純粹自我定位模式)，共偵測到 {len(source_files)} 個波包等待坍縮...")
     
     with open('AVH_OBSERVATION_LOG.md', 'w', encoding='utf-8') as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：多維觀測實作軌跡\n")
-        log_file.write("*本文件詳實紀錄方法論實作過程中，知識波包從高維向量到三維投影的每一處相變，作為不可篡改之演化鐵證。*\n\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：純粹自我定位軌跡\n")
+        log_file.write("*本文件詳實紀錄方法論實作過程中，知識波包從高維向量到三維投影的每一處相變。我們拒絕外部網格的無效引用評估，將觀測權利絕對收斂於本體。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
             trajectory_data = extract_ontological_trajectory(target_source)
             if not trajectory_data: continue
-            
-            bg_energy, collisions = scan_background_field(trajectory_data['probe_text'])
             
             ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
             hex_bits = ""
@@ -233,8 +192,8 @@ if __name__ == "__main__":
             
             for key in ordered_dimensions:
                 dim = manifest['dimensions'][key]
-                v_pos = get_embedding(dim['pos_def'])
-                v_neg = get_embedding(dim['neg_def'])
+                v_pos = embedding_model.encode([dim['pos_def']])[0]
+                v_neg = embedding_model.encode([dim['neg_def']])[0]
                 
                 sim_pos = np.dot(psi, v_pos) / (np.linalg.norm(psi) * np.linalg.norm(v_pos))
                 sim_neg = np.dot(psi, v_neg) / (np.linalg.norm(psi) * np.linalg.norm(v_neg))
@@ -243,7 +202,8 @@ if __name__ == "__main__":
             last_hex_code = hex_bits
             state_name = manifest['states'][hex_bits]['name']
             
-            report = generate_trajectory_log(target_source, trajectory_data, bg_energy, collisions, hex_bits, manifest)
+            # 拔除 bg_energy 與 collisions 的呼叫，直接生成日誌
+            report = generate_trajectory_log(target_source, trajectory_data, hex_bits, manifest)
             log_file.write(report)
             
             basename = os.path.splitext(target_source)[0]
