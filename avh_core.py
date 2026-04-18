@@ -8,7 +8,7 @@ from openai import OpenAI
 from datetime import datetime
 
 # ==============================================================================
-# AVH Genesis Engine (V2.1.0 完整軌跡收斂版)
+# AVH Genesis Engine (V2.1.1 雲端穩定收斂版)
 # ==============================================================================
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -28,6 +28,10 @@ def extract_ontological_trajectory(source_path):
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
             full_text = " ".join(file.read().split())
+            
+        # 重新讀取一次保留原始換行的文本，供 HTML/LaTeX 輸出使用
+        with open(source_path, 'r', encoding='utf-8') as file:
+            raw_text = file.read()
     except Exception as e:
         print(f"檔案讀取異常，跳過此文件 ({str(e)})")
         return None
@@ -62,7 +66,7 @@ def extract_ontological_trajectory(source_path):
             "probe_text": semantic_probe,
             "window_count": len(trajectories),
             "centroid_sim": float(similarities[centroid_index]),
-            "full_text": full_text
+            "full_text": raw_text
         }
     except Exception as e:
         print(f"工具調用失敗，原因為 向量轉換過程超時 ({str(e)})")
@@ -79,7 +83,7 @@ def scan_background_field(query_text):
         response.raise_for_status()
         data = response.json().get('data', [])
         total_citations = sum(p.get('citationCount', 0) for p in data)
-        collisions = [p.get('title') for p in data] # 抓取所有命中的標題
+        collisions = [p.get('title') for p in data]
         return total_citations, collisions
     except requests.exceptions.RequestException as e:
         print(f"工具調用失敗，原因為 Semantic Scholar API 阻擋 ({str(e)})")
@@ -91,8 +95,11 @@ def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions,
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     stats = trajectory_data['vec_stats']
     
-    # 動態組裝所有碰撞標題
-    collisions_text = "\n".join([f"    {i+1}. {title}" for i, title in enumerate(collisions)]) if collisions else "    無碰撞紀錄"
+    # 避免在 f-string 內部使用換行符號的邏輯
+    collisions_list = []
+    for i, title in enumerate(collisions):
+        collisions_list.append(f"    {i+1}. {title}")
+    collisions_text = "\n".join(collisions_list) if collisions_list else "    無碰撞紀錄"
     
     return f"""
 ## 📡 觀測軌跡：`{target_file}`
@@ -125,16 +132,20 @@ def generate_trajectory_log(target_file, trajectory_data, bg_energy, collisions,
 """
 
 def export_wordpress_html(basename, content, hex_code, state_name):
+    # 將換行處理移出 f-string，避免 Python 3.10 語法錯誤
+    html_content = content.replace('\n', '<br>')
+    timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     html_template = f"""
 <div class="avh-hologram-article">
     <div class="avh-content">
-        {content.replace('\n', '<br>')}
+        {html_content}
     </div>
     <hr>
     <div class="avh-seal" style="border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;">
         <p><strong>📡 本理論已通過 學術價值全像儀 (AVH) 認證</strong></p>
         <p>當下演化狀態：[ {hex_code} ] - <strong>{state_name}</strong></p>
-        <p>語意時間戳：{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+        <p>語意時間戳：{timestamp_str}</p>
         <p><em>本體論底層協議保護 | 瀚菱管理顧問 AJ Consulting</em></p>
     </div>
 </div>
@@ -143,26 +154,28 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         f.write(html_template)
 
 def export_latex(basename, content, hex_code, state_name):
-    tex_template = r"""
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage{xeCJK}
-\title{""" + basename + r"""}
-\author{Alaric Kuo}
-\date{\today}
-\begin{document}
-\maketitle
-\begin{abstract}
-本文章經由 AVH 學術價值全像儀觀測，當下演化狀態為 [""" + hex_code + r"""] """ + state_name + r"""。
-\end{abstract}
-""" + content.replace('#', '\section') + r"""
-\end{document}
-"""
+    # 將替換處理移出，並改用傳統字串拼接，徹底避開 f-string 與 LaTeX 大括號的衝突
+    tex_content = content.replace('#', '\\section')
+    
+    tex_template = (
+        "\\documentclass{article}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage{xeCJK}\n"
+        "\\title{" + basename + "}\n"
+        "\\author{Alaric Kuo}\n"
+        "\\date{\\today}\n"
+        "\\begin{document}\n"
+        "\\maketitle\n"
+        "\\begin{abstract}\n"
+        "本文章經由 AVH 學術價值全像儀觀測，當下演化狀態為 [" + hex_code + "] " + state_name + "。\n"
+        "\\end{abstract}\n\n"
+        + tex_content + "\n\n"
+        "\\end{document}\n"
+    )
     with open(f'{basename}_Archive.tex', 'w', encoding='utf-8') as f:
         f.write(tex_template)
 
 if __name__ == "__main__":
-    # 更新為 avh_manifest.json
     if not os.path.exists('avh_manifest.json'):
         print("工具調用失敗，原因為 遺失底層定義檔 (avh_manifest.json)")
         sys.exit(1)
@@ -180,7 +193,6 @@ if __name__ == "__main__":
         
     print(f"\n🚀 啟動 AVH 引擎，共偵測到 {len(source_files)} 個波包等待坍縮...")
     
-    # 更新為 AVH_OBSERVATION_LOG.md
     with open('AVH_OBSERVATION_LOG.md', 'w', encoding='utf-8') as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：多維觀測實作軌跡\n")
         log_file.write("*本文件詳實紀錄方法論實作過程中，知識波包從高維向量到三維投影的每一處相變，作為不可篡改之演化鐵證。*\n\n---\n")
