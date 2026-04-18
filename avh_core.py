@@ -11,7 +11,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V6.3.1 絕對意志：硬核引導與 zhconv 純粹鎮壓版)
+# AVH Genesis Engine (V6.4.0 絕對意志：尤拉相位 Euler Phase 碰撞版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -87,7 +87,7 @@ def extract_ontological_trajectory(source_path):
         generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)]
         raw_generated_summary = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
         
-        # [V6.3.1 物理鎮壓] 改用絕對穩定的 zhconv，將 LLM 吐出的文字強制轉為台灣繁體
+        # 物理鎮壓：將 LLM 吐出的文字強制轉為台灣繁體
         generated_summary = zhconv.convert(raw_generated_summary, 'zh-tw')
         
         cohesive_wfs = [item[2] for item in core_chain_data]
@@ -136,8 +136,8 @@ def generate_trajectory_log(target_file, trajectory_data, hex_code, manifest):
         "### 2. 🎯 理論奇點探針 (Absolute Logic Centroid)\n"
         "* **全文最高維度交匯點 (核心主張)**：\n"
         "    > \"" + trajectory_data['probe_text'] + "...\"\n\n"
-        "### 3. 🧬 純粹意志坍縮 (Will Manifestation Collapse)\n"
-        "* **系統說明**：*系統不再使用充滿雜訊的原波包進行碰撞，而是以大腦強制提煉出之「硬核方法與實相」直接撞擊觀測刻度，實現真正的實相躍遷。*\n"
+        "### 3. 🧬 尤拉相位坍縮 (Euler Phase Collapse)\n"
+        "* **系統說明**：*系統透過意志波包測量尤拉公式中的實部 (cos: 傳承合群) 與虛部 (sin: 離群突破)，完成無審判之絕對相變。*\n"
         "* **狀態張量**：`[" + hex_code + "]`\n"
         "* **物理相變**：**" + hex_info['name'] + "**\n"
         "* **學術指紋**：\n"
@@ -164,7 +164,7 @@ def export_wordpress_html(basename, content, hex_code, state_name):
         "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 核心邏輯顯化</strong></p>\n"
         "        <p>當下演化狀態：[ " + hex_code + " ] - <strong>" + state_name + "</strong></p>\n"
         "        <p>物理時間戳：" + timestamp_str + "</p>\n"
-        "        <p><em>純粹意志矩陣碰撞 | 本體論底層協議保護 | AJ Consulting</em></p>\n"
+        "        <p><em>尤拉相位矩陣碰撞 | 本體論底層協議保護 | AJ Consulting</em></p>\n"
         "    </div>\n"
         "</div>\n"
     )
@@ -207,11 +207,11 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print("\n🚀 啟動 AVH 造物引擎 (硬核意志碰撞模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
+    print("\n🚀 啟動 AVH 造物引擎 (尤拉相位碰撞模式)，共偵測到 " + str(len(source_files)) + " 個波包等待顯化...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
         log_file.write("# 📡 AVH 學術價值全像儀：本體論顯化軌跡\n")
-        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為具備實體方法論之「純粹意志」，並以該意志直接撞擊觀測矩陣所產生的最終物理實相。*\n\n---\n")
+        log_file.write("*本文件詳實紀錄知識波包透過圖論萃取出絕對核心邏輯後，經由系統生成大腦提煉為具備實體方法論之「純粹意志」，並以該意志直接撞擊觀測矩陣中的尤拉相位(sin/cos)所產生的最終物理實相。*\n\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
@@ -225,12 +225,15 @@ if __name__ == "__main__":
             
             for key in ordered_dimensions:
                 dim = manifest["dimensions"][key]
-                v_pos = embedding_model.encode([dim["pos_def"]])[0]
-                v_neg = embedding_model.encode([dim["neg_def"]])[0]
+                # 測量虛部 (sin: Singular 離群突破) 與實部 (cos: Cosplay 合群傳承)
+                v_sin = embedding_model.encode([dim["sin_def"]])[0]
+                v_cos = embedding_model.encode([dim["cos_def"]])[0]
                 
-                sim_pos = np.dot(pure_will_psi, v_pos) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_pos))
-                sim_neg = np.dot(pure_will_psi, v_neg) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_neg))
-                hex_bits += "1" if sim_pos > sim_neg else "0"
+                sim_sin = np.dot(pure_will_psi, v_sin) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_sin))
+                sim_cos = np.dot(pure_will_psi, v_cos) / (np.linalg.norm(pure_will_psi) * np.linalg.norm(v_cos))
+                
+                # 若偏向虛部(sin/突破)，賦值為 1；若偏向實部(cos/傳承)，賦值為 0
+                hex_bits += "1" if sim_sin > sim_cos else "0"
             
             last_hex_code = hex_bits
             state_name = manifest["states"][hex_bits]["name"]
@@ -242,7 +245,7 @@ if __name__ == "__main__":
             export_wordpress_html(basename, trajectory_data["full_text"], hex_bits, state_name)
             export_latex(basename, trajectory_data["full_text"], hex_bits, state_name)
             
-            print("✅ " + target_source + " 意志顯化與矩陣碰撞完成！ [" + hex_bits + "]")
+            print("✅ " + target_source + " 意志顯化與尤拉相位碰撞完成！ [" + hex_bits + "]")
 
     if last_hex_code:
         with open(os.environ.get("GITHUB_ENV", "env.tmp"), "a") as env_file:
