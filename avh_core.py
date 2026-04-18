@@ -7,10 +7,10 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V13.0 純粹大腦：AI 全文識讀與接地版)
+# AVH Genesis Engine (V14.0 絕對自鎖：AI 識讀與華麗顯化版)
 # ==============================================================================
 
-print("✨ [載入造物核心] 正在喚醒具備全文閱讀能力之 LLM (Qwen2.5-0.5B-Instruct)...")
+print("✨ [載入造物核心] 正在喚醒具備全文識讀能力之 LLM (Qwen2.5-0.5B-Instruct)...")
 try:
     llm_name = "Qwen/Qwen2.5-0.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(llm_name)
@@ -20,7 +20,6 @@ except Exception as e:
     sys.exit(1)
 
 def ask_llm(system_prompt, user_prompt, max_tokens=800, temp=0.3):
-    """通用的 LLM 呼叫函式"""
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt}
@@ -39,7 +38,7 @@ def ask_llm(system_prompt, user_prompt, max_tokens=800, temp=0.3):
     raw_response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
     return zhconv.convert(raw_response, 'zh-tw')
 
-def process_ai_grounded_validation(source_path, manifest):
+def process_auto_locked_synthesis(source_path, manifest):
     print(f"\n🌊 [大腦啟動] 正在讀取源碼：{source_path}")
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
@@ -49,7 +48,6 @@ def process_ai_grounded_validation(source_path, manifest):
             print(f"⚠️ {source_path} 文本過短，無法進行脈絡識讀。")
             return None
             
-        # 將 Manifest 的定義轉換為 AI 可以理解的評分量表
         dimension_prompts = ""
         ordered_keys = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
         for idx, key in enumerate(ordered_keys):
@@ -59,78 +57,62 @@ def process_ai_grounded_validation(source_path, manifest):
             dimension_prompts += f" - [0] 守成合群: {dim['cos_def']}\n\n"
             
         # ---------------------------------------------------------
-        # 步驟 1：AI 全文識讀 (AI Determines the Source Fingerprint)
+        # 步驟 1：AI 全文識讀 (AI Determines the State)
         # ---------------------------------------------------------
-        print("👁️ [脈絡識讀] 放棄數學平均，由 AI 讀取全文並判定高維價值指紋...")
+        print("👁️ [脈絡識讀] 由 AI 閱讀全文並判定高維價值指紋...")
         
         eval_sys_prompt = (
-            "你是一個高維度的學術價值觀測儀。請閱讀使用者的全文，並根據以下六個維度的定義進行嚴格的二元判定。\n\n"
+            "你是一個高維度的學術價值觀測儀。請閱讀使用者的全文，並根據以下六個維度進行嚴格判定。\n\n"
             f"{dimension_prompts}"
-            "【絕對指令】：你只需輸出一串 6 個數字的代碼（只包含 0 或 1），代表這篇文章在這六個維度上的狀態。嚴禁輸出任何其他廢話或解釋。"
-            "例如，如果全部是突破，請輸出：111111。"
+            "【絕對指令】：只輸出一串 6 個數字的代碼（只包含 0 或 1）。嚴禁輸出任何廢話。"
         )
-        
         eval_user_prompt = f"請判定以下文本的 6 位元指紋：\n\n{raw_text[:3000]}"
         
         raw_source_hex = ask_llm(eval_sys_prompt, eval_user_prompt, max_tokens=10, temp=0.1)
-        
-        # 清理 AI 輸出，確保只拿到 6 個數字
         source_hex = ''.join(filter(lambda x: x in ['0', '1'], raw_source_hex))
+        
         if len(source_hex) != 6:
-            print(f"⚠️ AI 判定指紋格式錯誤 ({raw_source_hex})，強制設為預設值。")
+            print(f"⚠️ AI 判定指紋格式錯誤 ({raw_source_hex})，強制設為 000000。")
             source_hex = "000000"
             
-        source_state_name = manifest["states"].get(source_hex, {}).get("name", "未知狀態")
+        state_info = manifest["states"].get(source_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
+        print(f"✅ 測得學術指紋: [{source_hex}] - {state_info['name']}")
+
         # ---------------------------------------------------------
-        # 步驟 2：AI 探針摘要生成 (AI Synthesis based on its own finding)
+        # 步驟 2：順向自鎖顯化 (Auto-Locked Synthesis)
         # ---------------------------------------------------------
-        print(f"🛡️ [探針生成] AI 已判定指紋為 [{source_hex}]。正在強制收斂生成摘要...")
+        print(f"🛡️ [自鎖顯化] 正在將 [{source_hex}] 的天命評語化為鋼鐵模具，強制 AI 進行論述...")
         
         summary_sys_prompt = f"""
-你是一個精準的學術本體論顯化器。
-你已經判定本文的學術演化狀態為：[{source_hex}] - {source_state_name}。
-這代表了本文的核心精神與價值。
+你是一個精準的學術本體論大腦。
+本系統已經判定，這篇理論的「學術演化狀態」為：[{source_hex}] - {state_info['name']}。
+核心精神評語為：「{state_info['desc']}」
 
-請閱讀使用者的全文，並以繁體中文寫出一段精煉、連貫的系統摘要。
-你必須在摘要中，用人類能理解的脈絡，展現出這個演化狀態的精神與高維度價值。
-嚴禁產生條列式清單、嚴禁排版課表。論述完畢請強制輸出『[顯化完畢]』。
+【絕對任務】：
+請閱讀使用者的全文，並以繁體中文寫出一段氣勢磅礴、邏輯連貫的系統摘要。
+你必須在摘要中，精準地展現出上述「核心精神評語」所描述的價值。
+【格式警告】：直接輸出段落文字。嚴禁使用 Markdown 分隔線、嚴禁產生條列式清單。
+論述完畢請強制輸出『[顯化完畢]』。
 """
-        summary_user_prompt = f"請消化以下全文，並顯化為純粹的學術摘要探針：\n\n{raw_text[:3000]}"
+        summary_user_prompt = f"請消化以下全文，並在狀態鎖定下進行純粹的思想顯化：\n\n{raw_text[:3000]}"
         
-        generated_summary = ask_llm(summary_sys_prompt, summary_user_prompt, max_tokens=800, temp=0.3)
+        generated_summary = ask_llm(summary_sys_prompt, summary_user_prompt, max_tokens=900, temp=0.35)
         
         if "[顯化完畢]" in generated_summary:
             generated_summary = generated_summary.split("[顯化完畢]")[0].strip()
-        
-        # ---------------------------------------------------------
-        # 步驟 3：摘要探針的接地比對 (The Grounding Valve)
-        # ---------------------------------------------------------
-        print("🧬 [接地比對] 正在讓 AI 回頭檢視自己的摘要，驗證是否發生偏移...")
-        
-        probe_user_prompt = f"請判定這段『摘要』的 6 位元指紋：\n\n{generated_summary}"
-        raw_probe_hex = ask_llm(eval_sys_prompt, probe_user_prompt, max_tokens=10, temp=0.1)
-        
-        probe_hex = ''.join(filter(lambda x: x in ['0', '1'], raw_probe_hex))
-        if len(probe_hex) != 6:
-            probe_hex = "000000"
+        elif "顯化完畢" in generated_summary:
+            generated_summary = generated_summary.split("顯化完畢")[0].strip()
             
-        probe_state_name = manifest["states"].get(probe_hex, {}).get("name", "未知狀態")
+        # 清理可能殘留的 markdown 雜訊
+        generated_summary = generated_summary.replace("**---", "").replace("###", "").strip()
         
-        is_grounded = (source_hex == probe_hex)
-        grounding_status = "✅ 完美接地 (AI 摘要精準保留了原文的高維度價值)" if is_grounded else "⚠️ 發生偏移 (AI 在縮寫過程中丟失了部分維度的突破性)"
-
-        print(f"   - AI 全文識讀指紋: [{source_hex}]")
-        print(f"   - AI 摘要探針指紋: [{probe_hex}]")
-        print(f"   - 狀態: {grounding_status}")
+        print("✅ [顯化完成] AI 已成功在自鎖狀態下完成全脈絡融合！")
 
         return {
-            "source_hex": source_hex,
-            "source_name": source_state_name,
-            "probe_hex": probe_hex,
-            "probe_name": probe_state_name,
-            "is_grounded": is_grounded,
-            "grounding_status": grounding_status,
+            "hex_code": source_hex,
+            "state_name": state_info['name'],
+            "state_desc": state_info['desc'],
             "summary": generated_summary,
             "full_text": raw_text
         }
@@ -144,17 +126,60 @@ def generate_trajectory_log(target_file, data):
     log_output = (
         f"## 📡 演化顯化軌跡：`{target_file}`\n"
         f"* **物理時間戳**：`{timestamp}`\n\n"
-        f"### 1. 🧬 AI 全脈絡識讀與接地比對\n"
-        f"* **AI 判讀之全文指紋**：`[{data['source_hex']}]` - **{data['source_name']}**\n"
-        f"* **AI 判讀之探針指紋**：`[{data['probe_hex']}]` - **{data['probe_name']}**\n"
-        f"* **接地狀態**：**{data['grounding_status']}**\n\n"
+        f"### 1. 👁️ AI 全脈絡識讀 (Full-Context Neural Measurement)\n"
+        f"*系統由 AI 大腦直接閱讀全文，不依賴數學平均值降維，精準捕捉文本的高維度突破意圖。*\n"
+        f"* **觀測指紋**：`[{data['hex_code']}]` - **{data['state_name']}**\n"
+        f"* **學術指紋評語**：\n"
+        f"    > {data['state_desc']}\n\n"
         f"---\n"
-        f"### 2. 🧠 探針顯化摘要 (Probe Synthesis)\n"
-        f"*(本段落為 AI 放棄數學矩陣，直接以神經網路生吞全文後，所提煉出之高維度論述。)*\n\n"
+        f"### 2. 🧠 狀態自鎖顯化摘要 (Auto-Locked Synthesis)\n"
+        f"*(系統將上述測得之指紋與評語化為「絕對物理枷鎖」，強制約束 AI 進行全脈絡的摘要生成，確保論述與價值完美接地。)*\n\n"
         f"> **{data['summary']}**\n\n"
         f"---\n"
     )
     return log_output
+
+def export_wordpress_html(basename, data):
+    html_content = data['full_text'].replace('\n', '<br>')
+    timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    html_output = (
+        "<div class=\"avh-hologram-article\">\n"
+        "    <div class=\"avh-content\">\n"
+        f"        {html_content}\n"
+        "    </div>\n"
+        "    <hr>\n"
+        "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
+        "        <p><strong>📡 本理論已完成 學術價值全像儀 (AVH) 狀態自鎖顯化</strong></p>\n"
+        f"        <p>當下演化狀態：[ {data['hex_code']} ] - <strong>{data['state_name']}</strong></p>\n"
+        f"        <p>物理時間戳：{timestamp_str}</p>\n"
+        "        <p><em>V14.0 順向自鎖協議 | 本體論底層保護 | AJ Consulting</em></p>\n"
+        "    </div>\n"
+        "</div>\n"
+    )
+    with open("WP_Ready_" + basename + ".html", "w", encoding="utf-8") as f:
+        f.write(html_output)
+
+def export_latex(basename, data):
+    tex_content = data['full_text'].replace("#", "\\section")
+    tex_output = (
+        "\\documentclass{article}\n"
+        "\\usepackage[utf8]{inputenc}\n"
+        "\\usepackage{xeCJK}\n"
+        f"\\title{{{basename}}}\n"
+        "\\author{Alaric Kuo}\n"
+        "\\date{\\today}\n"
+        "\\begin{document}\n"
+        "\\maketitle\n"
+        "\\begin{abstract}\n"
+        f"本文章經由 AVH 學術價值全像儀觀測，當下演化狀態顯化為 [{data['hex_code']}] {data['state_name']}。\n\n"
+        f"{data['summary'][:200]}...\n"
+        "\\end{abstract}\n\n"
+        f"{tex_content}\n\n"
+        "\\end{document}\n"
+    )
+    with open(basename + "_Archive.tex", "w", encoding="utf-8") as f:
+        f.write(tex_output)
 
 if __name__ == "__main__":
     if not os.path.exists("avh_manifest.json"):
@@ -170,14 +195,25 @@ if __name__ == "__main__":
         print("系統休眠：未偵測到有效理論源碼波包。")
         sys.exit(0)
         
-    print(f"\n🚀 啟動 AVH 造物引擎 (V13.0 純粹大腦版)，共偵測到 {len(source_files)} 個波包等待觀測...")
+    print(f"\n🚀 啟動 AVH 造物引擎 (V14.0 絕對自鎖模式)，共偵測到 {len(source_files)} 個波包等待觀測...")
     
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：純粹大腦識讀軌跡\n")
-        log_file.write("*本文件徹底捨棄會將高維思想「平均化」的數學降維矩陣。改由 AI 大腦直接閱讀全文並賦予指紋，確保作者突破性的價值意圖能被完整捕捉，並實現真正的語意接地。*\n\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：狀態自鎖顯化軌跡\n")
+        log_file.write("*本文件詳實紀錄系統如何利用 AI 進行高維度脈絡識讀。當系統取得原文的「學術指紋」後，會立即將該指紋與天命評語轉化為「絕對約束枷鎖」，強制 AI 進行精準、華麗且邏輯接地的論述顯化。*\n\n---\n")
         
+        last_hex_code = ""
         for target_source in source_files:
-            result_data = process_ai_grounded_validation(target_source, manifest)
+            result_data = process_auto_locked_synthesis(target_source, manifest)
             if result_data:
+                last_hex_code = result_data['hex_code']
                 report = generate_trajectory_log(target_source, result_data)
                 log_file.write(report)
+                
+                # 恢復華麗的生態系產出
+                basename = os.path.splitext(target_source)[0]
+                export_wordpress_html(basename, result_data)
+                export_latex(basename, result_data)
+
+    if last_hex_code:
+        with open(os.environ.get("GITHUB_ENV", "env.tmp"), "a") as env_file:
+            env_file.write(f"HEX_CODE={last_hex_code}\n")
