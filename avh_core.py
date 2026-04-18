@@ -7,10 +7,10 @@ import networkx as nx
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
-from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 # ==============================================================================
-# AVH Genesis Engine (V6.0.1 絕對顯化・生成式大腦修正版)
+# AVH Genesis Engine (V6.0.2 絕對顯化・生成大腦裸機加載版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動多語系拓樸網路 (paraphrase-multilingual-MiniLM)...")
@@ -20,10 +20,12 @@ except Exception as e:
     print("模型載入失敗：" + str(e))
     sys.exit(1)
 
-print("✨ [載入造物核心] 正在啟動生成式摘要大腦 (mT5 Multilingual XLSum)...")
+print("✨ [載入造物核心] 正在啟動生成式大腦 (mT5_multilingual_XLSum 裸機直接加載)...")
 try:
-    # 修正點 1：將任務精準指定為 mT5 原生的 "text2text-generation"
-    summarizer = pipeline("text2text-generation", model="csebuetnlp/mT5_multilingual_XLSum")
+    # 物理剝除 pipeline 傻瓜封裝，直接將權重與分詞器硬掛載至記憶體
+    # 這將絕對免疫 "Unknown task" 的底層清單錯誤
+    tokenizer = AutoTokenizer.from_pretrained("csebuetnlp/mT5_multilingual_XLSum")
+    summarizer_model = AutoModelForSeq2SeqLM.from_pretrained("csebuetnlp/mT5_multilingual_XLSum")
 except Exception as e:
     print("生成大腦載入失敗：" + str(e))
     sys.exit(1)
@@ -62,9 +64,26 @@ def extract_ontological_trajectory(source_path):
         
         print("✨ [論述顯化] 系統正在消化拓樸結構，並以自身的語言重新編織核心邏輯...")
         
+        # 將原文切換為張量 (Tensor)，手動送入模型進行光束搜索 (Beam Search)
         input_for_summary = extracted_text[:2000]
-        # 修正點 2：對接 text2text-generation 的正確輸出鍵值 ['generated_text']
-        generated_summary = summarizer(input_for_summary, max_length=200, min_length=50, do_sample=False)[0]['generated_text']
+        inputs = tokenizer(
+            [input_for_summary],
+            max_length=1024,
+            truncation=True,
+            return_tensors="pt"
+        )
+        
+        output_ids = summarizer_model.generate(
+            inputs["input_ids"],
+            max_length=200,
+            min_length=50,
+            num_beams=4,
+            no_repeat_ngram_size=2,
+            early_stopping=True
+        )
+        
+        # 解碼器將張量還原為人類文字
+        generated_summary = tokenizer.decode(output_ids[0], skip_special_tokens=True)
         
         cohesive_wfs = [item[2] for item in core_chain_data]
         psi_global = np.mean(cohesive_wfs, axis=0)
