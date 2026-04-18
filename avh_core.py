@@ -32,44 +32,73 @@ def extract_ontological_trajectory(source_path):
     print(f"🌊 [波包坍縮] 正在讀取源碼：{source_path}")
     try:
         with open(source_path, 'r', encoding='utf-8') as file:
-            full_text = " ".join(file.read().split())
-        with open(source_path, 'r', encoding='utf-8') as file:
             raw_text = file.read()
+            full_text = " ".join(raw_text.split())
+            
+        # 🛡️ [防火牆 1] 結構截斷：自動剝除參考字典與附錄
+        # 若文章中包含以下關鍵字，系統將自動截斷後方的文字，避免字典檔造成「語意中和」
+        cutoff_markers = ["第五章：64 種演化實相", "## 附錄", "[AVH-IGNORE]"]
+        for marker in cutoff_markers:
+            if marker in full_text:
+                full_text = full_text.split(marker)[0]
+                print(f"🛡️ [裝甲啟動] 偵測到邊界標記 '{marker}'，已自動截斷後方參考雜訊。")
+                break
+                
     except Exception as e:
         print(f"檔案讀取異常，跳過此文件 ({str(e)})")
         return None
         
     if len(full_text) < 500:
-        print(f"⚠️ {source_path} 文本資訊熵過低，忽略觀測。")
+        print(f"⚠️ {source_path} 有效文本資訊熵過低，忽略觀測。")
         return None
     
     window_size, stride = 1500, 800
     trajectories = [full_text[i:i+window_size] for i in range(0, len(full_text), stride) if len(full_text[i:i+window_size]) > 100]
     
-    # 讓 GitHub 的 CPU 免費幫我們計算
-    wave_functions = [embedding_model.encode([chunk])[0] for chunk in trajectories]
-    psi_global = np.mean(wave_functions, axis=0)
-    
-    vec_stats = {
-        "dim": len(psi_global),
-        "mean": float(np.mean(psi_global)),
-        "std": float(np.std(psi_global)),
-        "norm": float(np.linalg.norm(psi_global))
-    }
-    
-    similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
-    centroid_index = np.argmax(similarities)
-    semantic_probe = trajectories[centroid_index][:200]
-    
-    return {
-        "psi_global": psi_global,
-        "vec_stats": vec_stats,
-        "probe_text": semantic_probe,
-        "window_count": len(trajectories),
-        "centroid_sim": float(similarities[centroid_index]),
-        "full_text": raw_text
-    }
-
+    try:
+        # 計算每個視窗的波函數
+        wave_functions = [embedding_model.encode([chunk])[0] for chunk in trajectories]
+        
+        # 🛡️ [防火牆 2] 拓樸離群值剔除 (Anti-Injection Trim)
+        # 1. 找出文章的「幾何中位心」，這比平均值更能抵抗極端值注入
+        median_center = np.median(wave_functions, axis=0)
+        
+        # 2. 計算每個段落與中心的距離
+        distances = [np.linalg.norm(wf - median_center) for wf in wave_functions]
+        
+        # 3. 設定結界：剔除距離最遠的 15% 突兀段落（過濾掉語意注入的惡意字眼）
+        threshold = np.percentile(distances, 85)
+        cohesive_wfs = [wf for wf, d in zip(wave_functions, distances) if d <= threshold]
+        
+        # 4. 用淨化後的波函數計算真正的全局指紋
+        psi_global = np.mean(cohesive_wfs, axis=0)
+        
+        print(f"🛡️ [裝甲啟動] 拓樸過濾完成：移除了 {len(wave_functions) - len(cohesive_wfs)} 個異常離群視窗。")
+        
+        vec_stats = {
+            "dim": len(psi_global),
+            "mean": float(np.mean(psi_global)),
+            "std": float(np.std(psi_global)),
+            "norm": float(np.linalg.norm(psi_global))
+        }
+        
+        # 重心探針依舊從「淨化後」的波包中提取最核心的片段
+        similarities = [np.dot(wf, psi_global) / (np.linalg.norm(wf) * np.linalg.norm(psi_global)) for wf in wave_functions]
+        centroid_index = np.argmax(similarities)
+        semantic_probe = trajectories[centroid_index][:200]
+        
+        return {
+            "psi_global": psi_global,
+            "vec_stats": vec_stats,
+            "probe_text": semantic_probe,
+            "window_count": len(cohesive_wfs), # 記錄淨化後的有效視窗數
+            "centroid_sim": float(similarities[centroid_index]),
+            "full_text": raw_text
+        }
+    except Exception as e:
+        print(f"工具調用失敗，原因為 向量轉換過程錯誤 ({str(e)})")
+        sys.exit(1)
+        
 def scan_background_field(query_text):
     """掃描背景網格 (免費流：無 Key 狀態下依然運作)"""
     url = "https://api.semanticscholar.org/graph/v1/paper/search"
