@@ -6,6 +6,8 @@ import numpy as np
 import networkx as nx
 import re
 import requests
+import xml.etree.ElementTree as ET
+import urllib.parse
 from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 from sentence_transformers import SentenceTransformer
@@ -13,7 +15,7 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V23.0 紅隊修正：2026 正式端點與實體 API 對接版)
+# AVH Genesis Engine (V24.1 檔案保全與 arXiv 防火牆強化版)
 # ==============================================================================
 
 print("🧠 [載入觀測核心] 正在啟動 IQD 物理差分矩陣 (paraphrase-multilingual-MiniLM)...")
@@ -23,47 +25,72 @@ except Exception as e:
     print(f"工具調用失敗，原因為 本地向量模型載入錯誤 ({e})")
     sys.exit(1)
 
-def call_semantic_scholar(query, limit=5):
-    """實體連網：抓取 Semantic Scholar，實裝 API Key 防限流保護"""
-    print(f"🌍 [實體觀測] 正在連線 Semantic Scholar 抓取前沿文獻，關鍵字：[{query}]...")
-    url = "https://api.semanticscholar.org/graph/v1/paper/search"
-    params = {"query": query, "limit": limit, "fields": "title,abstract"}
+def call_arxiv_scholar(query, limit=5):
+    """實體連網：arXiv 物理與資訊科學開源文獻庫 (HTTPS + 邏輯強化版)"""
+    print(f"🌍 [實體觀測] 轉向 arXiv 資料庫抓取前沿文獻，關鍵字：[{query}]...")
     
-    # [修正] 實裝 API Key 標頭，防止在 Action 公用 IP 池被限流
-    headers = {}
-    api_key = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
-    if api_key:
-        headers["x-api-key"] = api_key
-    else:
-        print("⚠️ [警告] 未偵測到 SEMANTIC_SCHOLAR_API_KEY，將以匿名流量呼叫，可能遭遇限流。")
-        
+    # 強化搜尋邏輯，確保每個關鍵字都有 'all:' 前綴
+    terms = re.findall(r'[A-Za-z]{4,}', query)[:3]
+    if not terms:
+        terms = ["System", "Engineering", "Entropy"]
+
+    search_query = "+AND+".join([f"all:{t}" for t in terms])
+    encoded_query = urllib.parse.quote(search_query, safe=":+")
+    
+    # 使用安全的 HTTPS 端點
+    url = (
+        f"https://export.arxiv.org/api/query?"
+        f"search_query={encoded_query}&start=0&max_results={limit}"
+        f"&sortBy=submittedDate&sortOrder=descending"
+    )
+    
+    # 加上 UA，防止被當作不友善腳本阻擋
+    headers = {
+        "User-Agent": "AVH-Hologram/24.1 (GitHub Actions)"
+    }
+    
     try:
-        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=15)
         response.raise_for_status()
-        data = response.json()
-        papers = data.get("data", [])
-        return [p for p in papers if p.get("abstract")]
-    except requests.exceptions.RequestException as e:
-        print(f"工具調用失敗，原因為 Semantic Scholar API 遭遇超時或阻擋 ({e})")
+        
+        root = ET.fromstring(response.content)
+        namespace = {'atom': 'http://www.w3.org/2005/Atom'}
+        
+        papers = []
+        for entry in root.findall('atom:entry', namespace):
+            title_node = entry.find('atom:title', namespace)
+            abstract_node = entry.find('atom:summary', namespace)
+            if title_node is None or abstract_node is None:
+                continue
+
+            title = title_node.text.strip().replace('\n', ' ')
+            abstract = abstract_node.text.strip().replace('\n', ' ')
+            papers.append({"title": title, "abstract": abstract})
+            
+        if not papers:
+            print("⚠️ [警告] arXiv 未找到相關文獻，將退回預設保守基準。")
+            
+        return papers
+
+    except Exception as e:
+        print(f"工具調用失敗，原因為 arXiv API 遭遇超時或阻擋 ({e})")
         sys.exit(1)
 
 def call_copilot_brain(system_prompt, user_prompt):
-    """實體連網：呼叫 GitHub Models API (2026 最新端點與格式)"""
+    """實體連網：呼叫 GitHub Models Inference API"""
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
         print("工具調用失敗，原因為 遺失 GITHUB_TOKEN，無法驗證 GitHub Models")
         sys.exit(1)
         
-    print("🧠 [雲端大腦] 正在連線 GitHub Models 算力叢集...")
+    print("🧠 [雲端大腦] 正在連線 GitHub Models Inference 叢集...")
     
-    # [修正] 使用 2026 年最新官方端點
     client = OpenAI(
         base_url="https://models.github.ai/inference",
         api_key=token,
     )
     
     try:
-        # [修正] 使用標準的 {publisher}/{model_name} 格式
         response = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -79,7 +106,6 @@ def call_copilot_brain(system_prompt, user_prompt):
         sys.exit(1)
 
 def compute_iqd_hex(text_vec, manifest):
-    """計算 IQD 絕對差分指紋"""
     ordered_dimensions = ["value_intent", "governance", "cognition", "architecture", "expansion", "application"]
     hex_code = ""
     dim_logs = []
@@ -122,22 +148,18 @@ def process_avh_manifestation(source_path, manifest):
         peak_embeddings = [embeddings[i] for i in ranked_indices[:3]]
         psi_peak = np.mean(peak_embeddings, axis=0) 
 
-        # ---------------------------------------------------------
-        # 1. 計算原著 IQD 絕對指紋
-        # ---------------------------------------------------------
+        # 1. 測量絕對指紋
         print("🕸️ [IQD 差分] 計算文本巔峰之物理絕對指紋...")
         user_hex, dim_logs = compute_iqd_hex(psi_peak, manifest)
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
 
-        # ---------------------------------------------------------
-        # 2. 實體連網 Semantic Scholar 建立基準
-        # ---------------------------------------------------------
+        # 2. arXiv 真實基準
         top_sentence = paragraphs[ranked_indices[0]]
-        keywords = " ".join(re.findall(r'\b[A-Za-z]{4,}\b', top_sentence)[:4]) 
+        keywords = " ".join(re.findall(r'\b[A-Za-z]{4,}\b', top_sentence)[:3]) 
         if not keywords:
-            keywords = "System Engineering Information Entropy"
+            keywords = "System Engineering Entropy"
             
-        papers = call_semantic_scholar(keywords)
+        papers = call_arxiv_scholar(keywords)
         baseline_hex_votes = []
         
         if papers:
@@ -153,9 +175,7 @@ def process_avh_manifestation(source_path, manifest):
         else:
             baseline_hex = "000000"
 
-        # ---------------------------------------------------------
-        # 3. 呼叫 GitHub Models 進行無塵室顯化
-        # ---------------------------------------------------------
+        # 3. GitHub Models 顯化
         breakthrough_dims = [manifest["dimensions"][list(manifest["dimensions"].keys())[i]]["layer"] 
                              for i in range(6) if user_hex[i] == "1" and baseline_hex[i] == "0"]
         breakthrough_str = "、".join(breakthrough_dims) if breakthrough_dims else "與傳統基準同頻"
@@ -192,8 +212,8 @@ def generate_trajectory_log(target_file, data):
         f"## 📡 演化顯化軌跡：`{target_file}`\n"
         f"* **物理時間戳**：`{timestamp}`\n\n"
         f"### 1. ⚖️ 實體干涉觀測 (Physical Interference Protocol)\n"
-        f"*系統已連線 Semantic Scholar 抓取前沿文獻，並由 GitHub Models 神經網路完成顯化。*\n"
-        f"* 🗺️ **外部真實基準 (Baseline)**：`[{data['baseline_hex']}]`\n"
+        f"*系統已連線 arXiv 物理與資訊科學資料庫抓取前沿文獻，並由 GitHub Models 神經網路完成顯化。*\n"
+        f"* 🗺️ **arXiv 真實基準 (Baseline)**：`[{data['baseline_hex']}]`\n"
         f"* 🛡️ **本體論絕對指紋**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
         f"* 🌌 **突破傳統維度**：**【{data['breakthrough_str']}】**\n\n"
         f"### 2. 🧮 IQD 差分儀表板\n"
@@ -216,6 +236,7 @@ def export_wordpress_html(basename, data):
         "    <hr>\n"
         "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
         "        <p><strong>📡 學術價值全像儀 (AVH) 實體 API 認證</strong></p>\n"
+        f"        <p>觀測基準：arXiv 前沿文獻</p>\n"
         f"        <p>突破維度：【 {data['breakthrough_str']} 】</p>\n"
         f"        <p>最終演化狀態：[ {data['user_hex']} ] - <strong>{data['state_name']}</strong></p>\n"
         f"        <p>物理時間戳：{timestamp_str}</p>\n"
@@ -253,7 +274,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：實體 API 聯網觀測軌跡\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：arXiv 實體聯網觀測軌跡\n---\n")
         
         last_hex_code = ""
         for target_source in source_files:
