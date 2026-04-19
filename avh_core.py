@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V30.1 自然母體對撞 - Crossref 禮貌池穩定版)
+# AVH Genesis Engine (V30.2 自然母體對撞 - 柔性容錯與無人區宣告版)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V30.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V30.2 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -59,7 +59,6 @@ def parse_llm_json(response_text):
         sys.exit(1)
 
 def evaluate_user_text_and_compress(raw_text, manifest):
-    """【V30.1 階段 1】將理論壓縮成 12-word 核心宣告"""
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
     
@@ -84,7 +83,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 }}
 {MD_FENCE}
 """
-    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，執行核心塌縮 (12-word Core)...")
+    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，執行核心塌陷 (12-word Core)...")
     response = call_llm_with_retry(
         client, 
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": raw_text[:4000]}],
@@ -93,13 +92,10 @@ def evaluate_user_text_and_compress(raw_text, manifest):
     return parse_llm_json(response.choices[0].message.content)
 
 def fetch_broad_neighborhood_crossref(core_statement):
-    """【V30.1 階段 2】拿 12-word Core 去 Crossref 禮貌池撈 Top 25 篇 (確保基數)"""
-    # 💥 宣告真實身分，進入 Crossref 禮貌池 (Polite Pool)，迴避限流
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/30.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/30.2 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
-    # 多抓一點 (25篇)，因為有些論文可能沒有摘要
     url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract,is-referenced-by-count&rows=25"
     
     print(f"🌍 [實體觀測 - 階段 2] 投放核心宣告：『{core_statement}』\n🌍 正在 Crossref 禮貌池中打撈 Top 25 關聯文獻...")
@@ -122,10 +118,9 @@ def fetch_broad_neighborhood_crossref(core_statement):
         raw_papers = []
         for paper in items:
             raw_abstract = paper.get("abstract")
-            if not raw_abstract: # 踢除沒有摘要的文獻，大腦無法評估
+            if not raw_abstract: 
                 continue
-                
-            clean_abstract = re.sub(r'<[^>]+>', '', raw_abstract) # 清除 XML 標籤
+            clean_abstract = re.sub(r'<[^>]+>', '', raw_abstract) 
             title = paper.get("title", [""])[0] if paper.get("title") else "Unknown"
             
             raw_papers.append({
@@ -135,11 +130,10 @@ def fetch_broad_neighborhood_crossref(core_statement):
                 "citations": paper.get("is-referenced-by-count", 0)
             })
             
-            # 只要湊滿 15-20 篇給大腦重排就夠了
             if len(raw_papers) >= 20:
                 break
                 
-        if len(raw_papers) < 5:
+        if len(raw_papers) < 3:
             print(f"工具調用失敗，原因為 撈取到的合格摘要過少，無法支撐重排 ({len(raw_papers)} 篇)")
             sys.exit(1)
             
@@ -151,26 +145,29 @@ def fetch_broad_neighborhood_crossref(core_statement):
         sys.exit(1)
 
 def rerank_and_filter_papers(core_statement, raw_papers):
-    """【V30.1 階段 3】大腦親自篩選，剔除 Crossref 的撞字雜訊，保留最精純的 Top 8 母體"""
+    """【V30.2 核心】放寬絕對限制，接受低數量的母體，甚至允許大腦宣告 0 篇 (無人區)"""
     client = get_llm_client()
     papers_json = json.dumps(raw_papers, ensure_ascii=False)
     
     sys_prompt = f"""
-你現在是極度嚴格的學術審查委員。
+你現在是一位客觀的學術觀測員。
 我的核心理論宣告是："{core_statement}"
-以下是從傳統搜尋引擎撈回來的 {len(raw_papers)} 篇初步相關文獻。傳統系統很笨，會抓回只因為「撞字」但根本不相關的垃圾。
+以下是從傳統搜尋引擎撈回來的 {len(raw_papers)} 篇初步相關文獻。
 
-請利用你的高維度認知，親自閱讀它們的標題與摘要。剔除雜訊，挑選出「真正與核心理論具有學術血緣、探討相似底層邏輯」的最強 Top 8 篇論文（若不足 8 篇則挑出所有合格者，但至少要有 4 篇）。
+請利用你的高維度認知閱讀它們。剔除那些「只是撞字、核心邏輯毫無關聯」的雜訊。
+挑選出「在現有學術範式中，最適合拿來作為該理論『參考座標』或『對話對象』」的文獻 (最多 8 篇)。
+
+【絕對柔性指令】：如果該理論過於前沿（處於無人區），導致這 {len(raw_papers)} 篇文獻中「連一篇配得上作為參考座標的都沒有」，你完全可以回傳少量的 id，甚至回傳空陣列 `[]`。
 
 請回傳 JSON：
 {MD_FENCE}json
 {{
-  "selected_ids": ["id_1", "id_2", "id_3", "id_4", "id_5", "id_6", "id_7", "id_8"],
-  "filtering_log": "簡述你剔除了什麼類型的雜訊，保留了什麼屬性的文獻"
+  "selected_ids": ["id_1", "id_2"],
+  "filtering_log": "簡述你保留了哪些文獻作為座標，或為何判定多數文獻皆不合適"
 }}
 {MD_FENCE}
 """
-    print(f"⚖️ [大腦運算 - 階段 3] 啟動精準重排 (Re-ranking)，由 {len(raw_papers)} 篇雜訊中提煉 Top 8 自然母體...")
+    print(f"⚖️ [大腦運算 - 階段 3] 啟動柔性重排 (Re-ranking)，尋找參考座標，容許無人區判定...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_json}],
@@ -182,14 +179,10 @@ def rerank_and_filter_papers(core_statement, raw_papers):
     filtering_log = res.get("filtering_log", "執行標準過濾機制。")
     
     final_papers = [p for p in raw_papers if p["id"] in selected_ids]
-    if len(final_papers) < 4:
-        print(f"工具調用失敗，原因為 大腦重排後合格的母體文獻不足 4 篇。過濾日誌：{filtering_log}")
-        sys.exit(1)
-        
+    # 💥 移除舊版 sys.exit(1) 的死亡限制，讓 0 篇也能順利往下走
     return final_papers, filtering_log
 
 def evaluate_baseline_papers(papers, manifest):
-    """【V30.1 階段 4】測量過濾後的自然母體 Hex"""
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
     papers_str = json.dumps([{"title": p["title"], "abstract": p["abstract"]} for p in papers])
@@ -235,17 +228,21 @@ def process_avh_manifestation(source_path, manifest):
         # 2. Broad Retrieval (Crossref Polite Pool)
         raw_papers = fetch_broad_neighborhood_crossref(core_statement)
         
-        # 3. LLM Re-ranking (Top 8)
+        # 3. LLM Re-ranking (Dynamic Count)
         final_papers, filtering_log = rerank_and_filter_papers(core_statement, raw_papers)
         
-        baseline_status = f"Crossref Matrix Established (基礎設施母體建構完成：{len(final_papers)} 核心節點)"
-        
-        # 4. Baseline Hex Evaluation
-        baseline_hex, vote_stats = evaluate_baseline_papers(final_papers, manifest)
-        
+        # 💥 4. 處理絕對無人區的情境
         paper_records = []
-        for p in final_papers:
-            paper_records.append(f"- `[DOI:{p['id']}]` **{p['title']}** (Cited: {p['citations']})")
+        if not final_papers:
+            baseline_status = "Absolute Void (絕對無人區：大腦判定周遭毫無可對話之母體)"
+            baseline_hex = "000000"
+            vote_stats = [0]*6
+            paper_records.append("- `[Void]` **大腦過濾宣告**：傳統引擎返回之文獻皆屬雜訊，本理論目前無直接學術鄰域。")
+        else:
+            baseline_status = f"Crossref Matrix Established (基礎設施母體建構完成：{len(final_papers)} 核心節點)"
+            baseline_hex, vote_stats = evaluate_baseline_papers(final_papers, manifest)
+            for p in final_papers:
+                paper_records.append(f"- `[DOI:{p['id']}]` **{p['title']}** (Cited: {p['citations']})")
 
         # 5. Offset Calculation
         breakthrough_dims = []
@@ -263,8 +260,8 @@ def process_avh_manifestation(source_path, manifest):
         # 6. Summary Generation
         client = get_llm_client()
         summary_prompt = f"""
-本理論在「真實學術母體(Crossref Top {len(final_papers)} 關聯文獻)」中測得偏移值為 {offset_score:+d}，拓樸破缺維度：【{breakthrough_str}】。
-請根據下文撰寫 200 字理論導讀，客觀描述其在該特定學術鄰域中的相對定位與運作邏輯。
+本理論在「外部場域觀測」中測得偏移值為 {offset_score:+d}，拓樸破缺維度：【{breakthrough_str}】。
+請根據下文撰寫 200 字理論導讀，客觀描述其在學術生態中的定位(若是無人區請直接指出)。
 第一句必須以「本理論架構...」開頭。
 """
         response = call_llm_with_retry(
@@ -303,7 +300,11 @@ def generate_trajectory_log(target_file, data):
     dim_logs_text = "\n    ".join(data['dim_logs'])
     meta = data['meta_data']
     papers_text = "\n".join(meta['paper_records'])
-    vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{meta['final_hits']}" for i in range(6)])
+    
+    if meta['final_hits'] > 0:
+        vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{meta['final_hits']}" for i in range(6)])
+    else:
+        vote_str = "無對照母體，張量坍縮為 0"
 
     log_output = (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
@@ -325,7 +326,7 @@ def generate_trajectory_log(target_file, data):
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V30.1 架構，使用 Crossref 禮貌池確保連線穩定，並依賴 GPT-4o 進行高維語意重排濾噪。*\n"
+        f"> *註：本報告採 V30.2 柔性容錯架構。若大腦判定無同頻母體，則誠實宣告無人區。*\n"
     )
     return log_output
 
@@ -389,7 +390,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V30.1 自然母體觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V30.2 容錯母體觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
