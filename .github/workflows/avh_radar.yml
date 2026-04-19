@@ -1,4 +1,4 @@
-name: AVH Hologram Engine (V24.1)
+name: AVH Hologram Engine (V25.1)
 
 on:
   push:
@@ -12,7 +12,6 @@ on:
 
 jobs:
   avh-manifestation:
-    # 🛑 【防禦死循環】：拒絕機器人觸發，只有人類推的 Code 才會跑！
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
 
@@ -29,10 +28,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 📦 Install Dependencies
+      - name: 📦 Install Ultra-Light Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy networkx scikit-learn sentence-transformers openai requests zhconv
+          # 徹底拔除笨重的科學套件，只保留純粹的連網與解析工具
+          pip install openai requests zhconv
 
       - name: 🚀 Run AVH Genesis Engine
         env:
@@ -40,15 +40,13 @@ jobs:
         run: |
           python avh_core.py
 
-      - name: 💾 Commit and Push Artifacts (實相刻印)
+      - name: 💾 Commit and Push Artifacts
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          # 【防止檔案消失】：安全地檢查檔案是否存在，存在才加入追蹤，不存在也不會報錯中斷
           [ -f AVH_OBSERVATION_LOG.md ] && git add AVH_OBSERVATION_LOG.md || true
           compgen -G "WP_Ready_*.html" > /dev/null && git add WP_Ready_*.html || true
           compgen -G "*_Archive.tex" > /dev/null && git add *_Archive.tex || true
 
-          # 檢查快取是否有變動，有的話才執行 commit 與 push
-          git diff --cached --quiet || (git commit -m "🌌 系統自動顯化：arXiv 實體聯網與 GitHub Models 觀測結果" && git push)
+          git diff --cached --quiet || (git commit -m "🌌 系統自動顯化：V25 算力解放與絕對淨化版" && git push)
