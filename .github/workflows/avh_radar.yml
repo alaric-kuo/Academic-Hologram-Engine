@@ -40,7 +40,7 @@ jobs:
           SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
         # 假設你的主程式檔名為 avh_engine.py，請確認檔名一致
         run: |
-          python avh_engine.py
+          python avh_core.py
 
       - name: 💾 Commit and Push Artifacts (實相刻印與檔案回收)
         run: |
