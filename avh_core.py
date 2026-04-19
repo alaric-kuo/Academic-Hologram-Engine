@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V29.0 全域學術圖譜與絕對剛性搜索版)
+# AVH Genesis Engine (V29.1 全域學術基礎設施 - Crossref 禮貌池對接版)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V29.0 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V29.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -58,46 +58,61 @@ def parse_llm_json(response_text):
         print(f"工具調用失敗，原因為 LLM JSON 解析失敗 ({e})")
         sys.exit(1)
 
-def fetch_semantic_scholar_papers(keywords):
-    """【V29 核心】對接 Semantic Scholar 兩億級學術圖譜，嚴格執行超時阻擋中斷"""
+def fetch_crossref_papers(keywords):
+    """【V29.1 核心】對接 Crossref 基礎設施，進入 Polite Pool 徹底解決限流問題"""
     field_papers = []
-    headers = {"User-Agent": "AVH-Hologram-Agent/29.0"}
+    # 💥 關鍵防禦：宣告真實的 User-Agent 並附上 mailto，Crossref 會將此請求放入專屬的「高速禮貌通道」
+    headers = {
+        "User-Agent": "AVH-Hologram-Engine/29.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+    }
     
-    print(f"🌍 [實體觀測] 對接 Semantic Scholar 學術圖譜，發射 8 發真實探測針...")
+    print(f"🌍 [實體觀測] 對接全球學術基礎設施 (Crossref)，發射 8 發真實探測針...")
     
     for kw in keywords:
         encoded_query = urllib.parse.quote(kw)
-        url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={encoded_query}&limit=1&fields=title,abstract"
+        # 只抓標題和摘要，減少傳輸量
+        url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract&rows=1"
         
         try:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code != 200:
-                print(f"工具調用失敗，原因為 Semantic Scholar API 阻擋 (HTTP {response.status_code})")
-                sys.exit(1)
+            response = requests.get(url, headers=headers, timeout=15)
+            if response.status_code == 429:
+                print(f"⚠️ 遭遇 Crossref 瞬間限流，強制退避 5 秒...")
+                time.sleep(5)
+                response = requests.get(url, headers=headers, timeout=15)
                 
+            response.raise_for_status()
             data = response.json()
-            if not data.get("data") or len(data["data"]) == 0:
-                print(f"工具調用失敗，原因為 探測針 '{kw}' 抓取不全 (查無結果)")
-                sys.exit(1)
+            
+            items = data.get("message", {}).get("items", [])
+            if not items:
+                print(f"⚠️ 探測針 '{kw}' 查無結果，略過此節點。")
+                continue
                 
-            paper = data["data"][0]
+            paper = items[0]
+            title = paper.get("title", [""])[0] if paper.get("title") else "Unknown Title"
+            raw_abstract = paper.get("abstract", "No abstract available.")
+            
+            # 清理 Crossref 偶爾夾帶的 XML 標籤 (如 <jats:p>)
+            clean_abstract = re.sub(r'<[^>]+>', '', raw_abstract)
+            
             field_papers.append({
                 "anchor": kw,
-                "id": paper.get("paperId", "Unknown")[:8], # 取前8碼作ID
-                "title": paper.get("title", ""),
-                "abstract": paper.get("abstract", "")
+                "id": paper.get("DOI", "Unknown"),
+                "title": title,
+                "abstract": clean_abstract[:500] + "..." # 避免摘要過度肥大撐爆記憶體
             })
             
-            # API 禮貌性冷卻
-            time.sleep(1.5)
+            # 禮貌性冷卻 (進入 Polite Pool 後 1 秒就非常安全)
+            time.sleep(1)
             
-        except requests.exceptions.Timeout:
-            print("工具調用失敗，原因為 Semantic Scholar API 連線超時")
-            sys.exit(1)
-        except requests.exceptions.RequestException as e:
-            print(f"工具調用失敗，原因為 API 連線阻擋或異常 ({e})")
+        except Exception as e:
+            print(f"工具調用失敗，原因為 Crossref 基礎設施連線異常 ({e})")
             sys.exit(1)
             
+    if len(field_papers) < 4:
+        print(f"工具調用失敗，原因為 成功擷取的文獻過少，無法建構穩定能勢場")
+        sys.exit(1)
+        
     return field_papers
 
 def evaluate_user_text(raw_text, manifest):
@@ -142,7 +157,7 @@ def evaluate_baseline_papers(papers, manifest):
     
     sys_prompt = f"""
 你正在測量當代學術的「背景能勢場」。以下是由 8 個不同領域關鍵字從真實學術資料庫抓出的前沿論文。
-請綜合判斷這個由 8 篇論文構成的場域，在 6 個維度上的整體表現。
+請綜合判斷這個由真實論文構成的場域，在 6 個維度上的整體表現。
 維度定義：{manifest_str} (1=突破, 0=守成)
 
 請回傳 JSON：
@@ -178,15 +193,15 @@ def process_avh_manifestation(source_path, manifest):
         field_vectors = user_data.get("field_vectors", [])[:8]
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 2. 真實檢索背景能勢場 (嚴格執行連線中斷規則)
-        field_papers = fetch_semantic_scholar_papers(field_vectors)
+        # 2. 透過 Crossref 擷取文獻
+        field_papers = fetch_crossref_papers(field_vectors)
         
-        baseline_status = f"External Field Established (真實外部場域建構完成：{len(field_papers)} 節點)"
+        baseline_status = f"Crossref Field Established (基礎設施場域建構完成：{len(field_papers)} 節點)"
         baseline_hex, vote_stats = evaluate_baseline_papers(field_papers, manifest)
         
         paper_records = []
         for p in field_papers:
-            paper_records.append(f"- `[{p['anchor']}]` *{p['title']}* (`{p['id']}`)")
+            paper_records.append(f"- `[{p['anchor']}]` *{p['title']}* (`DOI:{p['id']}`)")
 
         # 3. 計算三角校正偏移值 (Offset)
         breakthrough_dims = []
@@ -204,7 +219,7 @@ def process_avh_manifestation(source_path, manifest):
         # 4. 導讀摘要
         client = get_llm_client()
         summary_prompt = f"""
-本理論在「真實外部背景能勢場」中測得偏移值為 {offset_score:+d}，突破維度：【{breakthrough_str}】。
+本理論在「真實外部背景能勢場(Crossref)」中測得偏移值為 {offset_score:+d}，突破維度：【{breakthrough_str}】。
 請根據下文撰寫 200 字理論導讀，客觀描述其在學術場域中的相對定位與運作邏輯。
 第一句必須以「本理論架構...」開頭。
 """
@@ -233,7 +248,6 @@ def process_avh_manifestation(source_path, manifest):
             }
         }
     except Exception as e:
-        # 捕捉在主幹道發生的未預期錯誤，避免繼續生成
         print(f"工具調用失敗，原因為 處理管線執行異常 ({e})")
         sys.exit(1)
 
@@ -243,7 +257,7 @@ def generate_trajectory_log(target_file, data):
     meta = data['meta_data']
     papers_text = "\n".join(meta['paper_records'])
     vector_str = ", ".join(meta['field_vectors'])
-    vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/8" for i in range(6)])
+    vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{len(meta['paper_records'])}" for i in range(6)])
 
     log_output = (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
@@ -253,7 +267,7 @@ def generate_trajectory_log(target_file, data):
         f"### 1. 🌌 真實外部能勢場建構 (External Background Field)\n"
         f"* **八極觀測向量**：`[{vector_str}]`\n"
         f"* **場域建構狀態**：`{meta['baseline_status']}`\n"
-        f"* **場域真實代表節點 (Top Articles from Semantic Scholar)**：\n"
+        f"* **場域真實代表節點 (Top Articles from Crossref)**：\n"
         f"{papers_text}\n\n"
         f"* **場域張量統計**：`[ {vote_str} ]`\n"
         f"* 🗺️ **背景絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
@@ -264,7 +278,7 @@ def generate_trajectory_log(target_file, data):
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V29.0 真實學術圖譜檢索，絕對拒絕大腦回憶與推測。*\n"
+        f"> *註：本報告採 V29.1 Crossref 全球學術基礎設施檢索，確保來源穩定與真實。*\n"
     )
     return log_output
 
@@ -328,7 +342,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V29 真實外部場域觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V29.1 Crossref 真實場域觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
