@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V29.1 全域學術基礎設施 - Crossref 禮貌池對接版)
+# AVH Genesis Engine (V30.0 自然母體對撞版 - 寬鬆檢索與精準重排)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V29.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V30 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -58,64 +58,8 @@ def parse_llm_json(response_text):
         print(f"工具調用失敗，原因為 LLM JSON 解析失敗 ({e})")
         sys.exit(1)
 
-def fetch_crossref_papers(keywords):
-    """【V29.1 核心】對接 Crossref 基礎設施，進入 Polite Pool 徹底解決限流問題"""
-    field_papers = []
-    # 💥 關鍵防禦：宣告真實的 User-Agent 並附上 mailto，Crossref 會將此請求放入專屬的「高速禮貌通道」
-    headers = {
-        "User-Agent": "AVH-Hologram-Engine/29.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
-    }
-    
-    print(f"🌍 [實體觀測] 對接全球學術基礎設施 (Crossref)，發射 8 發真實探測針...")
-    
-    for kw in keywords:
-        encoded_query = urllib.parse.quote(kw)
-        # 只抓標題和摘要，減少傳輸量
-        url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract&rows=1"
-        
-        try:
-            response = requests.get(url, headers=headers, timeout=15)
-            if response.status_code == 429:
-                print(f"⚠️ 遭遇 Crossref 瞬間限流，強制退避 5 秒...")
-                time.sleep(5)
-                response = requests.get(url, headers=headers, timeout=15)
-                
-            response.raise_for_status()
-            data = response.json()
-            
-            items = data.get("message", {}).get("items", [])
-            if not items:
-                print(f"⚠️ 探測針 '{kw}' 查無結果，略過此節點。")
-                continue
-                
-            paper = items[0]
-            title = paper.get("title", [""])[0] if paper.get("title") else "Unknown Title"
-            raw_abstract = paper.get("abstract", "No abstract available.")
-            
-            # 清理 Crossref 偶爾夾帶的 XML 標籤 (如 <jats:p>)
-            clean_abstract = re.sub(r'<[^>]+>', '', raw_abstract)
-            
-            field_papers.append({
-                "anchor": kw,
-                "id": paper.get("DOI", "Unknown"),
-                "title": title,
-                "abstract": clean_abstract[:500] + "..." # 避免摘要過度肥大撐爆記憶體
-            })
-            
-            # 禮貌性冷卻 (進入 Polite Pool 後 1 秒就非常安全)
-            time.sleep(1)
-            
-        except Exception as e:
-            print(f"工具調用失敗，原因為 Crossref 基礎設施連線異常 ({e})")
-            sys.exit(1)
-            
-    if len(field_papers) < 4:
-        print(f"工具調用失敗，原因為 成功擷取的文獻過少，無法建構穩定能勢場")
-        sys.exit(1)
-        
-    return field_papers
-
-def evaluate_user_text(raw_text, manifest):
+def evaluate_user_text_and_compress(raw_text, manifest):
+    """【V30 階段 1】測量本體指紋，並將理論壓縮成 12-word 核心宣告"""
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
     
@@ -123,8 +67,8 @@ def evaluate_user_text(raw_text, manifest):
 你是一台極度嚴謹的「學術本體論觀測儀器」。請閱讀文本並評估 6 個維度(1=突破, 0=守成)。
 維度定義：{manifest_str}
 
-為了向外部真實學術資料庫發動檢索以建構「背景能勢場」，請根據文本內容，精準提煉出 8 個「完全不同領域或維度」的英文學術名詞(單字)。
-這 8 個字必須涵蓋哲學、系統、治理、數學、資訊等廣泛的學術頻段(例如 Topology, Epistemology, Governance, Entropy, Kinematics 等)。
+【V30 核心任務】：為了向外部圖譜發動「語意寬鬆檢索」，請將這篇文本的底層物理/治理/系統邏輯，壓縮成一句「精準的英文學術核心宣告 (Core Statement)」。
+**這句話必須控制在 10 到 15 個英文單字之間。** 不能太短缺乏脈絡，也不能太長導致搜尋引擎崩潰。
 
 請回傳 JSON：
 {MD_FENCE}json
@@ -138,11 +82,11 @@ def evaluate_user_text(raw_text, manifest):
     "* **擴張潛力**：離群突破 (sin) `[觀測判定：...]`",
     "* **應用實相**：離群突破 (sin) `[觀測判定：...]`"
   ],
-  "field_vectors": ["Vector1", "Vector2", "Vector3", "Vector4", "Vector5", "Vector6", "Vector7", "Vector8"]
+  "core_statement": "Quantum topology approach to trust governance and anti-fragility systems"
 }}
 {MD_FENCE}
 """
-    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，萃取八極檢索向量...")
+    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，執行核心塌縮 (12-word Core)...")
     response = call_llm_with_retry(
         client, 
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": raw_text[:4000]}],
@@ -150,14 +94,92 @@ def evaluate_user_text(raw_text, manifest):
     )
     return parse_llm_json(response.choices[0].message.content)
 
-def evaluate_baseline_papers(papers, manifest):
+def fetch_broad_neighborhood(core_statement):
+    """【V30 階段 2】拿 12-word Core 去 Semantic Scholar 撈 Top 20 篇"""
+    headers = {"User-Agent": "AVH-Hologram-Agent/30.0"}
+    encoded_query = urllib.parse.quote(core_statement)
+    url = f"https://api.semanticscholar.org/graph/v1/paper/search?query={encoded_query}&limit=20&fields=title,abstract,year,citationCount"
+    
+    print(f"🌍 [實體觀測 - 階段 2] 投放核心宣告：『{core_statement}』\n🌍 正在 Semantic Scholar 兩億圖譜中打撈 Top 20 關聯文獻...")
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=20)
+        if response.status_code != 200:
+            print(f"工具調用失敗，原因為 Semantic Scholar API 阻擋 (HTTP {response.status_code})")
+            sys.exit(1)
+            
+        data = response.json()
+        if not data.get("data") or len(data["data"]) == 0:
+            print(f"工具調用失敗，原因為 核心宣告撈不到任何關聯文獻 (無人區過深或字元異常)")
+            sys.exit(1)
+            
+        raw_papers = []
+        for paper in data["data"]:
+            if not paper.get("abstract"): # 踢除沒有摘要的垃圾資料
+                continue
+            raw_papers.append({
+                "id": paper.get("paperId", "Unknown")[:8],
+                "title": paper.get("title", ""),
+                "abstract": paper.get("abstract", "")[:600],
+                "year": paper.get("year", "N/A"),
+                "citations": paper.get("citationCount", 0)
+            })
+            
+        time.sleep(1.5)
+        return raw_papers
+        
+    except requests.exceptions.RequestException as e:
+        print(f"工具調用失敗，原因為 API 連線異常或超時 ({e})")
+        sys.exit(1)
+
+def rerank_and_filter_papers(core_statement, raw_papers):
+    """【V30 階段 3】大腦親自篩選，剔除雜訊，保留最精純的 Top 8 母體"""
     client = get_llm_client()
-    manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
-    papers_str = json.dumps([{"anchor": p["anchor"], "title": p["title"], "abstract": p["abstract"]} for p in papers])
+    papers_json = json.dumps(raw_papers, ensure_ascii=False)
     
     sys_prompt = f"""
-你正在測量當代學術的「背景能勢場」。以下是由 8 個不同領域關鍵字從真實學術資料庫抓出的前沿論文。
-請綜合判斷這個由真實論文構成的場域，在 6 個維度上的整體表現。
+你現在是極度嚴格的學術審查委員。
+我的核心理論宣告是："{core_statement}"
+以下是從學術圖譜撈回來的 {len(raw_papers)} 篇初步相關文獻。
+傳統搜尋引擎很笨，會抓回只因為「撞字」但根本不相關的垃圾。
+
+請利用你的高維度認知，親自閱讀它們的標題與摘要。剔除雜訊，挑選出「真正與核心理論具有學術血緣、探討相似底層邏輯」的最強 Top 8 篇論文（若不足 8 篇則挑出所有合格者，但至少要有 4 篇）。
+
+請回傳 JSON：
+{MD_FENCE}json
+{{
+  "selected_ids": ["id_1", "id_2", "id_3", "id_4", "id_5", "id_6", "id_7", "id_8"],
+  "filtering_log": "簡述你剔除了什麼類型的雜訊，保留了什麼屬性的文獻"
+}}
+{MD_FENCE}
+"""
+    print(f"⚖️ [大腦運算 - 階段 3] 啟動精準重排 (Re-ranking)，從 {len(raw_papers)} 篇中提煉 Top 8 自然母體...")
+    response = call_llm_with_retry(
+        client,
+        messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_json}],
+        temperature=0.0
+    )
+    res = parse_llm_json(response.choices[0].message.content)
+    
+    selected_ids = set(res.get("selected_ids", []))
+    filtering_log = res.get("filtering_log", "執行標準過濾機制。")
+    
+    final_papers = [p for p in raw_papers if p["id"] in selected_ids]
+    if len(final_papers) < 4:
+        print(f"工具調用失敗，原因為 大腦重排後合格的母體文獻不足 4 篇，無法建構穩定場域。過濾日誌：{filtering_log}")
+        sys.exit(1)
+        
+    return final_papers, filtering_log
+
+def evaluate_baseline_papers(papers, manifest):
+    """【V30 階段 4】測量過濾後的自然母體 Hex"""
+    client = get_llm_client()
+    manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
+    papers_str = json.dumps([{"title": p["title"], "abstract": p["abstract"]} for p in papers])
+    
+    sys_prompt = f"""
+你正在測量當代學術的「真實背景能勢場」。以下是由系統精準篩選出的自然母體論文群。
+請綜合判斷這個論文群體所構成的場域，在 6 個維度上的整體表現。
 維度定義：{manifest_str} (1=突破, 0=守成)
 
 請回傳 JSON：
@@ -168,7 +190,7 @@ def evaluate_baseline_papers(papers, manifest):
 }}
 {MD_FENCE}
 """
-    print("⚖️ [場域測量 - 階段 2] 計算真實背景能勢場之絕對張量...")
+    print("⚖️ [場域測量 - 階段 4] 計算自然母體之絕對張量...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_str}],
@@ -186,24 +208,29 @@ def process_avh_manifestation(source_path, manifest):
         if len(raw_text.strip()) < 100:
             return None
 
-        # 1. User Hex & 8 Vectors
-        user_data = evaluate_user_text(raw_text, manifest)
+        # 1. User Hex & 12-Word Core
+        user_data = evaluate_user_text_and_compress(raw_text, manifest)
         user_hex = user_data["hex_code"]
         dim_logs = user_data["dim_logs"]
-        field_vectors = user_data.get("field_vectors", [])[:8]
+        core_statement = user_data.get("core_statement", "Academic Ontology Theory")
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 2. 透過 Crossref 擷取文獻
-        field_papers = fetch_crossref_papers(field_vectors)
+        # 2. Broad Retrieval (Top 20)
+        raw_papers = fetch_broad_neighborhood(core_statement)
         
-        baseline_status = f"Crossref Field Established (基礎設施場域建構完成：{len(field_papers)} 節點)"
-        baseline_hex, vote_stats = evaluate_baseline_papers(field_papers, manifest)
+        # 3. LLM Re-ranking (Top 8)
+        final_papers, filtering_log = rerank_and_filter_papers(core_statement, raw_papers)
+        
+        baseline_status = f"Natural Matrix Spawning (自然母體建構完成：{len(final_papers)} 核心節點)"
+        
+        # 4. Baseline Hex Evaluation
+        baseline_hex, vote_stats = evaluate_baseline_papers(final_papers, manifest)
         
         paper_records = []
-        for p in field_papers:
-            paper_records.append(f"- `[{p['anchor']}]` *{p['title']}* (`DOI:{p['id']}`)")
+        for p in final_papers:
+            paper_records.append(f"- `[ID:{p['id']}]` **{p['title']}** (Cited: {p['citations']})")
 
-        # 3. 計算三角校正偏移值 (Offset)
+        # 5. Offset Calculation
         breakthrough_dims = []
         offset_score = 0
         for i in range(6):
@@ -214,13 +241,13 @@ def process_avh_manifestation(source_path, manifest):
                 offset_score -= 1
                 
         breakthrough_str = "、".join(breakthrough_dims) if breakthrough_dims else "與場域同頻"
-        offset_status = f"能勢偏移值 (Offset): {offset_score:+d} (正值為突破，負值為受迫)"
+        offset_status = f"能勢偏移值 (Offset): {offset_score:+d} (正值為超越母體，負值為受迫於母體)"
         
-        # 4. 導讀摘要
+        # 6. Summary Generation
         client = get_llm_client()
         summary_prompt = f"""
-本理論在「真實外部背景能勢場(Crossref)」中測得偏移值為 {offset_score:+d}，突破維度：【{breakthrough_str}】。
-請根據下文撰寫 200 字理論導讀，客觀描述其在學術場域中的相對定位與運作邏輯。
+本理論在「真實學術母體(Top {len(final_papers)} 關聯文獻)」中測得偏移值為 {offset_score:+d}，拓樸破缺維度：【{breakthrough_str}】。
+請根據下文撰寫 200 字理論導讀，客觀描述其在該特定學術鄰域中的相對定位與運作邏輯。
 第一句必須以「本理論架構...」開頭。
 """
         response = call_llm_with_retry(
@@ -240,7 +267,10 @@ def process_avh_manifestation(source_path, manifest):
             "summary": clean_summary,
             "full_text": raw_text,
             "meta_data": {
-                "field_vectors": field_vectors,
+                "core_statement": core_statement,
+                "raw_hits": len(raw_papers),
+                "final_hits": len(final_papers),
+                "filtering_log": filtering_log,
                 "paper_records": paper_records,
                 "vote_stats": vote_stats,
                 "baseline_status": baseline_status,
@@ -256,29 +286,29 @@ def generate_trajectory_log(target_file, data):
     dim_logs_text = "\n    ".join(data['dim_logs'])
     meta = data['meta_data']
     papers_text = "\n".join(meta['paper_records'])
-    vector_str = ", ".join(meta['field_vectors'])
-    vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{len(meta['paper_records'])}" for i in range(6)])
+    vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{meta['final_hits']}" for i in range(6)])
 
     log_output = (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
         f"* **觀測時間戳 (CST)**：`{timestamp}`\n"
         f"* **高維算力引擎**：`{meta['llm_model']}`\n\n"
         f"---\n"
-        f"### 1. 🌌 真實外部能勢場建構 (External Background Field)\n"
-        f"* **八極觀測向量**：`[{vector_str}]`\n"
-        f"* **場域建構狀態**：`{meta['baseline_status']}`\n"
-        f"* **場域真實代表節點 (Top Articles from Crossref)**：\n"
+        f"### 1. 🌌 自然母體建構 (Natural Matrix Spawning)\n"
+        f"* **本體核心宣告 (Core Statement)**：`{meta['core_statement']}`\n"
+        f"* **場域建構狀態**：`{meta['baseline_status']}` (原始打撈 {meta['raw_hits']} 篇)\n"
+        f"* **大腦重排日誌 (Re-ranking Filter)**：_{meta['filtering_log']}_\n"
+        f"* **母體核心節點 (True Neighborhood)**：\n"
         f"{papers_text}\n\n"
-        f"* **場域張量統計**：`[ {vote_str} ]`\n"
-        f"* 🗺️ **背景絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
-        f"### 2. ⚖️ 三角校正與能勢干涉 (Triangulation & Interference)\n"
+        f"* **母體張量統計**：`[ {vote_str} ]`\n"
+        f"* 🗺️ **母體絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
+        f"### 2. ⚖️ 無人區干涉測量 (No Man's Land Triangulation)\n"
         f"* 🛡️ **本體論絕對指紋 (Ontology Hex)**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
         f"* ⚡ **{data['offset_status']}**\n"
-        f"* 🌌 **拓樸破缺維度 (相對於背景場)**：**【{data['breakthrough_str']}】**\n\n"
+        f"* 🌌 **拓樸破缺維度 (相對於自然母體)**：**【{data['breakthrough_str']}】**\n\n"
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V29.1 Crossref 全球學術基礎設施檢索，確保來源穩定與真實。*\n"
+        f"> *註：本報告採 V30.0 寬鬆檢索與精準重排架構，呈現最真實的無人區偏移度。*\n"
     )
     return log_output
 
@@ -294,7 +324,7 @@ def export_wordpress_html(basename, data):
         "    </div>\n"
         "    <hr>\n"
         "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "        <h3>📡 學術價值全像儀 (AVH) 外部真實場域認證</h3>\n"
+        "        <h3>📡 學術價值全像儀 (AVH) 真實母體認證</h3>\n"
         f"        <p><strong>理論導讀摘要 (Generated by {meta['llm_model']})：</strong><br>{data['summary']}</p>\n"
         "        <hr>\n"
         f"        <p>場域建構狀態：{meta['baseline_status']}</p>\n"
@@ -342,7 +372,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V29.1 Crossref 真實場域觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V30 自然母體觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
