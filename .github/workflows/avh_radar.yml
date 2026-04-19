@@ -1,56 +1,56 @@
-name: AVH Semantic Manifestation Pipeline
+name: AVH Hologram Engine (V23.0)
 
+# 觸發條件：當推送到 main 分支，或手動點擊執行時觸發
 on:
   push:
+    branches:
+      - main
     paths:
-      - '**/*.md'
-      - '**/*.tex'
-      - 'avh_manifest.json'
-      - '!AVH_OBSERVATION_LOG.md'
-      - '!WP_Ready_*.html'
-      - '!*_Archive.tex'
-
-permissions:
-  contents: write
+      - '*.md' # 只有當 Markdown 理論檔案變動時才觸發，節省算力
+  workflow_dispatch: # 允許在 Actions 頁面手動點擊 "Run workflow"
 
 jobs:
-  run-hologram-and-archive:
+  avh-manifestation:
     runs-on: ubuntu-latest
 
+    # 🛑 【核心防禦解鎖】：這是整套系統能跑通的靈魂！
+    permissions:
+      contents: write   # 允許 GitHub Actions 把產生的報表檔案推回你的 Repo
+      models: read      # 2026 GitHub Models 專屬授權，允許 GITHUB_TOKEN 呼叫 Copilot 算力
+
     steps:
-      - name: 🛰️ 載入宇宙網格
+      - name: 📥 Checkout Repository (讀取波包)
         uses: actions/checkout@v4
 
-      - name: 🐍 部署造物引擎
-        uses: actions/setup-python@v4
+      - name: 🐍 Setup Python 3.11 (架設物理環境)
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+          cache: 'pip' # 開啟快取，加速後續依賴安裝
 
-      - name: 📦 安裝多語系神經網路、真 LLM 與 zhconv 繁體鎮壓器
+      - name: 📦 Install Dependencies (安裝觀測儀器)
         run: |
-          pip install --upgrade pip
-          pip install sentence-transformers numpy networkx scikit-learn transformers torch accelerate zhconv
+          python -m pip install --upgrade pip
+          pip install numpy networkx scikit-learn sentence-transformers openai requests zhconv
 
-      - name: 🔮 啟動 AVH 引擎理論顯化
-        run: python avh_core.py
-
-      - name: 🚩 資訊熵同步 (Commit 顯化日誌)
-        run: |
-          git config --local user.email "avh-bot@aj-consulting.net"
-          git config --local user.name "AVH Hologram Oracle"
-          git add AVH_OBSERVATION_LOG.md
-          git commit -m "📡 AVH 軌跡刻印：本體論顯化完成 [skip ci]" || echo "無相變發生"
-          git push
-
-      - name: ⏳ 刻印實相時間戳與多維資產 (Create Semantic Release)
+      - name: 🚀 Run AVH Genesis Engine (啟動三態干涉與顯化)
         env:
+          # GITHUB_TOKEN 會由 Action 系統自動派發，並自動繼承上方的 models: read 權限
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # (選填) Semantic Scholar API Key，請在 Repo Settings -> Secrets and variables -> Actions 中設定
+          SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+        # 假設你的主程式檔名為 avh_engine.py，請確認檔名一致
         run: |
-          if [ -n "$HEX_CODE" ]; then
-            TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
-            TAG_NAME="AVH-State-${HEX_CODE}-${TIMESTAMP}"
-            
-            gh release create "$TAG_NAME" AVH_OBSERVATION_LOG.md *_Archive.tex WP_Ready_*.html \
-              -t "狀態張量更新 - 物理時間戳 $TIMESTAMP" \
-              -n "知識本體已完成絕對顯化。\n包含：1. 顯化軌跡與生成摘要 2. HTML 實體 3. LaTeX 原始碼"
-          fi
+          python avh_engine.py
+
+      - name: 💾 Commit and Push Artifacts (實相刻印與檔案回收)
+        run: |
+          # 設定 Git 機器人身份
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # 將所有新產生的報表加入追蹤
+          git add AVH_OBSERVATION_LOG.md WP_Ready_*.html *_Archive.tex
+          
+          # 檢查是否有檔案變動，如果有才執行 Commit 與 Push，避免報錯
+          git diff --quiet && git diff --staged --quiet || (git commit -m "🌌 系統自動顯化：AVH 實體聯網與 Copilot 觀測結果" && git push)
