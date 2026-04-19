@@ -12,13 +12,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V26.0 背景能勢場與三角校正版)
+# AVH Genesis Engine (V26.1 背景能勢場與三角校正 - arXiv節流裝甲版)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V26 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V26.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -59,12 +59,12 @@ def parse_llm_json(response_text):
         sys.exit(1)
 
 def fetch_field_papers(keywords):
-    """【V26 核心】根據 8 個關鍵向量，分別對 arXiv 進行單點突破，建立能勢場"""
-    headers = {"User-Agent": "AVH-Hologram/26.0 (GitHub Actions)"}
+    """【V26.1 核心】加入嚴格冷卻機制，防禦 arXiv 限流阻擋"""
+    headers = {"User-Agent": "AVH-Hologram/26.1 (GitHub Actions)"}
     namespace = {'atom': 'http://www.w3.org/2005/Atom'}
     field_papers = []
     
-    print(f"🌍 [場域建構] 正在向 arXiv 發射 8 個關鍵向量探測針...")
+    print(f"🌍 [場域建構] 正在向 arXiv 發射 8 個關鍵向量探測針 (強制 3 秒冷卻防護)...")
     for kw in keywords:
         encoded_query = urllib.parse.quote(f"all:{kw}", safe=":+")
         url = (f"https://export.arxiv.org/api/query?"
@@ -74,6 +74,11 @@ def fetch_field_papers(keywords):
         for attempt in range(3):
             try:
                 response = requests.get(url, headers=headers, timeout=10)
+                if response.status_code in [403, 429]:
+                    print(f"⚠️ 觸發 arXiv 限流 (HTTP {response.status_code})，強制退避 5 秒...")
+                    time.sleep(5)
+                    continue
+                    
                 response.raise_for_status()
                 root = ET.fromstring(response.content)
                 
@@ -88,11 +93,14 @@ def fetch_field_papers(keywords):
                         "title": title,
                         "abstract": abstract
                     })
-                break # 成功抓到一篇就換下一個 keyword
+                break 
             except Exception as e:
                 if attempt == 2:
                     print(f"⚠️ 向量探測針 [{kw}] 失去連線，略過。")
-                time.sleep(1)
+                time.sleep(2)
+        
+        # 絕對冷卻：每一發探測針打完，無論成功失敗，強制等 3 秒
+        time.sleep(3)
                 
     return field_papers
 
@@ -113,7 +121,11 @@ def evaluate_user_text(raw_text, manifest):
   "hex_code": "111111",
   "dim_logs": [
     "* **價值意圖**：離群突破 (sin) `[觀測判定：...]`",
-    "...其餘5維度..."
+    "* **治理維度**：離群突破 (sin) `[觀測判定：...]`",
+    "* **認知深度**：離群突破 (sin) `[觀測判定：...]`",
+    "* **描述架構**：離群突破 (sin) `[觀測判定：...]`",
+    "* **擴張潛力**：離群突破 (sin) `[觀測判定：...]`",
+    "* **應用實相**：離群突破 (sin) `[觀測判定：...]`"
   ],
   "field_vectors": ["Vector1", "Vector2", "Vector3", "Vector4", "Vector5", "Vector6", "Vector7", "Vector8"]
 }}
@@ -140,8 +152,8 @@ def evaluate_baseline_papers(papers, manifest):
     papers_str = json.dumps([{"anchor": p["anchor"], "title": p["title"]} for p in papers])
     
     sys_prompt = f"""
-你正在測量當代學術的「背景能勢場」。以下是由 8 個不同領域關鍵字抓出的前沿論文。
-請綜合判斷這個由 8 篇論文構成的場域，在 6 個維度上的整體表現。
+你正在測量當代學術的「背景能勢場」。以下是由多個不同領域關鍵字抓出的前沿論文。
+請綜合判斷這個論文群體所構成的場域，在 6 個維度上的整體表現。
 維度定義：{manifest_str} (1=突破, 0=守成)
 
 請回傳 JSON：
@@ -176,8 +188,8 @@ def process_avh_manifestation(source_path, manifest):
 
         # 1. User Hex & 8 Vectors
         user_data = evaluate_user_text(raw_text, manifest)
-        user_hex = user_data["hex_code"]
-        dim_logs = user_data["dim_logs"]
+        user_hex = user_data.get("hex_code", "000000")
+        dim_logs = user_data.get("dim_logs", [])
         field_vectors = user_data.get("field_vectors", [])[:8]
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
@@ -194,7 +206,7 @@ def process_avh_manifestation(source_path, manifest):
             baseline_status = "Field Fracture (能勢場建構破裂：節點不足)"
             baseline_hex = "000000"
             vote_stats = [0]*6
-            paper_records.append("- (探測針失效，無法建立穩定能勢場)")
+            paper_records.append("- (探測針遭阻擋或失效，無法建立穩定能勢場)")
 
         # 3. 計算三角校正偏移值 (Offset)
         breakthrough_dims = []
@@ -204,7 +216,7 @@ def process_avh_manifestation(source_path, manifest):
                 breakthrough_dims.append(manifest["dimensions"][list(manifest["dimensions"].keys())[i]]["layer"])
                 offset_score += 1
             elif user_hex[i] == "0" and baseline_hex[i] == "1":
-                offset_score -= 1 # 反向應力
+                offset_score -= 1
                 
         breakthrough_str = "、".join(breakthrough_dims) if breakthrough_dims else "與場域同頻"
         offset_status = f"能勢偏移值 (Offset): {offset_score:+d} (正值為突破，負值為受迫)"
@@ -276,7 +288,7 @@ def generate_trajectory_log(target_file, data):
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V26 八極向量能勢場干涉測量。*\n"
+        f"> *註：本報告採 V26.1 八極向量能勢場干涉測量。*\n"
     )
     return log_output
 
@@ -340,7 +352,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V26 背景能勢場觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V26.1 背景能勢場觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
