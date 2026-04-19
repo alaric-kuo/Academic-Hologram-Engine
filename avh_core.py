@@ -12,13 +12,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V26.1 背景能勢場與三角校正 - arXiv節流裝甲版)
+# AVH Genesis Engine (V27.0 聯集能勢場與三角校正 - 單發突破版)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V26.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V27.0 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -58,51 +58,49 @@ def parse_llm_json(response_text):
         print(f"工具調用失敗，原因為 LLM JSON 解析失敗 ({e})")
         sys.exit(1)
 
-def fetch_field_papers(keywords):
-    """【V26.1 核心】加入嚴格冷卻機制，防禦 arXiv 限流阻擋"""
-    headers = {"User-Agent": "AVH-Hologram/26.1 (GitHub Actions)"}
+def fetch_field_papers_union(keywords, limit=8):
+    """【V27.0 核心】使用 OR 聯集查詢，一發 API 呼叫抓取全域背景"""
+    headers = {"User-Agent": "AVH-Hologram/27.0 (GitHub Actions)"}
     namespace = {'atom': 'http://www.w3.org/2005/Atom'}
+    
+    # 建立聯集查詢字串：all:A OR all:B OR ...
+    search_query = " OR ".join([f"all:{kw}" for kw in keywords])
+    encoded_query = urllib.parse.quote(search_query)
+    
+    url = (f"https://export.arxiv.org/api/query?"
+           f"search_query={encoded_query}&start=0&max_results={limit}"
+           f"&sortBy=submittedDate&sortOrder=descending")
+    
+    print(f"🌍 [場域建構] 發射全域聯集探測網 (1發 API 突破限流)...")
     field_papers = []
     
-    print(f"🌍 [場域建構] 正在向 arXiv 發射 8 個關鍵向量探測針 (強制 3 秒冷卻防護)...")
-    for kw in keywords:
-        encoded_query = urllib.parse.quote(f"all:{kw}", safe=":+")
-        url = (f"https://export.arxiv.org/api/query?"
-               f"search_query={encoded_query}&start=0&max_results=1"
-               f"&sortBy=submittedDate&sortOrder=descending")
-        
-        for attempt in range(3):
-            try:
-                response = requests.get(url, headers=headers, timeout=10)
-                if response.status_code in [403, 429]:
-                    print(f"⚠️ 觸發 arXiv 限流 (HTTP {response.status_code})，強制退避 5 秒...")
-                    time.sleep(5)
-                    continue
-                    
-                response.raise_for_status()
-                root = ET.fromstring(response.content)
+    for attempt in range(3):
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            if response.status_code in [403, 429]:
+                print(f"⚠️ 觸發 arXiv 限流 (HTTP {response.status_code})，退避 5 秒...")
+                time.sleep(5)
+                continue
                 
-                entry = root.find('atom:entry', namespace)
-                if entry is not None:
-                    title = entry.find('atom:title', namespace).text.strip().replace('\n', ' ')
-                    abstract = entry.find('atom:summary', namespace).text.strip().replace('\n', ' ')
-                    paper_id = entry.find('atom:id', namespace).text.split('/')[-1]
-                    field_papers.append({
-                        "anchor": kw,
-                        "id": paper_id,
-                        "title": title,
-                        "abstract": abstract
-                    })
-                break 
-            except Exception as e:
-                if attempt == 2:
-                    print(f"⚠️ 向量探測針 [{kw}] 失去連線，略過。")
-                time.sleep(2)
-        
-        # 絕對冷卻：每一發探測針打完，無論成功失敗，強制等 3 秒
-        time.sleep(3)
-                
-    return field_papers
+            response.raise_for_status()
+            root = ET.fromstring(response.content)
+            
+            for entry in root.findall('atom:entry', namespace):
+                title = entry.find('atom:title', namespace).text.strip().replace('\n', ' ')
+                abstract = entry.find('atom:summary', namespace).text.strip().replace('\n', ' ')
+                paper_id = entry.find('atom:id', namespace).text.split('/')[-1]
+                field_papers.append({
+                    "id": paper_id,
+                    "title": title,
+                    "abstract": abstract
+                })
+            break # 成功抓取整批，跳出重試
+        except Exception as e:
+            if attempt == 2:
+                print(f"⚠️ 聯集探測網失去連線 ({e})")
+            time.sleep(3)
+            
+    return field_papers, search_query
 
 def evaluate_user_text(raw_text, manifest):
     client = get_llm_client()
@@ -112,7 +110,7 @@ def evaluate_user_text(raw_text, manifest):
 你是一台極度嚴謹的「學術本體論觀測儀器」。請閱讀文本並評估 6 個維度(1=突破, 0=守成)。
 維度定義：{manifest_str}
 
-【V26 核心任務】：為了建構「背景能勢場」，請根據文本內容，精準提煉出 8 個「完全不同領域或維度」的英文學術名詞(單字)。
+【V27 核心任務】：為了建構「背景能勢場」，請根據文本內容，精準提煉出 8 個「完全不同領域或維度」的英文學術名詞(單字)。
 這 8 個字必須涵蓋哲學、系統、治理、數學、資訊等廣泛的學術頻段(例如 Topology, Epistemology, Governance, Entropy, Kinematics 等)。
 
 請回傳 JSON：
@@ -149,10 +147,10 @@ def evaluate_baseline_papers(papers, manifest):
         
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
-    papers_str = json.dumps([{"anchor": p["anchor"], "title": p["title"]} for p in papers])
+    papers_str = json.dumps([{"title": p["title"], "abstract": p["abstract"]} for p in papers])
     
     sys_prompt = f"""
-你正在測量當代學術的「背景能勢場」。以下是由多個不同領域關鍵字抓出的前沿論文。
+你正在測量當代學術的「背景能勢場」。以下是由多個不同領域關鍵字聯合抓出的前沿論文。
 請綜合判斷這個論文群體所構成的場域，在 6 個維度上的整體表現。
 維度定義：{manifest_str} (1=突破, 0=守成)
 
@@ -193,20 +191,20 @@ def process_avh_manifestation(source_path, manifest):
         field_vectors = user_data.get("field_vectors", [])[:8]
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 2. 建立背景能勢場
-        field_papers = fetch_field_papers(field_vectors)
+        # 2. 建立背景能勢場 (聯集一波帶走)
+        field_papers, query_str = fetch_field_papers_union(field_vectors)
         paper_records = []
         
         if len(field_papers) >= 4:
             baseline_status = f"Field Established (能勢場建構完成：{len(field_papers)} 節點)"
             baseline_hex, vote_stats = evaluate_baseline_papers(field_papers, manifest)
             for p in field_papers:
-                paper_records.append(f"- `[{p['anchor']}]` *{p['title']}* (`{p['id']}`)")
+                paper_records.append(f"- `[{p['id']}]` *{p['title']}*")
         else:
             baseline_status = "Field Fracture (能勢場建構破裂：節點不足)"
             baseline_hex = "000000"
             vote_stats = [0]*6
-            paper_records.append("- (探測針遭阻擋或失效，無法建立穩定能勢場)")
+            paper_records.append("- (探測網遭阻擋或失效，無法建立穩定能勢場)")
 
         # 3. 計算三角校正偏移值 (Offset)
         breakthrough_dims = []
@@ -246,6 +244,7 @@ def process_avh_manifestation(source_path, manifest):
             "full_text": raw_text,
             "meta_data": {
                 "field_vectors": field_vectors,
+                "arxiv_query": query_str,
                 "valid_hits": len(field_papers),
                 "paper_records": paper_records,
                 "vote_stats": vote_stats,
@@ -275,9 +274,9 @@ def generate_trajectory_log(target_file, data):
         f"* **高維算力引擎**：`{meta['llm_model']}`\n\n"
         f"---\n"
         f"### 1. 🌌 背景能勢場建立 (Background Energy-Potential Field)\n"
-        f"* **八極觀測向量**：`[{vector_str}]`\n"
+        f"* **全域聯集陣列**：`{meta['arxiv_query']}`\n"
         f"* **場域建構狀態**：`{meta['baseline_status']}`\n"
-        f"* **場域代表節點 (Top Articles)**：\n"
+        f"* **能勢場代表節點 (Top Articles)**：\n"
         f"{papers_text}\n\n"
         f"* **場域張量統計**：`[ {vote_str} ]`\n"
         f"* 🗺️ **背景絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
@@ -288,7 +287,7 @@ def generate_trajectory_log(target_file, data):
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V26.1 八極向量能勢場干涉測量。*\n"
+        f"> *註：本報告採 V27.0 全域聯集能勢場干涉測量。*\n"
     )
     return log_output
 
@@ -352,7 +351,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V26.1 背景能勢場觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V27 聯集能勢場觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
