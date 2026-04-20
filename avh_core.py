@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V30.2 自然母體對撞 - 柔性容錯與無人區宣告版)
+# AVH Genesis Engine (V31.0 反向尺規與向量干涉版 - 以我為尺)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V30.2 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V31.0 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -93,7 +93,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/30.2 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/31.0 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
     url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract,is-referenced-by-count&rows=25"
@@ -145,29 +145,25 @@ def fetch_broad_neighborhood_crossref(core_statement):
         sys.exit(1)
 
 def rerank_and_filter_papers(core_statement, raw_papers):
-    """【V30.2 核心】放寬絕對限制，接受低數量的母體，甚至允許大腦宣告 0 篇 (無人區)"""
     client = get_llm_client()
     papers_json = json.dumps(raw_papers, ensure_ascii=False)
     
     sys_prompt = f"""
-你現在是一位客觀的學術觀測員。
-我的核心理論宣告是："{core_statement}"
-以下是從傳統搜尋引擎撈回來的 {len(raw_papers)} 篇初步相關文獻。
+你現在是一位客觀的學術觀測員。我的核心理論宣告是："{core_statement}"
+以下是傳統搜尋引擎撈回的 {len(raw_papers)} 篇初步文獻。
 
-請利用你的高維度認知閱讀它們。剔除那些「只是撞字、核心邏輯毫無關聯」的雜訊。
-挑選出「在現有學術範式中，最適合拿來作為該理論『參考座標』或『對話對象』」的文獻 (最多 8 篇)。
-
-【絕對柔性指令】：如果該理論過於前沿（處於無人區），導致這 {len(raw_papers)} 篇文獻中「連一篇配得上作為參考座標的都沒有」，你完全可以回傳少量的 id，甚至回傳空陣列 `[]`。
+請利用高維度認知閱讀它們。剔除「只是撞字、核心邏輯毫無關聯」的雜訊。
+挑出「最適合拿來作為該理論『參考座標』或『對話對象』」的文獻 (最多保留 8 篇，如果只有 1 篇合格就留 1 篇，0 篇則回傳空陣列)。
 
 請回傳 JSON：
 {MD_FENCE}json
 {{
   "selected_ids": ["id_1", "id_2"],
-  "filtering_log": "簡述你保留了哪些文獻作為座標，或為何判定多數文獻皆不合適"
+  "filtering_log": "簡述你保留了哪些文獻，為何剔除其他雜訊"
 }}
 {MD_FENCE}
 """
-    print(f"⚖️ [大腦運算 - 階段 3] 啟動柔性重排 (Re-ranking)，尋找參考座標，容許無人區判定...")
+    print(f"⚖️ [大腦運算 - 階段 3] 啟動柔性重排，全數保留合格母體 (最高 8 篇)...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_json}],
@@ -178,36 +174,50 @@ def rerank_and_filter_papers(core_statement, raw_papers):
     selected_ids = set(res.get("selected_ids", []))
     filtering_log = res.get("filtering_log", "執行標準過濾機制。")
     
-    final_papers = [p for p in raw_papers if p["id"] in selected_ids]
-    # 💥 移除舊版 sys.exit(1) 的死亡限制，讓 0 篇也能順利往下走
+    final_papers = [p for p in raw_papers if p["id"] in selected_ids][:8]
     return final_papers, filtering_log
 
-def evaluate_baseline_papers(papers, manifest):
+def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
+    """【V31.0 核心】反向尺規：以大魔王的理論為原點，測量既有母體的發展向量與相位角"""
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
     papers_str = json.dumps([{"title": p["title"], "abstract": p["abstract"]} for p in papers])
     
     sys_prompt = f"""
-你正在測量當代學術的「真實背景能勢場」。以下是由系統精準篩選出的自然母體論文群。
-請綜合判斷這個論文群體所構成的場域，在 6 個維度上的整體表現。
-維度定義：{manifest_str} (1=突破, 0=守成)
+你現在是一台「相對論向量測量儀」。
+【絕對基準尺】：大魔王的理論核心為 "{core_statement}"。請將此視為向量空間的「原點與絕對正向 (0度)」。
+以下是由系統篩選出、目前學界最接近的 {len(papers)} 篇自然母體論文群。
 
-請回傳 JSON：
+請『反過來』，用大魔王的理論當作尺，來測量這些既有研究。
+針對以下 6 個維度，判斷這些母體文獻的發展向量，相對於大魔王的理論是：
+- 【同向】 (0~89度)：朝同一個大目標前進，但可能有深淺之分。
+- 【正交】 (90度)：各走各的，毫無交集，或平行時空。
+- 【反向】 (91~180度)：觀念完全對立、或是舊時代的阻礙與倒退。
+
+維度定義：{manifest_str}
+(同時請保留 baseline_hex，1=該維度母體有獨立突破, 0=母體停滯)
+
+請嚴格回傳 JSON：
 {MD_FENCE}json
 {{
   "baseline_hex": "010011",
-  "vote_stats": [2, 3, 1, 4, 5, 4] 
+  "vote_stats": [2, 3, 1, 4, 5, 4],
+  "global_angle": "整體相位差：105度 (偏向正交與反向阻力)",
+  "vector_analysis": [
+    {{"dimension": "價值意圖", "direction": "反向", "angle": "120度", "reason": "母體仍在追求...這與大魔王的...背道而馳"}},
+    {{"dimension": "治理維度", "direction": "同向", "angle": "45度", "reason": "雙方皆認同...但大魔王推得更深"}}
+  ]
 }}
 {MD_FENCE}
 """
-    print("⚖️ [場域測量 - 階段 4] 計算真實自然母體之絕對張量...")
+    print("📐 [場域測量 - 階段 4] 啟動反向尺規！以本體為原點，測量現有母體的偏差角度...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_str}],
         temperature=0.1
     )
     res = parse_llm_json(response.choices[0].message.content)
-    return res.get("baseline_hex", "000000"), res.get("vote_stats", [0]*6)
+    return res
 
 def process_avh_manifestation(source_path, manifest):
     print(f"\n🌊 [波包掃描] 實體源碼：{source_path}")
@@ -225,43 +235,42 @@ def process_avh_manifestation(source_path, manifest):
         core_statement = user_data.get("core_statement", "Academic Ontology Theory")
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 2. Broad Retrieval (Crossref Polite Pool)
+        # 2. Broad Retrieval
         raw_papers = fetch_broad_neighborhood_crossref(core_statement)
         
-        # 3. LLM Re-ranking (Dynamic Count)
+        # 3. LLM Re-ranking
         final_papers, filtering_log = rerank_and_filter_papers(core_statement, raw_papers)
         
-        # 💥 4. 處理絕對無人區的情境
         paper_records = []
+        vector_logs = []
+        global_angle = ""
+        
+        # 4. 反向測量與處理絕對無人區
         if not final_papers:
             baseline_status = "Absolute Void (絕對無人區：大腦判定周遭毫無可對話之母體)"
             baseline_hex = "000000"
             vote_stats = [0]*6
             paper_records.append("- `[Void]` **大腦過濾宣告**：傳統引擎返回之文獻皆屬雜訊，本理論目前無直接學術鄰域。")
+            vector_logs = ["* (無母體可供測量，向量干涉無效)"]
+            global_angle = "整體相位差：無定義 (Void)"
         else:
             baseline_status = f"Crossref Matrix Established (基礎設施母體建構完成：{len(final_papers)} 核心節點)"
-            baseline_hex, vote_stats = evaluate_baseline_papers(final_papers, manifest)
             for p in final_papers:
                 paper_records.append(f"- `[DOI:{p['id']}]` **{p['title']}** (Cited: {p['citations']})")
-
-        # 5. Offset Calculation
-        breakthrough_dims = []
-        offset_score = 0
-        for i in range(6):
-            if user_hex[i] == "1" and baseline_hex[i] == "0":
-                breakthrough_dims.append(manifest["dimensions"][list(manifest["dimensions"].keys())[i]]["layer"])
-                offset_score += 1
-            elif user_hex[i] == "0" and baseline_hex[i] == "1":
-                offset_score -= 1
                 
-        breakthrough_str = "、".join(breakthrough_dims) if breakthrough_dims else "與場域同頻"
-        offset_status = f"能勢偏移值 (Offset): {offset_score:+d} (正值為超越母體，負值為受迫於母體)"
-        
-        # 6. Summary Generation
+            matrix_data = evaluate_matrix_with_reverse_ruler(final_papers, manifest, core_statement)
+            baseline_hex = matrix_data.get("baseline_hex", "000000")
+            vote_stats = matrix_data.get("vote_stats", [0]*6)
+            global_angle = matrix_data.get("global_angle", "未定義")
+            
+            for v in matrix_data.get("vector_analysis", []):
+                vector_logs.append(f"* **{v['dimension']}**：【{v['direction']}】(偏角 {v['angle']}) - {v['reason']}")
+
+        # 5. Summary Generation
         client = get_llm_client()
         summary_prompt = f"""
-本理論在「外部場域觀測」中測得偏移值為 {offset_score:+d}，拓樸破缺維度：【{breakthrough_str}】。
-請根據下文撰寫 200 字理論導讀，客觀描述其在學術生態中的定位(若是無人區請直接指出)。
+大魔王的理論在「外部場域觀測」中，與現有學術母體的相對位置為：{global_angle}。
+請根據下文撰寫 200 字理論導讀，客觀描述其作為絕對座標，是如何與現有學界產生干涉與拉扯的。若是無人區請直接指出。
 第一句必須以「本理論架構...」開頭。
 """
         response = call_llm_with_retry(
@@ -274,8 +283,6 @@ def process_avh_manifestation(source_path, manifest):
         return {
             "user_hex": user_hex,
             "baseline_hex": baseline_hex,
-            "breakthrough_str": breakthrough_str,
-            "offset_status": offset_status,
             "state_name": user_state_info['name'],
             "dim_logs": dim_logs,
             "summary": clean_summary,
@@ -286,6 +293,8 @@ def process_avh_manifestation(source_path, manifest):
                 "final_hits": len(final_papers),
                 "filtering_log": filtering_log,
                 "paper_records": paper_records,
+                "vector_logs": vector_logs,
+                "global_angle": global_angle,
                 "vote_stats": vote_stats,
                 "baseline_status": baseline_status,
                 "llm_model": LLM_MODEL_NAME
@@ -300,6 +309,7 @@ def generate_trajectory_log(target_file, data):
     dim_logs_text = "\n    ".join(data['dim_logs'])
     meta = data['meta_data']
     papers_text = "\n".join(meta['paper_records'])
+    vectors_text = "\n".join(meta['vector_logs'])
     
     if meta['final_hits'] > 0:
         vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{meta['final_hits']}" for i in range(6)])
@@ -311,22 +321,26 @@ def generate_trajectory_log(target_file, data):
         f"* **觀測時間戳 (CST)**：`{timestamp}`\n"
         f"* **高維算力引擎**：`{meta['llm_model']}`\n\n"
         f"---\n"
-        f"### 1. 🌌 自然母體建構 (Crossref Natural Matrix)\n"
-        f"* **本體核心宣告 (Core Statement)**：`{meta['core_statement']}`\n"
-        f"* **場域建構狀態**：`{meta['baseline_status']}` (原始打撈 {meta['raw_hits']} 篇)\n"
-        f"* **大腦重排日誌 (Re-ranking Filter)**：_{meta['filtering_log']}_\n"
-        f"* **母體核心節點 (True Neighborhood)**：\n"
-        f"{papers_text}\n\n"
-        f"* **母體張量統計**：`[ {vote_str} ]`\n"
-        f"* 🗺️ **母體絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
-        f"### 2. ⚖️ 無人區干涉測量 (No Man's Land Triangulation)\n"
+        f"### 1. 🌌 絕對本體觀測 (Absolute Ontology)\n"
         f"* 🛡️ **本體論絕對指紋 (Ontology Hex)**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
-        f"* ⚡ **{data['offset_status']}**\n"
-        f"* 🌌 **拓樸破缺維度 (相對於自然母體)**：**【{data['breakthrough_str']}】**\n\n"
+        f"* **本體核心宣告 (Core Statement)**：`{meta['core_statement']}`\n\n"
         f"**詳細本體測量儀表板**：\n"
         f"    {dim_logs_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V30.2 柔性容錯架構。若大腦判定無同頻母體，則誠實宣告無人區。*\n"
+        f"### 2. 🎣 自然母體打撈 (Matrix Spawning)\n"
+        f"* **場域建構狀態**：`{meta['baseline_status']}` (原始打撈 {meta['raw_hits']} 篇)\n"
+        f"* **大腦重排日誌 (Re-ranking Filter)**：_{meta['filtering_log']}_\n"
+        f"* **母體核心節點 (Surviving Neighborhood)**：\n"
+        f"{papers_text}\n\n"
+        f"---\n"
+        f"### 3. 📐 反向尺規：向量干涉與相位角 (Vector Interference)\n"
+        f"> *以大魔王之本體為原點(0度)，測量現有母體之發展向量*\n\n"
+        f"* 🌐 **整體場域偏差**：**{meta['global_angle']}**\n"
+        f"* 🗺️ **母體絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n"
+        f"* **維度向量干涉儀表板**：\n"
+        f"{vectors_text}\n\n"
+        f"---\n"
+        f"> *註：本報告採 V31.0 反向尺規架構。將本體視為絕對真理基準，計算當代學界與其之相位偏差角度。*\n"
     )
     return log_output
 
@@ -342,12 +356,11 @@ def export_wordpress_html(basename, data):
         "    </div>\n"
         "    <hr>\n"
         "    <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "        <h3>📡 學術價值全像儀 (AVH) 穩定母體認證</h3>\n"
+        "        <h3>📡 學術價值全像儀 (AVH) 反向尺規認證</h3>\n"
         f"        <p><strong>理論導讀摘要 (Generated by {meta['llm_model']})：</strong><br>{data['summary']}</p>\n"
         "        <hr>\n"
         f"        <p>場域建構狀態：{meta['baseline_status']}</p>\n"
-        f"        <p><strong>{data['offset_status']}</strong></p>\n"
-        f"        <p>突破維度：【 {data['breakthrough_str']} 】</p>\n"
+        f"        <p><strong>整體場域偏差：{meta['global_angle']}</strong></p>\n"
         f"        <p>最終本體狀態：[ {data['user_hex']} ] - <strong>{data['state_name']}</strong></p>\n"
         f"        <p>物理時間戳：{timestamp_str}</p>\n"
         "    </div>\n"
@@ -369,7 +382,7 @@ def export_latex(basename, data):
         "\\maketitle\n"
         "\\begin{abstract}\n"
         f"[{data['user_hex']}] {data['state_name']}。\n\n"
-        f"{data['offset_status']}\n"
+        f"整體場域偏差：{data['meta_data']['global_angle']}\n"
         "\\end{abstract}\n\n"
         f"{tex_content}\n\n"
         "\\end{document}\n"
@@ -390,7 +403,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V30.2 容錯母體觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V31.0 反向尺規觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
