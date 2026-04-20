@@ -13,7 +13,7 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V35.1 語意拓樸回歸版 - 斬除關鍵字降維與 UI 渲染防爆)
+# AVH Genesis Engine (V35.2 網址淨化回歸版 - 修復 Markdown 連結污染)
 # ==============================================================================
 
 LLM_MODEL_NAME = "openai/gpt-4o"
@@ -30,13 +30,14 @@ DIMENSIONS = [
 DIMENSION_KEYS = [d["key"] for d in DIMENSIONS]
 DIMENSION_META = {d["key"]: d for d in DIMENSIONS}
 
-print(f"🧠 [載入觀測核心] 啟動 V35.1 語意拓樸回歸版 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V35.2 語意拓樸回歸版 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
         raise ValueError("遺失 GITHUB_TOKEN，無法啟動算力。")
-    return OpenAI(base_url="[https://models.github.ai/inference](https://models.github.ai/inference)", api_key=token)
+    # V35.2 修復：還原乾淨的 API 網址
+    return OpenAI(base_url="https://models.github.ai/inference", api_key=token)
 
 def call_llm_with_retry(client, messages, temperature=0.0, max_retries=4, json_mode=True):
     last_error = None
@@ -64,7 +65,6 @@ def parse_llm_json(response_text):
     
     text = response_text.strip()
     
-    # 絕對防禦：動態生成反引號以避開系統 UI 崩潰 (immersive_entry_chip bug)
     fence = chr(96) * 3
     pattern = fence + r"(?:json)?\s*(.*?)\s*" + fence
     match = re.search(pattern, text, re.DOTALL)
@@ -312,11 +312,12 @@ def evaluate_user_profile(raw_text, manifest):
     }
 
 def fetch_broad_neighborhood_crossref(core_statement):
+    # V35.2 修復：還原乾淨的 API 網址
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/35.1 ([https://github.com/alaric-kuo](https://github.com/alaric-kuo); mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/35.2 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
-    url = f"[https://api.crossref.org/works?query=](https://api.crossref.org/works?query=){encoded_query}&select=DOI,title,abstract&rows=30"
+    url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract&rows=30"
 
     print(f"🌍 [階段 2] 投放核心宣告：『{core_statement}』\n🌍 正在 Crossref 禮貌池中打撈關聯文獻...")
     try:
@@ -571,7 +572,8 @@ def format_vector_logs(vector_data):
 def format_reference_records(scored_papers):
     rows = []
     for p in scored_papers:
-        doi_link = f"[https://doi.org/](https://doi.org/){p['id']}" if p["id"] != "Unknown" else "#"
+        # V35.2 修復：還原乾淨的 API 網址
+        doi_link = f"https://doi.org/{p['id']}" if p["id"] != "Unknown" else "#"
         note = f"｜{p['note']}" if p["note"] else ""
         rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}** {note}")
     return rows
@@ -712,7 +714,7 @@ def generate_trajectory_log(target_file, data):
         f"### 4. 🧾 系統導讀摘要（System Interpretation）\n"
         f"> {data['summary']}\n\n"
         f"---\n"
-        f"> *註：本報告採 V35.1 語意拓樸回歸版。斬除關鍵字降維污染，全域回歸高維大腦結構重排。*\n"
+        f"> *註：本報告採 V35.2 語意拓樸回歸版。斬除關鍵字降維污染，全域回歸高維大腦結構重排。*\n"
     )
 
 def export_wordpress_html(basename, data):
@@ -779,7 +781,7 @@ if __name__ == "__main__":
         print("ℹ️ 未找到任何 Markdown 來源檔。")
         sys.exit(0)
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V35.1 語意拓樸回歸日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V35.2 語意拓樸與網址淨化日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
