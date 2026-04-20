@@ -12,7 +12,7 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V34.1 單核精準檢索版 - Core Statement = Query)
+# AVH Genesis Engine (V35.0 聯集打撈與無人區回歸版 - Core Statement = Query)
 # ==============================================================================
 
 LLM_MODEL_NAME = "openai/gpt-4o"
@@ -32,10 +32,12 @@ DIMENSION_META = {d["key"]: d for d in DIMENSIONS}
 STOPWORDS = {
     "the", "a", "an", "and", "or", "for", "of", "to", "in", "on", "through",
     "by", "with", "from", "into", "via", "using", "use", "based", "beyond",
-    "toward", "towards", "within", "across", "under", "over", "between"
+    "toward", "towards", "within", "across", "under", "over", "between",
+    "that", "this", "these", "those", "their", "our", "your", "its",
+    "is", "are", "was", "were", "be", "being", "been", "as", "at", "it"
 }
 
-print(f"🧠 [載入觀測核心] 啟動 V34.1 單核精準檢索版 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V35.0 聯集打撈與無人區回歸版 ({LLM_MODEL_NAME})...")
 
 
 # ------------------------------------------------------------------------------
@@ -285,21 +287,23 @@ def build_dimensions_prompt(manifest):
 
 
 def tokenize_query_terms(text):
-    return [t for t in re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", str(text).lower()) if t not in STOPWORDS]
+    return [
+        t for t in re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", str(text).lower())
+        if t not in STOPWORDS
+    ]
 
 
 def build_phrase_windows(core_statement):
     tokens = tokenize_query_terms(core_statement)
     windows = []
 
-    # 3-gram 與 2-gram 作為強錨點
     for n in [3, 2]:
         for i in range(len(tokens) - n + 1):
-            phrase = " ".join(tokens[i:i+n])
+            phrase = " ".join(tokens[i:i + n])
             if phrase not in windows:
                 windows.append(phrase)
 
-    return windows[:8]
+    return windows[:10]
 
 
 # ------------------------------------------------------------------------------
@@ -325,13 +329,11 @@ def evaluate_user_profile(raw_text, manifest):
 5. confidence 範圍必須是 0 到 100 的整數。
 6. reason 必須是簡潔中文短語，客觀，不煽情。
 7. academic_fingerprint 必須是 60-110 字中文，客觀，不要鼓勵語氣，不要神話化。
-
-最重要：
 8. core_statement 同時是「展示主題句」與「檢索句」，不可拆成兩套。
-9. 它必須是可檢索、可追溯、精準的英文學術句，不是口號，不是標題，不是漂亮摘要。
-10. 長度以 8-18 個英文詞為原則。
-11. 必須盡量包含：研究對象、方法框架、判準衝突 或 目標問題。
-12. 避免過度泛化詞，例如只寫 redefining / evolution / trust / ontology 而沒有具體對象。
+9. core_statement 必須是可檢索、可追溯、精準的英文學術句，不是口號，不是漂亮標題。
+10. 長度以 8-22 個英文詞為原則。
+11. 必須盡量納入：研究對象、方法框架、判準衝突、或目標問題。
+12. 請避免只保留過度抽象大詞；要讓 Crossref 有機會抓到同題文獻。
 
 請只回傳 JSON：
 {{
@@ -430,7 +432,7 @@ def evaluate_user_profile(raw_text, manifest):
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/34.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/35.0 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     params = {
         "query": core_statement,
@@ -486,7 +488,7 @@ def fetch_broad_neighborhood_crossref(core_statement):
             if len(raw_papers) >= 24:
                 break
 
-        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進行 lexical prefilter...")
+        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進行聯集式 prefilter...")
         return raw_papers
 
     except Exception as e:
@@ -494,11 +496,12 @@ def fetch_broad_neighborhood_crossref(core_statement):
 
 
 # ------------------------------------------------------------------------------
-# 階段 3：程式級 lexical prefilter
+# 階段 3：聯集導向 prefilter
 # ------------------------------------------------------------------------------
 
 def score_paper_by_core_statement(paper, core_statement, query_terms, query_phrases):
     combined = normalize_whitespace(f"{paper['title']} {paper['abstract']}").lower()
+    title_l = paper["title"].lower()
 
     score = 0
     matched_terms = []
@@ -506,27 +509,24 @@ def score_paper_by_core_statement(paper, core_statement, query_terms, query_phra
 
     full_statement = normalize_whitespace(core_statement).lower()
     if full_statement and full_statement in combined:
-        score += 45
+        score += 50
         matched_phrases.append(full_statement)
 
     for phrase in query_phrases:
         if phrase and phrase in combined:
-            score += 18
+            score += 16
             matched_phrases.append(phrase)
 
     for term in query_terms:
         if term in combined:
-            score += 8
             matched_terms.append(term)
+            score += 8
+            if term in title_l:
+                score += 6
 
     coverage = 0.0
     if query_terms:
         coverage = len(set(matched_terms)) / len(set(query_terms))
-
-    # 標題命中加權
-    title_l = paper["title"].lower()
-    title_hits = sum(1 for term in query_terms if term in title_l)
-    score += title_hits * 5
 
     return {
         "lexical_score": score,
@@ -536,7 +536,7 @@ def score_paper_by_core_statement(paper, core_statement, query_terms, query_phra
     }
 
 
-def prefilter_raw_papers(raw_papers, core_statement, query_terms, query_phrases, keep_top_k=12):
+def prefilter_raw_papers(raw_papers, core_statement, query_terms, query_phrases, keep_top_k=16):
     if not raw_papers:
         return [], "無原始文獻可做 lexical prefilter。"
 
@@ -547,25 +547,29 @@ def prefilter_raw_papers(raw_papers, core_statement, query_terms, query_phrases,
         p2.update(scored)
         enriched.append(p2)
 
-    enriched.sort(
+    # 聯集導向：只要命中任一關鍵詞或任一句片語就先留下
+    kept = []
+    for p in enriched:
+        has_any_term = len(p["matched_terms"]) > 0
+        has_any_phrase = len(p["matched_phrases"]) > 0
+        if has_any_term or has_any_phrase:
+            kept.append(p)
+
+    kept.sort(
         key=lambda x: (x["lexical_score"], x["coverage"], len(x["matched_terms"])),
         reverse=True
     )
-
-    kept = [p for p in enriched if p["lexical_score"] > 0][:keep_top_k]
-
-    if not kept and enriched:
-        kept = enriched[:min(6, len(enriched))]
+    kept = kept[:keep_top_k]
 
     if kept:
         top = kept[0]
         log = (
-            f"程式級 prefilter 已啟動；原始 {len(raw_papers)} 篇，保留 {len(kept)} 篇。"
+            f"程式級 prefilter 已啟動；採聯集保留邏輯。原始 {len(raw_papers)} 篇，保留 {len(kept)} 篇。"
             f"最高 lexical score = {top['lexical_score']}，coverage = {top['coverage']:.3f}。"
             f"主要命中詞：{', '.join(top['matched_terms'][:8]) if top['matched_terms'] else '無'}。"
         )
     else:
-        log = f"程式級 prefilter 已啟動；原始 {len(raw_papers)} 篇，但無任何文獻命中核心檢索句。"
+        log = f"程式級 prefilter 已啟動；原始 {len(raw_papers)} 篇，但無任何文獻命中核心句之關鍵詞或片語。"
 
     return kept, log
 
@@ -586,7 +590,7 @@ def rerank_and_filter_papers(core_statement, prefiltered_papers):
 本理論唯一核心宣告（同時作為檢索句）為：
 "{core_statement}"
 
-以下文獻已經通過程式級 lexical prefilter。
+以下文獻已經通過聯集式 lexical prefilter。
 請你再做一次理論結構重排：
 1. 保留真正與這個核心宣告同題或可對話的文獻。
 2. 剔除只是撞字、但問題設定不同的文獻。
@@ -851,7 +855,7 @@ def format_reference_records(scored_papers):
     for p in scored_papers:
         doi_link = f"https://doi.org/{p['id']}" if p["id"] != "Unknown" else "#"
         terms = ", ".join(p["matched_terms"][:8]) if p["matched_terms"] else "無"
-        phrases = "; ".join(p["matched_phrases"][:4]) if p["matched_phrases"] else "無"
+        phrases = "；".join(p["matched_phrases"][:4]) if p["matched_phrases"] else "無"
         note = f"｜{p['note']}" if p["note"] else ""
 
         rows.append(
@@ -919,21 +923,21 @@ def process_avh_manifestation(source_path, manifest):
             user_profile["core_statement"],
             user_profile["query_terms"],
             user_profile["query_phrases"],
-            keep_top_k=12
+            keep_top_k=16
         )
         final_papers, filtering_log = rerank_and_filter_papers(user_profile["core_statement"], prefiltered_papers)
 
         if not final_papers:
-            baseline_status = "Sparse Reference Field（稀疏參考場）"
+            baseline_status = "Void（無人區：外部場域尚不足以形成可測量母體）"
             background_hex = "000000"
-            paper_records = ["- `[Void]` **全域寂靜**：目前不足以構成穩定可量化的背景能勢場。"]
-            vector_logs = ["* **背景向量量化**：無足夠背景質量，無法形成穩定比較。"]
-            global_angle = "N/A"
+            paper_records = ["- `[Void]` **全域寂靜**：周遭尚無足夠背景能勢質量，無法形成可測量母體。"]
+            vector_logs = ["* **背景向量量化**：無人區狀態，暫無穩定背景向量可供干涉比較。"]
+            global_angle = "無定義（Void）"
             global_cosine = "N/A"
             global_proximity = "N/A"
-            global_relation = "Void"
-            background_batch_log = "無可用背景文獻。"
-            summary = "本理論架構目前落在稀疏參考場之中，外部文獻鄰域不足，尚無法形成穩定背景母體，因此其與現有學界的方向關係暫時未定。"
+            global_relation = "無人區"
+            background_batch_log = "最終保留文獻為 0，系統判定當前外部場域不足以構成可測量背景母體。"
+            summary = "本理論架構目前處於無人區狀態；外部鄰近文獻尚不足以形成穩定背景母體，因此與現有學界的方向關係暫時不可定義。"
         else:
             baseline_status = f"Background Field Established（背景能勢建構完成：{len(final_papers)} 鄰域節點）"
             scored_background = evaluate_background_papers(final_papers, manifest, user_profile["core_statement"])
@@ -1042,7 +1046,7 @@ def generate_trajectory_log(target_file, data):
         f"### 4. 🧾 系統導讀摘要（System Interpretation）\n"
         f"> {data['summary']}\n\n"
         f"---\n"
-        f"> *註：本報告採 V34.1 單核精準檢索版。Core Statement 與 Query 不分離；檢索 trace 已顯性保留。*\n"
+        f"> *註：本報告採 V35.0 聯集打撈與無人區回歸版。Core Statement 與 Query 不分離；prefilter 採聯集邏輯；final hits = 0 時直接回歸 Void。*\n"
     )
 
 
@@ -1059,7 +1063,7 @@ def export_wordpress_html(basename, data):
         "  </div>\n"
         "  <hr>\n"
         "  <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "    <h3>📡 學術價值全像儀（AVH）單核精準檢索認證</h3>\n"
+        "    <h3>📡 學術價值全像儀（AVH）聯集打撈與無人區回歸認證</h3>\n"
         f"    <p><strong>核心宣告／檢索句：</strong>{html.escape(meta['core_statement'])}</p>\n"
         f"    <p><strong>本體狀態：</strong>[ {html.escape(data['user_hex'])} ] - {html.escape(data['state_name'])}</p>\n"
         f"    <p><strong>背景狀態：</strong>[ {html.escape(data['baseline_hex'])} ]</p>\n"
@@ -1123,7 +1127,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V34.1 單核精準檢索日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V35.0 聯集打撈與無人區回歸日誌\n---\n")
         last_hex_code = ""
 
         for target_source in source_files:
