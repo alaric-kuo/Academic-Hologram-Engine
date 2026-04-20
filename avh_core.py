@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V31.1 反向尺規與向量干涉版 - 徹底解除數量封印)
+# AVH Genesis Engine (V31.2 反向尺規與背景能勢版 - 嚴謹正名與精準排版)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V31.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V31.2 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -66,8 +66,12 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 你是一台極度嚴謹的「學術本體論觀測儀器」。請閱讀文本並評估 6 個維度(1=突破, 0=守成)。
 維度定義：{manifest_str}
 
-為了向外部圖譜發動「語意寬鬆檢索」，請將這篇文本的底層物理/治理/系統邏輯，壓縮成一句「精準的英文學術核心宣告 (Core Statement)」。
-**這句話必須控制在 10 到 15 個英文單字之間。** 請回傳 JSON：
+為了向外部圖譜發動精準的語意檢索，請將這篇文本的最核心學術貢獻，壓縮成一句「極度精準的英文學術核心宣告 (Core Statement)」。
+**規則**：
+1. 長度嚴格控制在 10 到 15 個英文單字之間。
+2. 拒絕空泛的學術八股文 (例如 "A framework for...")。必須直指理論本質，提取最具原創性的物理/治理/拓樸概念。
+
+請回傳 JSON：
 {MD_FENCE}json
 {{
   "hex_code": "111111",
@@ -79,11 +83,11 @@ def evaluate_user_text_and_compress(raw_text, manifest):
     "* **擴張潛力**：離群突破 (sin) `[觀測判定：...]`",
     "* **應用實相**：離群突破 (sin) `[觀測判定：...]`"
   ],
-  "core_statement": "Quantum topology approach to trust governance and anti-fragility systems"
+  "core_statement": "Semantic topology and active damping for anti-fragile knowledge systems"
 }}
 {MD_FENCE}
 """
-    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，執行核心塌陷 (12-word Core)...")
+    print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，提取銳利的核心宣告 (12-word Core)...")
     response = call_llm_with_retry(
         client, 
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": raw_text[:4000]}],
@@ -93,7 +97,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/31.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/31.2 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
     url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract,is-referenced-by-count&rows=25"
@@ -134,8 +138,7 @@ def fetch_broad_neighborhood_crossref(core_statement):
             if len(raw_papers) >= 20:
                 break
                 
-        # 💥 這裡已徹底移除 len < 3 的自殺判定，撈到幾篇算幾篇
-        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進入大腦重排...")
+        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進行參考背景重排...")
         time.sleep(1)
         return raw_papers
         
@@ -151,21 +154,21 @@ def rerank_and_filter_papers(core_statement, raw_papers):
     papers_json = json.dumps(raw_papers, ensure_ascii=False)
     
     sys_prompt = f"""
-你現在是一位客觀的學術觀測員。我的核心理論宣告是："{core_statement}"
+你現在是一位客觀的學術觀測員。本理論核心宣告為："{core_statement}"
 以下是傳統搜尋引擎撈回的 {len(raw_papers)} 篇初步文獻。
 
 請利用高維度認知閱讀它們。剔除「只是撞字、核心邏輯毫無關聯」的雜訊。
-挑出「最適合拿來作為該理論『參考座標』或『對話對象』」的文獻 (最多保留 8 篇，如果只有 1 篇合格就留 1 篇，0 篇則回傳空陣列)。
+挑出「最適合拿來作為該理論『參考背景座標』或『對話對象』」的文獻 (最多保留 8 篇，如果只有 1 篇合格就留 1 篇，0 篇則回傳空陣列)。
 
 請回傳 JSON：
 {MD_FENCE}json
 {{
   "selected_ids": ["id_1", "id_2"],
-  "filtering_log": "簡述你保留了哪些文獻，為何剔除其他雜訊"
+  "filtering_log": "簡述保留了哪些文獻作為背景能勢參考，為何剔除其他雜訊"
 }}
 {MD_FENCE}
 """
-    print(f"⚖️ [大腦運算 - 階段 3] 啟動柔性重排，全數保留合格母體 (最高 8 篇)...")
+    print(f"⚖️ [大腦運算 - 階段 3] 啟動柔性重排，萃取符合條件的參考背景能勢...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_json}],
@@ -186,17 +189,17 @@ def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
     
     sys_prompt = f"""
 你現在是一台「相對論向量測量儀」。
-【絕對基準尺】：大魔王的理論核心為 "{core_statement}"。請將此視為向量空間的「原點與絕對正向 (0度)」。
-以下是由系統篩選出、目前學界最接近的 {len(papers)} 篇自然母體論文群。
+【絕對基準尺】：本理論核心為 "{core_statement}"。請將此視為向量空間的「原點與絕對正向 (0度)」。
+以下是由系統篩選出、目前學界最接近的 {len(papers)} 篇參考背景文獻。
 
-請『反過來』，用大魔王的理論當作尺，來測量這些既有研究。
-針對以下 6 個維度，判斷這些母體文獻的發展向量，相對於大魔王的理論是：
-- 【同向】 (0~89度)：朝同一個大目標前進，但可能有深淺之分。
-- 【正交】 (90度)：各走各的，毫無交集，或平行時空。
-- 【反向】 (91~180度)：觀念完全對立、或是舊時代的阻礙與倒退。
+請『反過來』，以本理論當作尺規，測量這些既有背景研究。
+針對以下 6 個維度，判斷這些參考背景能勢的發展向量，相對於本理論是：
+- 【同向】 (0~89度)：朝同一個大目標前進，但深度或廣度有所不及。
+- 【正交】 (90度)：各走各的，平行時空或關注截然不同的切入點。
+- 【反向】 (91~180度)：觀念完全對立，或是本理論明確意圖顛覆的舊時代框架。
 
 維度定義：{manifest_str}
-(同時請保留 baseline_hex，1=該維度母體有獨立突破, 0=母體停滯)
+(同時請保留 baseline_hex，1=背景文獻在該維度有獨立突破, 0=背景文獻停滯)
 
 請嚴格回傳 JSON：
 {MD_FENCE}json
@@ -205,13 +208,13 @@ def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
   "vote_stats": [2, 3, 1, 4, 5, 4],
   "global_angle": "整體相位差：105度 (偏向正交與反向阻力)",
   "vector_analysis": [
-    {{"dimension": "價值意圖", "direction": "反向", "angle": "120度", "reason": "母體仍在追求...這與大魔王的...背道而馳"}},
-    {{"dimension": "治理維度", "direction": "同向", "angle": "45度", "reason": "雙方皆認同...但大魔王推得更深"}}
+    {{"dimension": "價值意圖", "direction": "反向", "angle": "120度", "reason": "背景文獻仍在追求...這與本理論的...背道而馳"}},
+    {{"dimension": "治理維度", "direction": "同向", "angle": "45度", "reason": "雙方皆認同...但本理論推得更深"}}
   ]
 }}
 {MD_FENCE}
 """
-    print("📐 [場域測量 - 階段 4] 啟動反向尺規！以本體為原點，測量現有母體的偏差角度...")
+    print("📐 [場域測量 - 階段 4] 啟動反向尺規！以本體為原點，測量參考背景能勢的偏差角度...")
     response = call_llm_with_retry(
         client,
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": papers_str}],
@@ -247,10 +250,10 @@ def process_avh_manifestation(source_path, manifest):
             baseline_hex = "000000"
             vote_stats = [0]*6
             paper_records.append("- `[Void]` **全域寂靜**：核心宣告過於前沿，無法與現存文獻建立有效拓樸連結。")
-            vector_logs = ["* **測量結果**：周遭無文獻質量，無法產生向量干涉與相位角。"]
+            vector_logs = ["* **測量結果**：周遭無背景能勢質量，無法產生向量干涉與相位角。"]
             global_angle = "整體相位差：無定義 (Void)"
         else:
-            baseline_status = f"Crossref Matrix Established (基礎設施母體建構完成：{len(final_papers)} 核心節點)"
+            baseline_status = f"Background Field Established (參考背景能勢建構完成：{len(final_papers)} 節點)"
             for p in final_papers:
                 paper_records.append(f"- `[DOI:{p['id']}]` **{p['title']}** (Cited: {p['citations']})")
                 
@@ -264,7 +267,7 @@ def process_avh_manifestation(source_path, manifest):
 
         client = get_llm_client()
         summary_prompt = f"""
-大魔王的理論在「外部場域觀測」中，與現有學術母體的相對位置為：{global_angle}。
+本理論在「外部場域觀測」中，與現有參考背景能勢的相對位置為：{global_angle}。
 請根據下文撰寫 200 字理論導讀，客觀描述其作為絕對座標，是如何與現有學界產生干涉與拉扯的。若是無人區請直接指出。
 第一句必須以「本理論架構...」開頭。
 """
@@ -301,10 +304,11 @@ def process_avh_manifestation(source_path, manifest):
 
 def generate_trajectory_log(target_file, data):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
-    dim_logs_text = "\n    ".join(data['dim_logs'])
+    # V31.2 修正排版：使用雙換行確保 Markdown 正確渲染列表間距
+    dim_logs_text = "\n\n".join(data['dim_logs'])
     meta = data['meta_data']
     papers_text = "\n".join(meta['paper_records'])
-    vectors_text = "\n".join(meta['vector_logs'])
+    vectors_text = "\n\n".join(meta['vector_logs'])
     
     log_output = (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
@@ -314,23 +318,23 @@ def generate_trajectory_log(target_file, data):
         f"### 1. 🌌 絕對本體觀測 (Absolute Ontology)\n"
         f"* 🛡️ **本體論絕對指紋 (Ontology Hex)**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
         f"* **本體核心宣告 (Core Statement)**：`{meta['core_statement']}`\n\n"
-        f"**詳細本體測量儀表板**：\n"
-        f"    {dim_logs_text}\n\n"
+        f"**詳細本體測量儀表板**：\n\n"
+        f"{dim_logs_text}\n\n"
         f"---\n"
-        f"### 2. 🎣 自然母體打撈 (Matrix Spawning)\n"
+        f"### 2. 🎣 背景能勢打撈 (Background Field Retrieval)\n"
         f"* **場域建構狀態**：`{meta['baseline_status']}` (原始打撈 {meta['raw_hits']} 篇)\n"
         f"* **大腦重排日誌 (Re-ranking Filter)**：_{meta['filtering_log']}_\n"
-        f"* **母體核心節點 (Surviving Neighborhood)**：\n"
+        f"* **參考核心節點 (Reference Neighborhood)**：\n"
         f"{papers_text}\n\n"
         f"---\n"
         f"### 3. 📐 反向尺規：向量干涉與相位角 (Vector Interference)\n"
-        f"> *以大魔王之本體為原點(0度)，測量現有母體之發展向量*\n\n"
+        f"> *以本理論為絕對原點(0度)，測量現有背景能勢之發展向量*\n\n"
         f"* 🌐 **整體場域偏差**：**{meta['global_angle']}**\n"
-        f"* 🗺️ **母體絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n"
-        f"* **維度向量干涉儀表板**：\n"
+        f"* 🗺️ **背景絕對指紋 (Background Hex)**：`[{data['baseline_hex']}]`\n\n"
+        f"**維度向量干涉儀表板**：\n\n"
         f"{vectors_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V31.1 反向尺規架構。解除所有數量封印，真實反映與學界的向量干涉。*\n"
+        f"> *註：本報告採 V31.2 反向尺規架構。將本體視為絕對真理基準，計算當代學界文獻與其之相位偏差角度。*\n"
     )
     return log_output
 
@@ -393,7 +397,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V31.1 反向尺規觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V31.2 基準反轉觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
