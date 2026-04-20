@@ -3,16 +3,17 @@ import sys
 import json
 import glob
 import re
+import requests
+import urllib.parse
 import time
 import math
 import html
-import requests
 from datetime import datetime
 from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V35.0 聯集打撈與無人區回歸版 - Core Statement = Query)
+# AVH Genesis Engine (V35.1 語意拓樸回歸版 - 斬除關鍵字降維與 UI 渲染防爆)
 # ==============================================================================
 
 LLM_MODEL_NAME = "openai/gpt-4o"
@@ -29,30 +30,13 @@ DIMENSIONS = [
 DIMENSION_KEYS = [d["key"] for d in DIMENSIONS]
 DIMENSION_META = {d["key"]: d for d in DIMENSIONS}
 
-STOPWORDS = {
-    "the", "a", "an", "and", "or", "for", "of", "to", "in", "on", "through",
-    "by", "with", "from", "into", "via", "using", "use", "based", "beyond",
-    "toward", "towards", "within", "across", "under", "over", "between",
-    "that", "this", "these", "those", "their", "our", "your", "its",
-    "is", "are", "was", "were", "be", "being", "been", "as", "at", "it"
-}
-
-print(f"🧠 [載入觀測核心] 啟動 V35.0 聯集打撈與無人區回歸版 ({LLM_MODEL_NAME})...")
-
-
-# ------------------------------------------------------------------------------
-# 基礎工具
-# ------------------------------------------------------------------------------
+print(f"🧠 [載入觀測核心] 啟動 V35.1 語意拓樸回歸版 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
         raise ValueError("遺失 GITHUB_TOKEN，無法啟動算力。")
-    return OpenAI(
-        base_url="https://models.github.ai/inference",
-        api_key=token,
-    )
-
+    return OpenAI(base_url="[https://models.github.ai/inference](https://models.github.ai/inference)", api_key=token)
 
 def call_llm_with_retry(client, messages, temperature=0.0, max_retries=4, json_mode=True):
     last_error = None
@@ -61,27 +45,32 @@ def call_llm_with_retry(client, messages, temperature=0.0, max_retries=4, json_m
             kwargs = {
                 "messages": messages,
                 "model": LLM_MODEL_NAME,
-                "temperature": temperature,
+                "temperature": temperature
             }
             if json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
             return client.chat.completions.create(**kwargs)
-
         except Exception as e:
             last_error = e
             wait_time = 2 ** attempt
             print(f"⚠️ 雲端連線異常 (嘗試 {attempt + 1}/{max_retries})，等待 {wait_time} 秒後重試... [{e}]")
             if attempt < max_retries - 1:
                 time.sleep(wait_time)
-
     raise ConnectionError(f"雲端算力請求超時或阻擋 ({last_error})")
-
 
 def parse_llm_json(response_text):
     if response_text is None:
         raise ValueError("LLM 未回傳任何內容。")
-
+    
     text = response_text.strip()
+    
+    # 絕對防禦：動態生成反引號以避開系統 UI 崩潰 (immersive_entry_chip bug)
+    fence = chr(96) * 3
+    pattern = fence + r"(?:json)?\s*(.*?)\s*" + fence
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        text = match.group(1).strip()
+
     start_idx = text.find("{")
     if start_idx == -1:
         raise ValueError("找不到 JSON 起始符號 '{'")
@@ -93,10 +82,8 @@ def parse_llm_json(response_text):
 
     for i in range(start_idx, len(text)):
         ch = text[i]
-
         if ch == '"' and not escape:
             in_string = not in_string
-
         if not in_string:
             if ch == "{":
                 depth += 1
@@ -105,7 +92,6 @@ def parse_llm_json(response_text):
                 if depth == 0:
                     end_idx = i
                     break
-
         if ch == "\\" and not escape:
             escape = True
         else:
@@ -115,17 +101,15 @@ def parse_llm_json(response_text):
         raise ValueError("找不到完整 JSON 結尾。")
 
     clean_json = text[start_idx:end_idx + 1]
-
+    
     try:
         return json.loads(clean_json, strict=False)
     except Exception:
         clean_json = re.sub(r"(?<!\\)\n", " ", clean_json)
         return json.loads(clean_json, strict=False)
 
-
 def normalize_whitespace(text):
     return re.sub(r"\s+", " ", str(text)).strip()
-
 
 def clean_crossref_abstract(raw_abstract):
     if not raw_abstract:
@@ -134,23 +118,18 @@ def clean_crossref_abstract(raw_abstract):
     text = html.unescape(text)
     return normalize_whitespace(text)
 
-
 def clamp(value, low, high):
     return max(low, min(high, value))
-
 
 def dim_label(key):
     meta = DIMENSION_META[key]
     return f"{meta['zh']}（{meta['en']}）"
 
-
 def sign_to_binary(scores_by_key):
     return "".join("1" if scores_by_key[k] > 0 else "0" for k in DIMENSION_KEYS)
 
-
 def signed_score_to_side(score):
     return "離群突破（sin）" if score > 0 else "合群守成（cos）"
-
 
 def enforce_score(value, field_name):
     try:
@@ -159,7 +138,6 @@ def enforce_score(value, field_name):
         raise ValueError(f"{field_name} 分數無法解析：{value}")
     return clamp(score, -100, 100)
 
-
 def enforce_confidence(value, field_name):
     try:
         conf = int(round(float(value)))
@@ -167,11 +145,9 @@ def enforce_confidence(value, field_name):
         raise ValueError(f"{field_name} 置信度無法解析：{value}")
     return clamp(conf, 0, 100)
 
-
 def validate_dimension_entries(entries, field_prefix):
     if not isinstance(entries, list) or len(entries) != 6:
-        raise ValueError(f"{field_prefix} 維度資料數量異常：需為 6，取得 {len(entries) if isinstance(entries, list) else '非陣列'}")
-
+        raise ValueError(f"{field_prefix} 維度資料數量異常：需為 6")
     by_key = {}
     for item in entries:
         if not isinstance(item, dict):
@@ -180,13 +156,10 @@ def validate_dimension_entries(entries, field_prefix):
         if key not in DIMENSION_KEYS:
             raise ValueError(f"{field_prefix} 出現未知維度 key：{key}")
         by_key[key] = item
-
     missing = [k for k in DIMENSION_KEYS if k not in by_key]
     if missing:
         raise ValueError(f"{field_prefix} 缺少維度：{missing}")
-
     return by_key
-
 
 def cosine_similarity(vec_a, vec_b):
     dot = sum(a * b for a, b in zip(vec_a, vec_b))
@@ -196,16 +169,13 @@ def cosine_similarity(vec_a, vec_b):
         return 0.0
     return dot / (norm_a * norm_b)
 
-
 def angle_from_cosine(cos_val):
     cos_val = clamp(cos_val, -1.0, 1.0)
     return math.degrees(math.acos(cos_val))
 
-
 def proximity_from_scores(user_score, background_score):
     diff = abs(user_score - background_score)
     return round(max(0.0, 100.0 - diff / 2.0), 1)
-
 
 def classify_relation(user_score, background_score):
     if abs(background_score) < 10:
@@ -222,42 +192,29 @@ def classify_relation(user_score, background_score):
         return "同向，但本體更強"
     return "同向，但背景更強"
 
-
 def compact_title(title, max_len=72):
     title = normalize_whitespace(title)
     if len(title) <= max_len:
         return title
     return title[: max_len - 1] + "…"
 
-
 def escape_latex(text):
     if text is None:
         return ""
-
     replacements = [
-        ("\\", "__LATEX_BACKSLASH__"),
-        ("&", r"\&"),
-        ("%", r"\%"),
-        ("$", r"\$"),
-        ("#", r"\#"),
-        ("_", r"\_"),
-        ("{", r"\{"),
-        ("}", r"\}"),
-        ("~", r"\textasciitilde{}"),
-        ("^", r"\textasciicircum{}"),
+        ("\\", "__LATEX_BACKSLASH__"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+        ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+        ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}"),
         ("__LATEX_BACKSLASH__", r"\textbackslash{}"),
     ]
-
     out = str(text)
     for src, dst in replacements:
         out = out.replace(src, dst)
     return out
 
-
 def markdown_to_latex(text):
     lines = str(text).splitlines()
     out = []
-
     for line in lines:
         if line.startswith("### "):
             out.append(f"\\subsubsection{{{escape_latex(line[4:])}}}")
@@ -267,9 +224,7 @@ def markdown_to_latex(text):
             out.append(f"\\section{{{escape_latex(line[2:])}}}")
         else:
             out.append(escape_latex(line))
-
     return "\n".join(out)
-
 
 def build_dimensions_prompt(manifest):
     payload = []
@@ -285,31 +240,6 @@ def build_dimensions_prompt(manifest):
         })
     return json.dumps(payload, ensure_ascii=False)
 
-
-def tokenize_query_terms(text):
-    return [
-        t for t in re.findall(r"[a-zA-Z][a-zA-Z\-]{2,}", str(text).lower())
-        if t not in STOPWORDS
-    ]
-
-
-def build_phrase_windows(core_statement):
-    tokens = tokenize_query_terms(core_statement)
-    windows = []
-
-    for n in [3, 2]:
-        for i in range(len(tokens) - n + 1):
-            phrase = " ".join(tokens[i:i + n])
-            if phrase not in windows:
-                windows.append(phrase)
-
-    return windows[:10]
-
-
-# ------------------------------------------------------------------------------
-# 階段 1：本體量化 + 單核檢索句生成
-# ------------------------------------------------------------------------------
-
 def evaluate_user_profile(raw_text, manifest):
     client = get_llm_client()
     manifest_str = build_dimensions_prompt(manifest)
@@ -323,69 +253,33 @@ def evaluate_user_profile(raw_text, manifest):
 
 量化規則：
 1. 每一維都要回傳 signed_score，範圍必須是 -100 到 +100 的整數。
-2. +100 = 非常強烈的離群突破（sin）。
-3. 0 = 中性、混合或不足以判定。
-4. -100 = 非常強烈的合群守成（cos）。
-5. confidence 範圍必須是 0 到 100 的整數。
-6. reason 必須是簡潔中文短語，客觀，不煽情。
-7. academic_fingerprint 必須是 60-110 字中文，客觀，不要鼓勵語氣，不要神話化。
-8. core_statement 同時是「展示主題句」與「檢索句」，不可拆成兩套。
-9. core_statement 必須是可檢索、可追溯、精準的英文學術句，不是口號，不是漂亮標題。
-10. 長度以 8-22 個英文詞為原則。
-11. 必須盡量納入：研究對象、方法框架、判準衝突、或目標問題。
-12. 請避免只保留過度抽象大詞；要讓 Crossref 有機會抓到同題文獻。
+2. +100 = 非常強烈的離群突破（sin）；0 = 中性；-100 = 非常強烈的合群守成（cos）。
+3. confidence 範圍必須是 0 到 100 的整數。
+4. reason 必須是簡潔中文短語，客觀，不煽情。
+5. academic_fingerprint 必須是 60-110 字中文，客觀。
+6. core_statement 作為核心宣告與檢索句。必須控制在 10-15 個英文單字，拒絕八股與口號，直指拓樸與演化本質。
 
 請只回傳 JSON：
 {{
-  "core_statement": "<同時作為展示與檢索的英文學術句>",
-  "academic_fingerprint": "<60-110字中文學術指紋>",
+  "core_statement": "<10-15 字精準英文核心宣告>",
+  "academic_fingerprint": "<中文學術指紋>",
   "dimensions": [
-    {{
-      "key": "value_intent",
-      "signed_score": 85,
-      "confidence": 92,
-      "reason": "重構知識邊界"
-    }},
-    {{
-      "key": "governance",
-      "signed_score": 72,
-      "confidence": 88,
-      "reason": "突破剛性治理框架"
-    }},
-    {{
-      "key": "cognition",
-      "signed_score": 90,
-      "confidence": 90,
-      "reason": "直指本體與混亂核心"
-    }},
-    {{
-      "key": "architecture",
-      "signed_score": 83,
-      "confidence": 87,
-      "reason": "全域連續動態架構"
-    }},
-    {{
-      "key": "expansion",
-      "signed_score": 78,
-      "confidence": 85,
-      "reason": "提取跨域通用協議"
-    }},
-    {{
-      "key": "application",
-      "signed_score": 68,
-      "confidence": 80,
-      "reason": "轉化為現實干預工具"
-    }}
+    {{"key": "value_intent", "signed_score": 85, "confidence": 92, "reason": "..."}},
+    {{"key": "governance", "signed_score": 72, "confidence": 88, "reason": "..."}},
+    {{"key": "cognition", "signed_score": 90, "confidence": 90, "reason": "..."}},
+    {{"key": "architecture", "signed_score": 83, "confidence": 87, "reason": "..."}},
+    {{"key": "expansion", "signed_score": 78, "confidence": 85, "reason": "..."}},
+    {{"key": "application", "signed_score": 68, "confidence": 80, "reason": "..."}}
   ]
 }}
 """.strip()
 
-    print("🕸️ [階段 1] 量化本體強度向量，並生成單核精準檢索句...")
+    print("🕸️ [階段 1] 量化本體強度向量，並提取 10-15 字精準核心宣告...")
     response = call_llm_with_retry(
         client,
         messages=[
             {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": raw_text[:9000]},
+            {"role": "user", "content": raw_text[:8000]},
         ],
         temperature=0.0,
         json_mode=True,
@@ -397,11 +291,8 @@ def evaluate_user_profile(raw_text, manifest):
 
     if not core_statement:
         raise ValueError("core_statement 為空。")
-    if not academic_fingerprint:
-        raise ValueError("academic_fingerprint 為空。")
 
     by_key = validate_dimension_entries(res.get("dimensions", []), "本體量化")
-
     scores = {}
     confidences = {}
     reasons = {}
@@ -411,56 +302,28 @@ def evaluate_user_profile(raw_text, manifest):
         confidences[key] = enforce_confidence(item.get("confidence"), f"{key}.confidence")
         reasons[key] = normalize_whitespace(item.get("reason", ""))
 
-    query_terms = list(dict.fromkeys(tokenize_query_terms(core_statement)))
-    query_phrases = build_phrase_windows(core_statement)
-
     return {
         "core_statement": core_statement,
         "academic_fingerprint": academic_fingerprint,
         "scores": scores,
         "confidences": confidences,
         "reasons": reasons,
-        "hex_code": sign_to_binary(scores),
-        "query_terms": query_terms,
-        "query_phrases": query_phrases,
+        "hex_code": sign_to_binary(scores)
     }
-
-
-# ------------------------------------------------------------------------------
-# 階段 2：Crossref 打撈
-# ------------------------------------------------------------------------------
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/35.0 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/35.1 ([https://github.com/alaric-kuo](https://github.com/alaric-kuo); mailto:open-source-bot@example.com)"
     }
-    params = {
-        "query": core_statement,
-        "select": "DOI,title,abstract",
-        "rows": 30,
-    }
+    encoded_query = urllib.parse.quote(core_statement)
+    url = f"[https://api.crossref.org/works?query=](https://api.crossref.org/works?query=){encoded_query}&select=DOI,title,abstract&rows=30"
 
-    print(f"🌍 [階段 2] 投放核心宣告（同時作為檢索句）：『{core_statement}』")
-    print("🌍 正在 Crossref 禮貌池中打撈關聯文獻...")
-
+    print(f"🌍 [階段 2] 投放核心宣告：『{core_statement}』\n🌍 正在 Crossref 禮貌池中打撈關聯文獻...")
     try:
-        response = requests.get(
-            "https://api.crossref.org/works",
-            headers=headers,
-            params=params,
-            timeout=20,
-        )
-
+        response = requests.get(url, headers=headers, timeout=20)
         if response.status_code == 429:
-            print("⚠️ 遭遇 Crossref 瞬間限流，強制退避 5 秒...")
             time.sleep(5)
-            response = requests.get(
-                "https://api.crossref.org/works",
-                headers=headers,
-                params=params,
-                timeout=20,
-            )
-
+            response = requests.get(url, headers=headers, timeout=20)
         response.raise_for_status()
         data = response.json()
         items = data.get("message", {}).get("items", [])
@@ -470,11 +333,9 @@ def fetch_broad_neighborhood_crossref(core_statement):
             raw_abstract = paper.get("abstract")
             if not raw_abstract:
                 continue
-
             clean_abstract = clean_crossref_abstract(raw_abstract)
             if not clean_abstract:
                 continue
-
             title_list = paper.get("title") or []
             title = title_list[0] if title_list and isinstance(title_list[0], str) else "Unknown"
             doi = str(paper.get("DOI", "Unknown")).strip()
@@ -484,127 +345,37 @@ def fetch_broad_neighborhood_crossref(core_statement):
                 "title": normalize_whitespace(title),
                 "abstract": clean_abstract[:900],
             })
-
-            if len(raw_papers) >= 24:
+            if len(raw_papers) >= 20:
                 break
-
-        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進行聯集式 prefilter...")
+        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進行大腦重排...")
         return raw_papers
-
     except Exception as e:
         raise ConnectionError(f"Crossref 連線異常或超時 ({e})")
 
-
-# ------------------------------------------------------------------------------
-# 階段 3：聯集導向 prefilter
-# ------------------------------------------------------------------------------
-
-def score_paper_by_core_statement(paper, core_statement, query_terms, query_phrases):
-    combined = normalize_whitespace(f"{paper['title']} {paper['abstract']}").lower()
-    title_l = paper["title"].lower()
-
-    score = 0
-    matched_terms = []
-    matched_phrases = []
-
-    full_statement = normalize_whitespace(core_statement).lower()
-    if full_statement and full_statement in combined:
-        score += 50
-        matched_phrases.append(full_statement)
-
-    for phrase in query_phrases:
-        if phrase and phrase in combined:
-            score += 16
-            matched_phrases.append(phrase)
-
-    for term in query_terms:
-        if term in combined:
-            matched_terms.append(term)
-            score += 8
-            if term in title_l:
-                score += 6
-
-    coverage = 0.0
-    if query_terms:
-        coverage = len(set(matched_terms)) / len(set(query_terms))
-
-    return {
-        "lexical_score": score,
-        "coverage": round(coverage, 3),
-        "matched_terms": sorted(set(matched_terms)),
-        "matched_phrases": sorted(set(matched_phrases)),
-    }
-
-
-def prefilter_raw_papers(raw_papers, core_statement, query_terms, query_phrases, keep_top_k=16):
+def rerank_and_filter_papers(core_statement, raw_papers):
     if not raw_papers:
-        return [], "無原始文獻可做 lexical prefilter。"
-
-    enriched = []
-    for paper in raw_papers:
-        scored = score_paper_by_core_statement(paper, core_statement, query_terms, query_phrases)
-        p2 = dict(paper)
-        p2.update(scored)
-        enriched.append(p2)
-
-    # 聯集導向：只要命中任一關鍵詞或任一句片語就先留下
-    kept = []
-    for p in enriched:
-        has_any_term = len(p["matched_terms"]) > 0
-        has_any_phrase = len(p["matched_phrases"]) > 0
-        if has_any_term or has_any_phrase:
-            kept.append(p)
-
-    kept.sort(
-        key=lambda x: (x["lexical_score"], x["coverage"], len(x["matched_terms"])),
-        reverse=True
-    )
-    kept = kept[:keep_top_k]
-
-    if kept:
-        top = kept[0]
-        log = (
-            f"程式級 prefilter 已啟動；採聯集保留邏輯。原始 {len(raw_papers)} 篇，保留 {len(kept)} 篇。"
-            f"最高 lexical score = {top['lexical_score']}，coverage = {top['coverage']:.3f}。"
-            f"主要命中詞：{', '.join(top['matched_terms'][:8]) if top['matched_terms'] else '無'}。"
-        )
-    else:
-        log = f"程式級 prefilter 已啟動；原始 {len(raw_papers)} 篇，但無任何文獻命中核心句之關鍵詞或片語。"
-
-    return kept, log
-
-
-# ------------------------------------------------------------------------------
-# 階段 4：LLM 重排
-# ------------------------------------------------------------------------------
-
-def rerank_and_filter_papers(core_statement, prefiltered_papers):
-    if not prefiltered_papers:
         return [], "無可用文獻進行重排。"
 
     client = get_llm_client()
-    papers_json = json.dumps(prefiltered_papers, ensure_ascii=False)
+    papers_json = json.dumps(raw_papers, ensure_ascii=False)
 
     sys_prompt = f"""
 你現在是一位客觀的學術觀測員。
-本理論唯一核心宣告（同時作為檢索句）為：
-"{core_statement}"
+本理論唯一核心宣告為："{core_statement}"
 
-以下文獻已經通過聯集式 lexical prefilter。
-請你再做一次理論結構重排：
-1. 保留真正與這個核心宣告同題或可對話的文獻。
-2. 剔除只是撞字、但問題設定不同的文獻。
-3. 最多保留 8 篇，0 篇則回傳空陣列。
-4. filtering_log 必須用中文，明確說明保留與剔除判準。
+請閱讀以下初步打撈的文獻，進行理論結構重排：
+1. 嚴格保留真正與這個核心宣告「同題」或「可對話」的文獻。
+2. 強制剔除所有只是「撞關鍵字」但領域或問題設定完全無關的文獻（例如探討旅遊、毫無關聯的應用等）。
+3. 寧缺勿濫，最多保留 8 篇，如果沒有任何一篇具有理論對話價值，請直接回傳空陣列 []。
 
 請只回傳 JSON：
 {{
   "selected_ids": ["<保留的 id>"],
-  "filtering_log": "<中文簡述保留與剔除理由，80-180字>"
+  "filtering_log": "<中文簡述保留與剔除理由>"
 }}
 """.strip()
 
-    print("⚖️ [階段 4] 啟動結構重排，萃取真正可對話的背景文獻...")
+    print("⚖️ [階段 3] 啟動結構重排，強制剔除撞字雜訊，萃取純淨對話母體...")
     response = call_llm_with_retry(
         client,
         messages=[
@@ -618,19 +389,14 @@ def rerank_and_filter_papers(core_statement, prefiltered_papers):
 
     raw_selected = res.get("selected_ids", [])
     if not isinstance(raw_selected, list):
-        raise TypeError("selected_ids 必須是陣列 (list)")
+        raise TypeError("selected_ids 必須是陣列")
 
-    valid_ids = {p["id"] for p in prefiltered_papers}
+    valid_ids = {p["id"] for p in raw_papers}
     selected_ids = {str(sid).strip() for sid in raw_selected if str(sid).strip() in valid_ids}
     filtering_log = normalize_whitespace(res.get("filtering_log", "執行標準過濾機制。"))
 
-    final_papers = [p for p in prefiltered_papers if p["id"] in selected_ids][:8]
+    final_papers = [p for p in raw_papers if p["id"] in selected_ids][:8]
     return final_papers, filtering_log
-
-
-# ------------------------------------------------------------------------------
-# 階段 5：背景逐篇量化
-# ------------------------------------------------------------------------------
 
 def evaluate_background_papers(final_papers, manifest, core_statement):
     if not final_papers:
@@ -642,23 +408,21 @@ def evaluate_background_papers(final_papers, manifest, core_statement):
 
     sys_prompt = f"""
 你是一台「背景文獻向量量化儀」。
-觀測原點唯一核心宣告為：
-"{core_statement}"
+觀測原點唯一核心宣告為："{core_statement}"
 
-請逐篇閱讀以下文獻摘要，並用與本體相同的六維座標進行量化。
+請逐篇閱讀以下純淨的對話母體文獻摘要，並用相同的六維座標進行量化。
 
 維度定義：
 {manifest_str}
 
 量化規則：
-1. 每篇文獻、每一維都必須回傳 signed_score，範圍是 -100 到 +100 的整數。
+1. 每篇文獻每一維都必須回傳 signed_score (-100 到 +100)。
 2. +100 = 非常強烈離群突破（sin）；0 = 中性；-100 = 非常強烈合群守成（cos）。
-3. note 請用 10-30 字中文簡述該文獻與核心宣告的對位特徵。
-4. 不要使用鼓勵語氣，不要神話化。
+3. note 用 10-30 字中文簡述該文獻與核心宣告的對位特徵。
 
 請只回傳 JSON：
 {{
-  "batch_log": "<中文簡述整批背景文獻的共同特徵與限制，60-140字>",
+  "batch_log": "<中文簡述整批背景文獻特徵，60-140字>",
   "papers": [
     {{
       "id": "<doi>",
@@ -676,7 +440,7 @@ def evaluate_background_papers(final_papers, manifest, core_statement):
 }}
 """.strip()
 
-    print("📚 [階段 5] 逐篇量化背景文獻強度向量...")
+    print("📚 [階段 4] 逐篇量化純淨背景文獻強度向量...")
     response = call_llm_with_retry(
         client,
         messages=[
@@ -689,22 +453,15 @@ def evaluate_background_papers(final_papers, manifest, core_statement):
     res = parse_llm_json(response.choices[0].message.content)
 
     returned = res.get("papers", [])
-    if not isinstance(returned, list):
-        raise TypeError("背景量化回傳 papers 必須是陣列。")
-
     valid_map = {p["id"]: p for p in final_papers}
     scored_papers = []
 
     for item in returned:
-        if not isinstance(item, dict):
-            continue
+        if not isinstance(item, dict): continue
         paper_id = str(item.get("id", "")).strip()
-        if paper_id not in valid_map:
-            continue
+        if paper_id not in valid_map: continue
 
-        scores_entries = item.get("scores", [])
-        by_key = validate_dimension_entries(scores_entries, f"背景文獻 {paper_id}")
-
+        by_key = validate_dimension_entries(item.get("scores", []), f"背景文獻 {paper_id}")
         scores = {}
         for key in DIMENSION_KEYS:
             scores[key] = enforce_score(by_key[key].get("signed_score"), f"{paper_id}.{key}.signed_score")
@@ -712,46 +469,26 @@ def evaluate_background_papers(final_papers, manifest, core_statement):
         scored_papers.append({
             "id": paper_id,
             "title": valid_map[paper_id]["title"],
-            "abstract": valid_map[paper_id]["abstract"],
             "note": normalize_whitespace(item.get("note", "")),
-            "lexical_score": valid_map[paper_id].get("lexical_score", 0),
-            "coverage": valid_map[paper_id].get("coverage", 0.0),
-            "matched_terms": valid_map[paper_id].get("matched_terms", []),
-            "matched_phrases": valid_map[paper_id].get("matched_phrases", []),
             "scores": scores,
         })
 
-    if not scored_papers:
-        raise ValueError("背景量化結果為空，無法建立背景向量。")
-
     batch_log = normalize_whitespace(res.get("batch_log", "背景文獻已完成逐篇量化。"))
-
-    return {
-        "papers": scored_papers,
-        "batch_log": batch_log,
-    }
-
-
-# ------------------------------------------------------------------------------
-# 階段 6：幾何量化與可解釋輸出
-# ------------------------------------------------------------------------------
+    return {"papers": scored_papers, "batch_log": batch_log}
 
 def aggregate_background(scored_papers):
     mean_scores = {}
     peak_scores = {}
     peak_papers = {}
-
     for key in DIMENSION_KEYS:
         vals = [(p["scores"][key], p) for p in scored_papers]
         mean_scores[key] = round(sum(v for v, _ in vals) / len(vals), 1)
-
         peak_val, peak_paper = max(vals, key=lambda x: x[0])
         peak_scores[key] = peak_val
         peak_papers[key] = peak_paper
 
     background_hex = sign_to_binary({k: mean_scores[k] for k in DIMENSION_KEYS})
     return mean_scores, peak_scores, peak_papers, background_hex
-
 
 def build_vector_logs(user_profile, scored_papers):
     user_scores = user_profile["scores"]
@@ -764,34 +501,24 @@ def build_vector_logs(user_profile, scored_papers):
     angle = round(angle_from_cosine(cos_val), 1)
     global_proximity = round(max(0.0, 100.0 - angle / 1.8), 1)
 
-    if angle < 30:
-        global_relation = "高度同向"
-    elif angle < 60:
-        global_relation = "中度同向"
-    elif angle < 90:
-        global_relation = "弱同向"
-    elif angle == 90:
-        global_relation = "正交"
-    elif angle < 120:
-        global_relation = "弱反向"
-    else:
-        global_relation = "明顯反向"
+    if angle < 30: global_relation = "高度同向"
+    elif angle < 60: global_relation = "中度同向"
+    elif angle < 90: global_relation = "弱同向"
+    elif angle == 90: global_relation = "正交"
+    elif angle < 120: global_relation = "弱反向"
+    else: global_relation = "明顯反向"
 
     vector_logs = []
-
     for key in DIMENSION_KEYS:
         u = user_scores[key]
         b = mean_scores[key]
         peak = peak_scores[key]
         peak_paper = peak_papers[key]
-
         proximity = proximity_from_scores(u, b)
         relation = classify_relation(u, b)
         diff_mean = round(u - b, 1)
         diff_peak = round(u - peak, 1)
-
         peak_compare = "背景峰值更強" if abs(peak) > abs(u) else "本體仍更強"
-        peak_title = compact_title(peak_paper["title"])
 
         vector_logs.append({
             "key": key,
@@ -799,7 +526,7 @@ def build_vector_logs(user_profile, scored_papers):
             "user_score": u,
             "background_mean": b,
             "background_peak": peak,
-            "peak_title": peak_title,
+            "peak_title": compact_title(peak_paper["title"]),
             "relation": relation,
             "proximity": proximity,
             "diff_mean": diff_mean,
@@ -819,11 +546,6 @@ def build_vector_logs(user_profile, scored_papers):
         "vector_logs": vector_logs,
     }
 
-
-# ------------------------------------------------------------------------------
-# 輸出格式化
-# ------------------------------------------------------------------------------
-
 def format_user_dimension_logs(user_profile):
     logs = []
     for key in DIMENSION_KEYS:
@@ -832,11 +554,8 @@ def format_user_dimension_logs(user_profile):
         conf = user_profile["confidences"][key]
         reason = user_profile["reasons"][key]
         side = signed_score_to_side(score)
-        logs.append(
-            f"* **{label}**：`{score:+d}` / 100 ｜ **{side}** ｜ 置信度 `{conf}` ｜ 觀測判定：{reason}"
-        )
+        logs.append(f"* **{label}**：`{score:+d}` / 100 ｜ **{side}** ｜ 置信度 `{conf}` ｜ 觀測判定：{reason}")
     return logs
-
 
 def format_vector_logs(vector_data):
     logs = []
@@ -849,22 +568,13 @@ def format_vector_logs(vector_data):
         )
     return logs
 
-
 def format_reference_records(scored_papers):
     rows = []
     for p in scored_papers:
-        doi_link = f"https://doi.org/{p['id']}" if p["id"] != "Unknown" else "#"
-        terms = ", ".join(p["matched_terms"][:8]) if p["matched_terms"] else "無"
-        phrases = "；".join(p["matched_phrases"][:4]) if p["matched_phrases"] else "無"
+        doi_link = f"[https://doi.org/](https://doi.org/){p['id']}" if p["id"] != "Unknown" else "#"
         note = f"｜{p['note']}" if p["note"] else ""
-
-        rows.append(
-            f"- [DOI 連結]({doi_link}) **{p['title']}** "
-            f"｜ lexical `{p['lexical_score']}` ｜ coverage `{p['coverage']}` "
-            f"｜ 命中詞 `{terms}` ｜ 命中片語 `{phrases}` {note}"
-        )
+        rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}** {note}")
     return rows
-
 
 def generate_summary(raw_text, global_relation, global_angle, global_proximity):
     client = get_llm_client()
@@ -873,12 +583,7 @@ def generate_summary(raw_text, global_relation, global_angle, global_proximity):
 整體相位角：約 {global_angle} 度。
 整體語意相近度：約 {global_proximity} / 100。
 
-請根據下文，撰寫 180-240 字中文理論導讀。
-要求：
-1. 第一句必須以「本理論架構...」開頭。
-2. 客觀，不要鼓勵語氣。
-3. 要指出它與背景場是同向、弱同向、正交還是反向，並說明它強在哪裡、距離在哪裡。
-4. 不要神話化，不要空泛。
+請根據下文，撰寫 180-240 字中文理論導讀。第一句必須以「本理論架構...」開頭。客觀不神話化。
 """.strip()
 
     response = call_llm_with_retry(
@@ -892,11 +597,6 @@ def generate_summary(raw_text, global_relation, global_angle, global_proximity):
     )
     return zhconv.convert((response.choices[0].message.content or "").strip(), "zh-tw")
 
-
-# ------------------------------------------------------------------------------
-# 主流程
-# ------------------------------------------------------------------------------
-
 def process_avh_manifestation(source_path, manifest):
     print(f"\n🌊 [波包掃描] 實體源碼：{source_path}")
     try:
@@ -909,23 +609,10 @@ def process_avh_manifestation(source_path, manifest):
 
         user_profile = evaluate_user_profile(raw_text, manifest)
         user_hex = user_profile["hex_code"]
-
-        state_info = manifest["states"].get(
-            user_hex,
-            {"name": "未知狀態", "desc": "缺乏觀測紀錄"}
-        )
-        user_state_name = state_info["name"]
-        user_state_desc = state_info["desc"]
-
+        state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
+        
         raw_papers = fetch_broad_neighborhood_crossref(user_profile["core_statement"])
-        prefiltered_papers, prefilter_log = prefilter_raw_papers(
-            raw_papers,
-            user_profile["core_statement"],
-            user_profile["query_terms"],
-            user_profile["query_phrases"],
-            keep_top_k=16
-        )
-        final_papers, filtering_log = rerank_and_filter_papers(user_profile["core_statement"], prefiltered_papers)
+        final_papers, filtering_log = rerank_and_filter_papers(user_profile["core_statement"], raw_papers)
 
         if not final_papers:
             baseline_status = "Void（無人區：外部場域尚不足以形成可測量母體）"
@@ -946,38 +633,29 @@ def process_avh_manifestation(source_path, manifest):
             vector_data = build_vector_logs(user_profile, scored_background["papers"])
             background_hex = vector_data["background_hex"]
             vector_logs = format_vector_logs(vector_data)
-
             global_angle = f"{vector_data['global_angle']} 度（{vector_data['global_relation']}）"
             global_cosine = vector_data["global_cosine"]
             global_proximity = vector_data["global_proximity"]
             global_relation = vector_data["global_relation"]
-
             paper_records = format_reference_records(scored_background["papers"])
 
             summary = generate_summary(
-                raw_text,
-                vector_data["global_relation"],
-                vector_data["global_angle"],
-                vector_data["global_proximity"],
+                raw_text, vector_data["global_relation"], vector_data["global_angle"], vector_data["global_proximity"]
             )
 
         return {
             "user_hex": user_hex,
             "baseline_hex": background_hex,
-            "state_name": user_state_name,
-            "state_desc": user_state_desc,
+            "state_name": state_info["name"],
+            "state_desc": state_info["desc"],
             "summary": summary,
             "full_text": raw_text,
             "meta_data": {
                 "core_statement": user_profile["core_statement"],
-                "query_terms": user_profile["query_terms"],
-                "query_phrases": user_profile["query_phrases"],
                 "academic_fingerprint": user_profile["academic_fingerprint"],
                 "user_dimension_logs": format_user_dimension_logs(user_profile),
                 "raw_hits": len(raw_papers),
-                "prefilter_hits": len(prefiltered_papers),
-                "final_hits": len(final_papers),
-                "prefilter_log": prefilter_log,
+                "final_hits": len(final_papers) if final_papers else 0,
                 "filtering_log": filtering_log,
                 "background_batch_log": background_batch_log,
                 "paper_records": paper_records,
@@ -990,44 +668,32 @@ def process_avh_manifestation(source_path, manifest):
                 "llm_model": LLM_MODEL_NAME,
             },
         }
-
     except Exception as e:
         print(f"❌ 檔案 {source_path} 處理失敗: {e}")
         return None
 
-
-# ------------------------------------------------------------------------------
-# 產出檔案
-# ------------------------------------------------------------------------------
-
 def generate_trajectory_log(target_file, data):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S CST")
     meta = data["meta_data"]
-
     user_logs_text = "\n\n".join(meta["user_dimension_logs"])
     papers_text = "\n".join(meta["paper_records"])
     vector_logs_text = "\n\n".join(meta["vector_logs"])
-    query_terms_text = ", ".join(meta["query_terms"]) if meta["query_terms"] else "無"
-    query_phrases_text = " ｜ ".join(meta["query_phrases"]) if meta["query_phrases"] else "無"
 
     return (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
         f"* **觀測時間戳（CST）**：`{timestamp}`\n"
-        f"* **高維算力引擎（High-Dimensional Engine）**：`{meta['llm_model']}`\n\n"
+        f"* **高維算力引擎**：`{meta['llm_model']}`\n\n"
         f"---\n"
         f"### 1. 🌌 絕對本體觀測（Absolute Ontology）\n"
         f"* 🛡️ **本體論絕對指紋（Ontology Hex）**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
-        f"* **本體核心宣告／唯一檢索句（Core Statement / Query）**：`{meta['core_statement']}`\n"
-        f"* **檢索詞錨點（Query Term Anchors）**：`{query_terms_text}`\n"
-        f"* **檢索片語錨點（Query Phrase Anchors）**：`{query_phrases_text}`\n\n"
+        f"* **本體核心宣告（Core Statement）**：`{meta['core_statement']}`\n\n"
         f"**學術指紋（Academic Fingerprint）**：\n"
         f"> {meta['academic_fingerprint']}\n\n"
         f"**詳細本體量化儀表板（Ontology Quantification Dashboard）**：\n\n"
         f"{user_logs_text}\n\n"
         f"---\n"
         f"### 2. 🎣 背景能勢打撈（Background Field Retrieval）\n"
-        f"* **場域建構狀態（Field Status）**：`{meta['baseline_status']}` （原始打撈 {meta['raw_hits']} 篇 → prefilter 保留 {meta['prefilter_hits']} 篇 → 最終保留 {meta['final_hits']} 篇）\n"
-        f"* **程式級預過濾日誌（Programmatic Prefilter Log）**：_{meta['prefilter_log']}_\n"
+        f"* **場域建構狀態（Field Status）**：`{meta['baseline_status']}` （原始打撈 {meta['raw_hits']} 篇 → 最終保留 {meta['final_hits']} 篇）\n"
         f"* **大腦重排日誌（Re-ranking Log）**：_{meta['filtering_log']}_\n"
         f"* **背景批次量化摘要（Batch Quantification Log）**：_{meta['background_batch_log']}_\n"
         f"* **參考鄰域節點（Reference Neighborhood）**：\n"
@@ -1046,16 +712,14 @@ def generate_trajectory_log(target_file, data):
         f"### 4. 🧾 系統導讀摘要（System Interpretation）\n"
         f"> {data['summary']}\n\n"
         f"---\n"
-        f"> *註：本報告採 V35.0 聯集打撈與無人區回歸版。Core Statement 與 Query 不分離；prefilter 採聯集邏輯；final hits = 0 時直接回歸 Void。*\n"
+        f"> *註：本報告採 V35.1 語意拓樸回歸版。斬除關鍵字降維污染，全域回歸高維大腦結構重排。*\n"
     )
-
 
 def export_wordpress_html(basename, data):
     safe_full_text = html.escape(data["full_text"]).replace("\n", "<br>")
     safe_summary = html.escape(data["summary"])
     meta = data["meta_data"]
     timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     html_output = (
         "<div class=\"avh-hologram-article\">\n"
         "  <div class=\"avh-content\">\n"
@@ -1063,8 +727,8 @@ def export_wordpress_html(basename, data):
         "  </div>\n"
         "  <hr>\n"
         "  <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
-        "    <h3>📡 學術價值全像儀（AVH）聯集打撈與無人區回歸認證</h3>\n"
-        f"    <p><strong>核心宣告／檢索句：</strong>{html.escape(meta['core_statement'])}</p>\n"
+        "    <h3>📡 學術價值全像儀（AVH）語意干涉認證</h3>\n"
+        f"    <p><strong>核心宣告：</strong>{html.escape(meta['core_statement'])}</p>\n"
         f"    <p><strong>本體狀態：</strong>[ {html.escape(data['user_hex'])} ] - {html.escape(data['state_name'])}</p>\n"
         f"    <p><strong>背景狀態：</strong>[ {html.escape(data['baseline_hex'])} ]</p>\n"
         f"    <p><strong>整體場域關係：</strong>{html.escape(str(meta['global_relation']))}</p>\n"
@@ -1075,15 +739,12 @@ def export_wordpress_html(basename, data):
         "  </div>\n"
         "</div>\n"
     )
-
     with open(f"WP_Ready_{basename}.html", "w", encoding="utf-8") as f:
         f.write(html_output)
-
 
 def export_latex(basename, data):
     safe_text = markdown_to_latex(data["full_text"])
     meta = data["meta_data"]
-
     tex_output = (
         "\\documentclass{article}\n"
         "\\usepackage[utf8]{inputenc}\n"
@@ -1094,7 +755,7 @@ def export_latex(basename, data):
         "\\begin{document}\n"
         "\\maketitle\n"
         "\\begin{abstract}\n"
-        f"核心宣告／檢索句：{escape_latex(meta['core_statement'])}\n\n"
+        f"核心宣告：{escape_latex(meta['core_statement'])}\n\n"
         f"本體狀態：[{data['user_hex']}] {escape_latex(data['state_name'])}\n\n"
         f"背景狀態：[{data['baseline_hex']}]\n\n"
         f"整體場域關係：{escape_latex(str(meta['global_relation']))}\n\n"
@@ -1104,32 +765,22 @@ def export_latex(basename, data):
         f"{safe_text}\n\n"
         "\\end{document}\n"
     )
-
     with open(f"{basename}_Archive.tex", "w", encoding="utf-8") as f:
         f.write(tex_output)
-
-
-# ------------------------------------------------------------------------------
-# Entrypoint
-# ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
     if not os.path.exists("avh_manifest.json"):
         print("⚠️ 遺失底層定義檔 avh_manifest.json，終止執行。")
         sys.exit(1)
-
     with open("avh_manifest.json", "r", encoding="utf-8") as f:
         manifest = json.load(f)
-
     source_files = [f for f in glob.glob("*.md") if f.lower() not in ["avh_observation_log.md"]]
     if not source_files:
         print("ℹ️ 未找到任何 Markdown 來源檔。")
         sys.exit(0)
-
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V35.0 聯集打撈與無人區回歸日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V35.1 語意拓樸回歸日誌\n---\n")
         last_hex_code = ""
-
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
             if result_data:
@@ -1140,7 +791,6 @@ if __name__ == "__main__":
                 export_latex(basename, result_data)
             else:
                 log_file.write(f"\n> ⚠️ `[{target_source}]` 掃描失敗或略過，詳見系統執行日誌。\n---\n")
-
     if last_hex_code:
         with open(os.environ.get("GITHUB_ENV", "env.tmp"), "a", encoding="utf-8") as env_file:
             env_file.write(f"HEX_CODE={last_hex_code}\n")
