@@ -11,13 +11,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V31.0 反向尺規與向量干涉版 - 以我為尺)
+# AVH Genesis Engine (V31.1 反向尺規與向量干涉版 - 徹底解除數量封印)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V31.0 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V31.1 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -93,7 +93,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/31.0 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/31.1 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
     url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract,is-referenced-by-count&rows=25"
@@ -111,11 +111,12 @@ def fetch_broad_neighborhood_crossref(core_statement):
         data = response.json()
         
         items = data.get("message", {}).get("items", [])
-        if not items:
-            print(f"工具調用失敗，原因為 核心宣告在 Crossref 查無任何文獻")
-            sys.exit(1)
-            
         raw_papers = []
+        
+        if not items:
+            print(f"⚠️ 核心宣告在 Crossref 查無任何文獻，將直接進入絕對無人區狀態。")
+            return raw_papers
+            
         for paper in items:
             raw_abstract = paper.get("abstract")
             if not raw_abstract: 
@@ -133,10 +134,8 @@ def fetch_broad_neighborhood_crossref(core_statement):
             if len(raw_papers) >= 20:
                 break
                 
-        if len(raw_papers) < 3:
-            print(f"工具調用失敗，原因為 撈取到的合格摘要過少，無法支撐重排 ({len(raw_papers)} 篇)")
-            sys.exit(1)
-            
+        # 💥 這裡已徹底移除 len < 3 的自殺判定，撈到幾篇算幾篇
+        print(f"🌍 成功撈取 {len(raw_papers)} 篇具備摘要之文獻，準備進入大腦重排...")
         time.sleep(1)
         return raw_papers
         
@@ -145,6 +144,9 @@ def fetch_broad_neighborhood_crossref(core_statement):
         sys.exit(1)
 
 def rerank_and_filter_papers(core_statement, raw_papers):
+    if not raw_papers:
+        return [], "無可用文獻進行重排。"
+        
     client = get_llm_client()
     papers_json = json.dumps(raw_papers, ensure_ascii=False)
     
@@ -178,7 +180,6 @@ def rerank_and_filter_papers(core_statement, raw_papers):
     return final_papers, filtering_log
 
 def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
-    """【V31.0 核心】反向尺規：以大魔王的理論為原點，測量既有母體的發展向量與相位角"""
     client = get_llm_client()
     manifest_str = json.dumps(manifest["dimensions"], ensure_ascii=False)
     papers_str = json.dumps([{"title": p["title"], "abstract": p["abstract"]} for p in papers])
@@ -228,30 +229,25 @@ def process_avh_manifestation(source_path, manifest):
         if len(raw_text.strip()) < 100:
             return None
 
-        # 1. User Hex & 12-Word Core
         user_data = evaluate_user_text_and_compress(raw_text, manifest)
         user_hex = user_data["hex_code"]
         dim_logs = user_data["dim_logs"]
         core_statement = user_data.get("core_statement", "Academic Ontology Theory")
         user_state_info = manifest["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
         
-        # 2. Broad Retrieval
         raw_papers = fetch_broad_neighborhood_crossref(core_statement)
-        
-        # 3. LLM Re-ranking
         final_papers, filtering_log = rerank_and_filter_papers(core_statement, raw_papers)
         
         paper_records = []
         vector_logs = []
         global_angle = ""
         
-        # 4. 反向測量與處理絕對無人區
         if not final_papers:
-            baseline_status = "Absolute Void (絕對無人區：大腦判定周遭毫無可對話之母體)"
+            baseline_status = "Absolute Void (絕對無人區：現有學界圖譜無對話座標)"
             baseline_hex = "000000"
             vote_stats = [0]*6
-            paper_records.append("- `[Void]` **大腦過濾宣告**：傳統引擎返回之文獻皆屬雜訊，本理論目前無直接學術鄰域。")
-            vector_logs = ["* (無母體可供測量，向量干涉無效)"]
+            paper_records.append("- `[Void]` **全域寂靜**：核心宣告過於前沿，無法與現存文獻建立有效拓樸連結。")
+            vector_logs = ["* **測量結果**：周遭無文獻質量，無法產生向量干涉與相位角。"]
             global_angle = "整體相位差：無定義 (Void)"
         else:
             baseline_status = f"Crossref Matrix Established (基礎設施母體建構完成：{len(final_papers)} 核心節點)"
@@ -266,7 +262,6 @@ def process_avh_manifestation(source_path, manifest):
             for v in matrix_data.get("vector_analysis", []):
                 vector_logs.append(f"* **{v['dimension']}**：【{v['direction']}】(偏角 {v['angle']}) - {v['reason']}")
 
-        # 5. Summary Generation
         client = get_llm_client()
         summary_prompt = f"""
 大魔王的理論在「外部場域觀測」中，與現有學術母體的相對位置為：{global_angle}。
@@ -311,11 +306,6 @@ def generate_trajectory_log(target_file, data):
     papers_text = "\n".join(meta['paper_records'])
     vectors_text = "\n".join(meta['vector_logs'])
     
-    if meta['final_hits'] > 0:
-        vote_str = " | ".join([f"Dim{i+1}: {meta['vote_stats'][i]}/{meta['final_hits']}" for i in range(6)])
-    else:
-        vote_str = "無對照母體，張量坍縮為 0"
-
     log_output = (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
         f"* **觀測時間戳 (CST)**：`{timestamp}`\n"
@@ -340,7 +330,7 @@ def generate_trajectory_log(target_file, data):
         f"* **維度向量干涉儀表板**：\n"
         f"{vectors_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V31.0 反向尺規架構。將本體視為絕對真理基準，計算當代學界與其之相位偏差角度。*\n"
+        f"> *註：本報告採 V31.1 反向尺規架構。解除所有數量封印，真實反映與學界的向量干涉。*\n"
     )
     return log_output
 
@@ -403,7 +393,7 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V31.0 反向尺規觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V31.1 反向尺規觀測日誌\n---\n")
         last_hex_code = ""
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
