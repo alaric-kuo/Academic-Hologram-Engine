@@ -38,11 +38,28 @@ def get_llm_client():
     return OpenAI(base_url="https://models.github.ai/inference", api_key=token)
 
 
+
+
+def ensure_json_keyword(messages):
+    """GitHub Models 的 json_object 模式要求 messages 內必須明示 json。"""
+    for m in messages:
+        content = str(m.get("content", ""))
+        if "json" in content.lower():
+            return messages
+
+    patched = list(messages)
+    patched.insert(0, {
+        "role": "system",
+        "content": "Return valid JSON only. The response must be a single JSON object."
+    })
+    return patched
+
 def call_llm_with_retry(client, messages, temperature=0.0, max_retries=4, json_mode=True):
     last_error = None
     for attempt in range(max_retries):
         try:
-            kwargs = {"messages": messages, "model": LLM_MODEL_NAME, "temperature": temperature}
+            effective_messages = ensure_json_keyword(messages) if json_mode else messages
+            kwargs = {"messages": effective_messages, "model": LLM_MODEL_NAME, "temperature": temperature}
             if json_mode:
                 kwargs["response_format"] = {"type": "json_object"}
             return client.chat.completions.create(**kwargs)
