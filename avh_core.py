@@ -12,13 +12,13 @@ from openai import OpenAI
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V33.2 結構防禦與批次穩定版 - 容錯隔離與 Schema 審計)
+# AVH Genesis Engine (V33.3 終極防彈版 - 絕對 JSON 提取與寬容解析)
 # ==============================================================================
 
 LLM_MODEL_NAME = 'openai/gpt-4o'
 MD_FENCE = "`" * 3
 
-print(f"🧠 [載入觀測核心] 啟動 V33.2 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
+print(f"🧠 [載入觀測核心] 啟動 V33.3 高維度大腦矩陣 ({LLM_MODEL_NAME})...")
 
 def get_llm_client():
     token = os.environ.get("COPILOT_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -42,20 +42,19 @@ def call_llm_with_retry(client, messages, temperature=0.1, max_retries=4):
             time.sleep(wait_time)
 
 def parse_llm_json(response_text):
+    """【V33.3 終極防彈解析】放棄正則，改用絕對括號定位與寬容解析"""
     try:
-        text = response_text.strip()
-        # V33.2 修正：將正則表達式改為非貪婪模式 (.*?)，防止吞噬多餘字元
-        pattern = f"{MD_FENCE}(?:json)?\\s*(\\{{.*?\\}})\\s*{MD_FENCE}"
-        fence_match = re.search(pattern, text, re.DOTALL)
-        if fence_match:
-            return json.loads(fence_match.group(1))
-
-        obj_match = re.search(r"(\{.*?\})", text, re.DOTALL)
-        if obj_match:
-            return json.loads(obj_match.group(1))
-        raise ValueError("找不到可解析的 JSON 區塊")
+        # 尋找最外層的 {}，無視任何前後的雜訊或 Markdown 標記
+        start = response_text.find('{')
+        end = response_text.rfind('}')
+        if start != -1 and end != -1:
+            json_str = response_text[start:end+1]
+            # strict=False 允許字串內包含未轉義的換行符 (LLM 常犯錯誤)
+            return json.loads(json_str, strict=False)
+        raise ValueError("找不到成對的 `{}` 區塊")
     except Exception as e:
-        raise ValueError(f"LLM JSON 解析失敗 ({e})\n原始輸出片段：{response_text[:200]}...")
+        snippet = response_text[:200].replace('\n', ' ')
+        raise ValueError(f"JSON 解析失敗 ({e}) | 輸出片段：{snippet}...")
 
 def evaluate_user_text_and_compress(raw_text, manifest):
     client = get_llm_client()
@@ -70,6 +69,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 任務二：請將這篇文本的最核心學術貢獻，壓縮成一句「極度精準的英文學術核心宣告 (Core Statement)」。(長度 10-15 字，拒絕八股)
 
 請嚴格回傳以下 JSON 格式 (角括號內為必須由你動態填寫的變數)：
+(⚠️ 警告：必須是合法 JSON，字串內若需換行請使用 \\n，絕對禁止直接換行)
 {MD_FENCE}json
 {{
   "hex_code": "<在此填寫判定後的 6 位數二進制字串，例如 101010>",
@@ -86,7 +86,6 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 {MD_FENCE}
 """
     print("🕸️ [大腦運算 - 階段 1] 測量本體絕對指紋，強制啟動動態判定...")
-    # V33.2 修正：擴大讀取範圍以涵蓋後段論述，並將核心判定降溫至 0.0 以降低漂移
     response = call_llm_with_retry(
         client, 
         messages=[{"role": "system", "content": sys_prompt}, {"role": "user", "content": raw_text[:8000]}],
@@ -104,7 +103,7 @@ def evaluate_user_text_and_compress(raw_text, manifest):
 
 def fetch_broad_neighborhood_crossref(core_statement):
     headers = {
-        "User-Agent": "AVH-Hologram-Engine/33.2 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
+        "User-Agent": "AVH-Hologram-Engine/33.3 (https://github.com/alaric-kuo; mailto:open-source-bot@example.com)"
     }
     encoded_query = urllib.parse.quote(core_statement)
     url = f"https://api.crossref.org/works?query={encoded_query}&select=DOI,title,abstract&rows=25"
@@ -165,6 +164,7 @@ def rerank_and_filter_papers(core_statement, raw_papers):
 挑出「最適合拿來作為該理論『參考背景座標』或『對話對象』」的文獻 (最多保留 8 篇，如果只有 1 篇合格就留 1 篇，0 篇則回傳空陣列)。
 
 請回傳 JSON：
+(⚠️ 警告：必須是合法 JSON，字串內若需換行請使用 \\n，絕對禁止直接換行)
 {MD_FENCE}json
 {{
   "selected_ids": ["<填寫保留的 id>"],
@@ -210,6 +210,7 @@ def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
 維度定義：{manifest_str}
 
 請嚴格回傳 JSON (角括號內為強制動態計算的變數)：
+(⚠️ 警告：必須是合法 JSON，字串內若需換行請使用 \\n，絕對禁止直接換行)
 {MD_FENCE}json
 {{
   "baseline_hex": "<動態計算 6 位數字串>",
@@ -239,13 +240,11 @@ def evaluate_matrix_with_reverse_ruler(papers, manifest, core_statement):
     return res
 
 def escape_latex(text):
-    """V33.2 新增：基礎 LaTeX 特殊字元跳脫"""
     chars = {
         '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#', 
         '_': r'\_', '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}', 
         '^': r'\textasciicircum{}', '\\': r'\textbackslash{}'
     }
-    # 先跳脫反斜線，避免重複跳脫
     text = text.replace('\\', chars['\\'])
     for k, v in chars.items():
         if k != '\\':
@@ -290,7 +289,6 @@ def process_avh_manifestation(source_path, manifest):
             baseline_status = f"Background Field Established (參考背景能勢建構完成：{len(final_papers)} 鄰域節點)"
             for p in final_papers:
                 doi_link = f"https://doi.org/{p['id']}" if p['id'] != "Unknown" else "#"
-                # V33.2 修正：標準 Markdown 連結格式
                 paper_records.append(f"- [DOI 連結]({doi_link}) **{p['title']}**")
                 
             matrix_data = evaluate_matrix_with_reverse_ruler(final_papers, manifest, core_statement)
@@ -336,7 +334,6 @@ def process_avh_manifestation(source_path, manifest):
             }
         }
     except Exception as e:
-        # V33.2 修正：捕獲異常但不中斷程式，確保批次執行能繼續
         print(f"❌ 檔案 {source_path} 處理失敗: {e}")
         return None
 
@@ -374,12 +371,11 @@ def generate_trajectory_log(target_file, data):
         f"**維度向量干涉儀表板**：\n\n"
         f"{vectors_text}\n\n"
         f"---\n"
-        f"> *註：本報告採 V33.2 結構防禦版。實裝 Schema 審計與批次隔離容錯，確保觀測穩定性。*\n"
+        f"> *註：本報告採 V33.3 終極防彈版。實裝 Schema 審計、批次隔離容錯與寬容 JSON 解析，確保最高觀測穩定性。*\n"
     )
     return log_output
 
 def export_wordpress_html(basename, data):
-    # V33.2 修正：加入 HTML 轉義防護
     safe_full_text = html.escape(data['full_text']).replace('\n', '<br>')
     safe_summary = html.escape(data['summary'])
     safe_desc = html.escape(data['state_desc'])
@@ -410,7 +406,6 @@ def export_wordpress_html(basename, data):
         f.write(html_output)
 
 def export_latex(basename, data):
-    # V33.2 修正：實裝 LaTeX 轉義防護，並保留標題轉換
     safe_text = escape_latex(data['full_text']).replace(r"\#", "\\section")
     safe_desc = escape_latex(data['state_desc'])
     meta = data['meta_data']
@@ -450,10 +445,9 @@ if __name__ == "__main__":
         sys.exit(0)
         
     with open("AVH_OBSERVATION_LOG.md", "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V33.2 批次穩定觀測日誌\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V33.3 終極防彈觀測日誌\n---\n")
         last_hex_code = ""
         
-        # V33.2 修正：Per-file 隔離容錯
         for target_source in source_files:
             result_data = process_avh_manifestation(target_source, manifest)
             if result_data:
