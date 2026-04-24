@@ -1,129 +1,129 @@
 # 📡 AVH 學術價值全像儀：V54.0 全文直讀修正版
 ---
 ## 📡 AVH 技術觀測日誌：`README.md`
-* **觀測時間戳（Taipei Standard Time）**：`2026-04-24 18:57:56 Taipei Standard Time`
+* **觀測時間戳（Taipei Standard Time）**：`2026-04-24 20:00:04 Taipei Standard Time`
 * **高維算力引擎（本地純淨版）**：`gemma4`
 
 ---
 ### 1. 🌌 絕對本體觀測（Absolute Ontology）
 * 🛡️ **本體論絕對指紋（Ontology Hex）**：`[111111]` - **絕對全域躍遷**
   * 📜 **演化實相（State Manifest）**：_意圖重構知識邊界，治理動態卸力突圍；認知直指能量本體，架構全域連續演化；擴張建立通用協議，應用觸發實體干預。_
-* **絕對核心論述（Primary Statement）**：`AVH measures knowledge evolution potential, not just static academic metrics.`
-* **全文檢索簽名（Retrieval Signature）**：`Academic Value Hologram (AVH) protocol for measuring knowledge ontology evolution, utilizing a six-dimensional state tensor derived from principles like orthogonal unloading and wave-particle duality, and outputting results via a multi-stage engine based on Cosine similarity and physical interference.`
-* **多視角外發探針（Probe Set）**：`AVH measures knowledge evolution potential, not just static academic metrics. ｜ The system quantifies thought impact using a six-dimensional state tensor. ｜ It utilizes principles like orthogonal unloading for breakthrough analysis. ｜ The engine processes text via a 64-D Core TF Tensor and Cosine similarity. ｜ Results are materialized as structured assets: .md, .html, and .tex. ｜ Evaluation focuses on dynamic energy and potential, rejecting linear continuity. ｜ The protocol measures the structural impact on existing academic fields. ｜ It defines knowledge as a dynamic energy field, not a static archive.`
-* **實作證據（Implementation Signals）**：`本地端語言模型 (Local LLM) ｜ 64 維核心語意矩陣 (64-D Core TF Tensor) ｜ 餘弦相似度公式 (Cosine Similarity Formula) ｜ Crossref 發射 (Crossref Emission) ｜ DOI 與標題去重 (DOI and Title Deduplication) ｜ 觀測日誌（.md） ｜ 認證展示實體（.html） ｜ 出版原始碼（.tex）`
-* **應用證據（Application Signals）**：`本地端語言模型執行「意圖濾波」 ｜ 將方法論封裝為可自動化運作的系統 ｜ 計算餘弦相似度，篩選有效探針 ｜ 將觀測結果坍縮為三份實體資產：觀測日誌（.md）、認證展示實體（.html）以及出版原始碼（.tex）`
+* **絕對核心論述（Primary Statement）**：`Knowledge creation is liberated, requiring new trust systems beyond traditional academic review.`
+* **全文檢索簽名（Retrieval Signature）**：`Academic Value Hologram (AVH) protocol for quantifying knowledge ontology evolution, utilizing a six-dimensional state tensor derived from topological and physical principles, and outputting results via a multi-stage, local-compute, version-controlled pipeline.`
+* **多視角外發探針（Probe Set）**：`Knowledge creation is liberated, requiring new trust systems beyond traditional academic review. ｜ The AVH quantifies thought impact by observing energy and potential, not just static metrics. ｜ The six dimensions define the knowledge state tensor: Sin (disruptive potential) and Cos (established mass). ｜ The system uses a multi-stage, local-compute pipeline for robust, traceable knowledge observation. ｜ Global scoring integrates multiple probes and signature matching for comprehensive field strength. ｜ The process calculates physical interference between the core ontology and background field. ｜ Output artifacts include observation logs, HTML displays, and LaTeX source code for full sovereignty. ｜ True innovation requires disrupting rigid boundaries, not merely optimizing within existing fields.`
+* **實作證據（Implementation Signals）**：`本地端模型 (Local-end model) ｜ Crossref ｜ Cosine ｜ Tensor ｜ JSON ｜ Ollama ｜ `.md` ｜ `.html` ｜ `.tex` ｜ Git (git add, git commit, git push)`
+* **應用證據（Application Signals）**：`本地端引擎 (Local-end engine) ｜ 全文直讀、本體量化與八重探針展開 (Full-text reading, ontology quantification, and eight-probe deployment) ｜ 觀測日誌（.md） ｜ 認證展示實體（.html） ｜ 出版原始碼（.tex） ｜ Git 倉庫自動執行版本控制`
 
 **學術指紋（Academic Fingerprint）**：
-> 學術價值全像儀 (AVH) 協議：基於知識本體演化論的六維拓樸量化模型，結合高維語義矩陣和物理干涉機制，重構學術價值評估的動態本體論。
+> 學術價值全像儀：基於知識本體演化觀測協議，建立六維拓樸張量模型，並設計多階段本地化計算管線進行知識本體量化。
 
 **詳細本體量化儀表板（Ontology Quantification Dashboard）**：
 
-* **價值意圖**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：全文核心目標是建立一套全新的、顛覆傳統學術評價體系的「全像儀」，旨在引發深層的典範轉移，從根本上重構知識的價值邊界。
+* **價值意圖**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：全文的核心目標是顛覆傳統學術評價體系，建立一套全新的、基於能量和拓樸的知識本體論，引發典範轉移。
 
-* **治理維度**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：該協議明確拒絕融入既有的學術評價體系（如H-index），而是主張從更高維度（本體論、拓樸學）正面直擊體制的核心問題，建立獨立的信任系統。
+* **治理維度**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：作者主張建立一套獨立於既有學術機構和審查機制（如期刊）的、更高維度的信任和評價系統。
 
-* **認知深度**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `95` ｜ 觀測判定：文本引入了「知識本體演化論」、「拓樸邏輯」、「能勢」、「資訊熵」等高維概念，並提出「波粒二象」等複雜的認知框架，超越了表層的數據整合。
+* **認知深度**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `95` ｜ 觀測判定：通過引入「能勢」、「熵」、「拓樸」等物理學和數學概念，將知識的本質從靜態的文本內容提升到動態的能量變化過程。
 
-* **描述架構**：`+80` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `92` ｜ 觀測判定：設計了一個複雜的、多階段的動態模型（AVH Engine），包含六個維度、高維矩陣、物理干涉等，追求全域連續的拓樸解析，而非傳統的邊界切割。
+* **描述架構**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：建立了一個包含六個維度（Sin/Cos）的狀態張量，並設計了多階段、多公式權重計算的複雜計算流程。
 
-* **擴張潛力**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：提出的六大維度（Intent, Logic, Physical）和八大公理，具有跨越學科（物理學、拓樸學、本體論）的通用底層協議，旨在引發跨域典範轉移。
+* **擴張潛力**：`+80` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `85` ｜ 觀測判定：理論框架跨越了學術、物理、資訊科學等多個領域，旨在提供一個通用的、可跨域引用的知識演化模型。
 
-* **應用實相**：`+50` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `75` ｜ 觀測判定：雖然理論宏大，但其核心機制（如本地LLM、TF Tensor、Cosine相似度計算、生成.md/.html/.tex）描述了具體的、可自動化的運作流程和實體輸出，使其超越了純粹的學理推導。
+* **應用實相**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `92` ｜ 觀測判定：提供了從本地端模型到多層次檢索、多重權重計算，最終輸出為可執行的多格式實體資產的完整技術流程。
 
 ---
 ### 2. 🎣 背景能勢打撈（Background Field Retrieval）
 * **場域建構狀態（Field Status）**：`Background Field Established（全域能勢建構：8 鄰域節點）` （多視角搜索共 64 篇 → 全域收斂至 8 篇）
 * **光譜透析多視角打撈日誌（Spectrum Dialysis Retrieval Log）**：
-* **視角 1** `AVH measures knowledge evolution potential, not just static academic metrics.`
+* **視角 1** `Knowledge creation is liberated, requiring new trust systems beyond traditional academic review.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.312]` Measures and Metrics and Academic Labour... (probe=0.500, signature=0.289)
-    2. `[0.289]` Measuring: Knowledge-based Development Metrics, Evolution an... (probe=0.344, signature=0.298)
-    3. `[0.200]` Static source code metrics and static analysis warnings for ... (probe=0.298, signature=0.145)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Measures and Metrics and Academic Labour 🪧*(標題降維捕獲)*](https://doi.org/10.1057/9781137289889.0013) (Score: `0.312`)
-* **視角 2** `The system quantifies thought impact using a six-dimensional state tensor.`
+    1. `[0.300]` Academic Peer Review as a Knowledge Creation Process: How Do... (probe=0.423, signature=0.334)
+    2. `[0.281]` Cultivating Creation... (probe=0.338, signature=0.286)
+    3. `[0.252]` Investigating Knowledge Creation... (probe=0.365, signature=0.271)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Academic Peer Review as a Knowledge Creation Process: How Do Experts Collaboratively Improve Knowledge? (Poster 6) 🪧*(標題降維捕獲)*](https://doi.org/10.3102/ip.25.2188634) (Score: `0.300`)
+* **視角 2** `The AVH quantifies thought impact by observing energy and potential, not just static metrics.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.227]` Solitons in a six-dimensional super Yang-Mills-tensor system... (probe=0.354, signature=0.135)
-    2. `[0.210]` Tensor multiplets in six-dimensional (2,0) supergravity... (probe=0.311, signature=0.139)
-    3. `[0.209]` The six-dimensional self-dual tensor... (probe=0.305, signature=0.143)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Solitons in a six-dimensional super Yang-Mills-tensor system and non-critical strings](https://doi.org/10.1016/s0370-2693(97)01531-1) (Score: `0.227`) ｜摘要源 `semanticscholar`
-* **視角 3** `It utilizes principles like orthogonal unloading for breakthrough analysis.`
+    1. `[0.137]` Monitoring of Power Measured by Static Energy Meters for Obs... (probe=0.294, signature=0.000)
+    2. `[0.132]` Static source code metrics and static analysis warnings for ... (probe=0.265, signature=0.018)
+    3. `[0.119]` Prioritizing green hydrogen use based on alternative metrics... (probe=0.300, signature=0.000)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Monitoring of Power Measured by Static Energy Meters for Observing EMI Issues](https://doi.org/10.1109/emceurope.2018.8485024) (Score: `0.137`) ｜摘要源 `openalex`
+* **視角 3** `The six dimensions define the knowledge state tensor: Sin (disruptive potential) and Cos (established mass).`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.178]` Principles and Values of Breakthrough Agile... (probe=0.378, signature=0.072)
-    2. `[0.135]` On the Epistemology of Breakthrough Innovation: The Orthogon... (probe=0.252, signature=0.048)
-    3. `[0.117]` Principles of a selection index which involves several chara... (probe=0.218, signature=0.042)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Principles and Values of Breakthrough Agile 🪧*(標題降維捕獲)*](https://doi.org/10.4324/9781003335702-2) (Score: `0.178`)
-* **視角 4** `The engine processes text via a 64-D Core TF Tensor and Cosine similarity.`
+    1. `[0.180]` SUPERCONFORMAL TENSOR CALCULUS AND MATTER COUPLINGS IN SIX D... (probe=0.327, signature=0.118)
+    2. `[0.163]` Tafeln der verallgemeinerten Kreisfunktionen Sin(4) ?, Cos(4... (probe=0.361, signature=0.000)
+    3. `[0.160]` A pedagogical proof for cos(sin x) &amp;gt; sin(cos x)... (probe=0.356, signature=0.000)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[SUPERCONFORMAL TENSOR CALCULUS AND MATTER COUPLINGS IN SIX DIMENSIONS 🪧*(標題降維捕獲)*](https://doi.org/10.1142/9789814542340_0054) (Score: `0.180`)
+* **視角 4** `The system uses a multi-stage, local-compute pipeline for robust, traceable knowledge observation.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.283]` A Comparative Study of Cosine Similarity and Manhattan Dista... (probe=0.457, signature=0.140)
-    2. `[0.192]` Recommendation System Yogyakarta Tourism Using TF-IDF and Co... (probe=0.285, signature=0.109)
-    3. `[0.179]` Pemrosesan Query dan Pemeringkatan Judul Berita Terkait Gube... (probe=0.232, signature=0.118)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[A Comparative Study of Cosine Similarity and Manhattan Distance on Text Representations Using TF-IDF and Bag of Words](https://doi.org/10.1109/icitcom66635.2025.11265201) (Score: `0.283`) ｜摘要源 `openalex`
-* **視角 5** `Results are materialized as structured assets: .md, .html, and .tex.`
+    1. `[0.234]` Optimal operation of multi-integrated energy system based on... (probe=0.373, signature=0.147)
+    2. `[0.192]` Multi‐Agent System and Ontology to Manage Ideas and Represen... (probe=0.239, signature=0.236)
+    3. `[0.140]` Robust multi-stage progressive autoencoder for hyperspectral... (probe=0.199, signature=0.113)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Optimal operation of multi-integrated energy system based on multi-level Nash multi-stage robust](https://doi.org/10.1016/j.apenergy.2023.122557) (Score: `0.234`) ｜摘要源 `semanticscholar`
+* **視角 5** `Global scoring integrates multiple probes and signature matching for comprehensive field strength.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.168]` An HTML/CSS schema for TeX primitives— generating high-quali... (probe=0.341, signature=0.000)
-    2. `[0.162]` Supplemental Information 1: HTML file with R commands and Re... (probe=0.333, signature=0.059)
-    3. `[0.125]` Introduction to Synthetic and Structured Assets... (probe=0.262, signature=0.000)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[An HTML/CSS schema for TeX primitives— generating high-quality responsive HTML from generic TeX](https://doi.org/10.47397/tb/44-2/tb137mueller-primitives) (Score: `0.168`) ｜摘要源 `openalex`
-* **視角 6** `Evaluation focuses on dynamic energy and potential, rejecting linear continuity.`
+    1. `[0.177]` Signature Matching... (probe=0.447, signature=0.000)
+    2. `[0.142]` The list-strength effect (LSE) and global matching models... (probe=0.359, signature=0.000)
+    3. `[0.131]` Multi-pattern signature matching for hardware network intrus... (probe=0.221, signature=0.061)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Signature Matching 🪧*(標題降維捕獲)*](https://doi.org/10.1007/springerreference_70906) (Score: `0.177`)
+* **視角 6** `The process calculates physical interference between the core ontology and background field.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.163]` Evaluation of Provider Continuity in Primary Care: Actual Ve... (probe=0.326, signature=0.035)
-    2. `[0.159]` Fundamentals of Linear Continuity... (probe=0.354, signature=0.000)
-    3. `[0.151]` Reasons for Rejecting Potential Employment Measure... (probe=0.316, signature=0.065)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Evaluation of Provider Continuity in Primary Care: Actual Versus Random and Potential Continuity](https://doi.org/10.1093/fampra/4.4.251) (Score: `0.163`) ｜摘要源 `openalex`
-* **視角 7** `The protocol measures the structural impact on existing academic fields.`
+    1. `[0.176]` Ontology: Core Process Mining and Querying Enabling Tool... (probe=0.259, signature=0.112)
+    2. `[0.140]` Interference between a fluorescent photon and a classical fi... (probe=0.292, signature=0.019)
+    3. `[0.116]` BiDimRegression: Calculates the Bidimensional Regression Bet... (probe=0.257, signature=0.000)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Ontology: Core Process Mining and Querying Enabling Tool](https://doi.org/10.5772/intechopen.71981) (Score: `0.176`) ｜摘要源 `openalex`
+* **視角 7** `Output artifacts include observation logs, HTML displays, and LaTeX source code for full sovereignty.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.226]` Case 4 - Notification of Existing Measures and Procedural Qu... (probe=0.390, signature=0.112)
-    2. `[0.206]` Case 4 - Notification of Existing Measures and Procedural Qu... (probe=0.404, signature=0.116)
-    3. `[0.192]` Supplemental Material for Structural Stigma: A Systematic Re... (probe=0.378, signature=0.048)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Case 4 - Notification of Existing Measures and Procedural Questions (Paragraphs 97-103 on Measures Permitted by the PPA and the Annecy Protocol)](https://doi.org/10.1163/wtogatt-cs4) (Score: `0.226`) ｜摘要源 `semanticscholar`
-* **視角 8** `It defines knowledge as a dynamic energy field, not a static archive.`
+    1. `[0.150]` RcmdrPlugin.Export: Export R Output to LaTeX or HTML... (probe=0.315, signature=0.000)
+    2. `[0.148]` highr: Syntax Highlighting for R Source Code... (probe=0.320, signature=0.000)
+    3. `[0.140]` Source code 1. R code for analyses in Approach 2: mcmc_flu.r... (probe=0.354, signature=0.000)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[RcmdrPlugin.Export: Export R Output to LaTeX or HTML](https://doi.org/10.32614/cran.package.rcmdrplugin.export) (Score: `0.150`) ｜摘要源 `openalex`
+* **視角 8** `True innovation requires disrupting rigid boundaries, not merely optimizing within existing fields.`
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.179]` Dynamic permittivity of confined water under a static backgr... (probe=0.401, signature=0.051)
-    2. `[0.179]` Dynamic permittivity of confined water under a static backgr... (probe=0.401, signature=0.051)
-    3. `[0.133]` Intelligent static and dynamic reservoir model building base... (probe=0.187, signature=0.107)
-  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Dynamic permittivity of confined water under a static background field 🪧*(標題降維捕獲)*](https://doi.org/10.1021/scimeetings.5c10926) (Score: `0.179`)
+    1. `[0.127]` Spaces for Creativity and Innovation within and Across Organ... (probe=0.320, signature=0.000)
+    2. `[0.119]` New boundaries... (probe=0.301, signature=0.000)
+    3. `[0.113]` 11. “Within their true, right and ancient boundaries”: The g... (probe=0.251, signature=0.000)
+  * 🎯 **有效探針捕獲 (Score >= 0.08)**：[Spaces for Creativity and Innovation within and Across Organizational Boundaries: Introduction 🪧*(標題降維捕獲)*](https://doi.org/10.1108/s0733-558x20250000091014) (Score: `0.127`)
 
 * **背景批次量化摘要（Batch Quantification Log）**：_系統採用切片吞吐模式，成功量化全域最強的 8/8 篇文獻。_
 * **全域收斂之能勢節點（Top 8 Global Reference Nodes）**：
-- [DOI 連結](https://doi.org/10.1057/9781137289889.0013) **Measures and Metrics and Academic Labour** 🪧*(標題降維捕獲)*
-- [DOI 連結](https://doi.org/10.4337/9780857936042.00027) **Measuring: Knowledge-based Development Metrics, Evolution and Perspectives** ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.1109/icitcom66635.2025.11265201) **A Comparative Study of Cosine Similarity and Manhattan Distance on Text Representations Using TF-IDF and Bag of Words** ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.1016/s0370-2693(97)01531-1) **Solitons in a six-dimensional super Yang-Mills-tensor system and non-critical strings** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1163/wtogatt-cs4) **Case 4 - Notification of Existing Measures and Procedural Questions (Paragraphs 97-103 on Measures Permitted by the PPA and the Annecy Protocol)** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1016/s0370-2693(98)00070-7) **Tensor multiplets in six-dimensional (2,0) supergravity** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1016/s0370-2693(97)00365-1) **The six-dimensional self-dual tensor** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1109/icsme46990.2020.00022) **Static source code metrics and static analysis warnings for fine-grained just-in-time defect prediction** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.3102/ip.25.2188634) **Academic Peer Review as a Knowledge Creation Process: How Do Experts Collaboratively Improve Knowledge? (Poster 6)** 🪧*(標題降維捕獲)*
+- [DOI 連結](https://doi.org/10.33015/dominican.edu/2018.hum.09) **Cultivating Creation** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5040/9798400606403.0009) **Investigating Knowledge Creation** 🪧*(標題降維捕獲)*
+- [DOI 連結](https://doi.org/10.5040/9798400606403.0007) **The Dynamic Nature of Academic Knowledge** 🪧*(標題降維捕獲)*
+- [DOI 連結](https://doi.org/10.1016/j.apenergy.2023.122557) **Optimal operation of multi-integrated energy system based on multi-level Nash multi-stage robust** ｜摘要源 `semanticscholar`
+- [DOI 連結](https://doi.org/10.7551/mitpress/14648.003.0014) **An Aesthetic of Knowledge: Relations and the Documentation of Traditional Knowledge in Papua New Guinea** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.1017/cbo9780511575389.008) **Trust in collaborations and the social structure of academic research** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5040/9798400606403.0013) **Changing Conditions for Knowledge Creation** 🪧*(標題降維捕獲)*
 
 ---
 ### 3. 📐 向量干涉量化（Quantified Vector Interference）
 * **背景絕對指紋（Background Hex）**：`[111111]`
 * **整體場域關係（Global Relation）**：**高度同向（全域能勢大幅突破）**
-* **整體相位角（Global Angle）**：`19.0 度`
-* **全域餘弦相似（Global Cosine Similarity）**：`0.9457`
-* **整體語意相近度（Global Semantic Proximity）**：`59.9` / 100
+* **整體相位角（Global Angle）**：`13.3 度`
+* **全域餘弦相似（Global Cosine Similarity）**：`0.9733`
+* **整體語意相近度（Global Semantic Proximity）**：`60.0` / 100
 * **量化公式（Quantification Rule）**：`Per-dimension proximity = 100 - |U - B| / 2; Global proximity = 100 - ((Angle / 1.8) * 0.4 + Global_Mean_Diff * 0.6)`
 
 **維度向量干涉儀表板（Per-Dimension Vector Dashboard）**：
 
-* **價值意圖**：本體 `+95` ｜ 背景均值 `+18.8` ｜ 背景峰值 `+45`（Measures and Metrics and Academic Labour） ｜ 方向 `同向` ｜ 相近度 `61.9` / 100 ｜ 均值差 `+76.2` ｜ 峰值差 `+50.0` ｜ 本體能勢突破
+* **價值意圖**：本體 `+95` ｜ 背景均值 `+33.8` ｜ 背景峰值 `+45`（Investigating Knowledge Creation） ｜ 方向 `同向` ｜ 相近度 `69.4` / 100 ｜ 均值差 `+61.2` ｜ 峰值差 `+50.0` ｜ 本體能勢突破
 
-* **治理維度**：本體 `+85` ｜ 背景均值 `+19.4` ｜ 背景峰值 `+40`（Measures and Metrics and Academic Labour） ｜ 方向 `同向` ｜ 相近度 `67.2` / 100 ｜ 均值差 `+65.6` ｜ 峰值差 `+45.0` ｜ 本體能勢突破
+* **治理維度**：本體 `+85` ｜ 背景均值 `+28.1` ｜ 背景峰值 `+40`（Investigating Knowledge Creation） ｜ 方向 `同向` ｜ 相近度 `71.5` / 100 ｜ 均值差 `+56.9` ｜ 峰值差 `+45.0` ｜ 本體能勢突破
 
-* **認知深度**：本體 `+90` ｜ 背景均值 `+30.6` ｜ 背景峰值 `+45`（The six-dimensional self-dual tensor） ｜ 方向 `同向` ｜ 相近度 `70.3` / 100 ｜ 均值差 `+59.4` ｜ 峰值差 `+45.0` ｜ 本體能勢突破
+* **認知深度**：本體 `+90` ｜ 背景均值 `+27.5` ｜ 背景峰值 `+30`（Investigating Knowledge Creation） ｜ 方向 `同向` ｜ 相近度 `68.8` / 100 ｜ 均值差 `+62.5` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
 
-* **描述架構**：本體 `+80` ｜ 背景均值 `+33.8` ｜ 背景峰值 `+45`（Solitons in a six-dimensional super Yang-Mills-tensor system and non-cr…） ｜ 方向 `同向` ｜ 相近度 `76.9` / 100 ｜ 均值差 `+46.2` ｜ 峰值差 `+35.0` ｜ 本體能勢突破
+* **描述架構**：本體 `+95` ｜ 背景均值 `+25.0` ｜ 背景峰值 `+30`（Investigating Knowledge Creation） ｜ 方向 `同向` ｜ 相近度 `65.0` / 100 ｜ 均值差 `+70.0` ｜ 峰值差 `+65.0` ｜ 本體能勢突破
 
-* **擴張潛力**：本體 `+85` ｜ 背景均值 `+18.8` ｜ 背景峰值 `+25`（Measures and Metrics and Academic Labour） ｜ 方向 `同向` ｜ 相近度 `66.9` / 100 ｜ 均值差 `+66.2` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
+* **擴張潛力**：本體 `+80` ｜ 背景均值 `+31.2` ｜ 背景峰值 `+40`（Cultivating Creation） ｜ 方向 `同向` ｜ 相近度 `75.6` / 100 ｜ 均值差 `+48.8` ｜ 峰值差 `+40.0` ｜ 本體能勢突破
 
-* **應用實相**：本體 `+50` ｜ 背景均值 `+5.0` ｜ 背景峰值 `+35`（Measuring: Knowledge-based Development Metrics, Evolution and Perspecti…） ｜ 方向 `弱耦合` ｜ 相近度 `77.5` / 100 ｜ 均值差 `+45.0` ｜ 峰值差 `+15.0` ｜ 本體能勢突破
+* **應用實相**：本體 `+85` ｜ 背景均值 `+13.8` ｜ 背景峰值 `+35`（Optimal operation of multi-integrated energy system based on multi-leve…） ｜ 方向 `同向` ｜ 相近度 `64.4` / 100 ｜ 均值差 `+71.2` ｜ 峰值差 `+50.0` ｜ 本體能勢突破
 
 ---
 ### 4. 🧾 系統導讀摘要（System Interpretation）
-> 本理論架構提出「學術價值全像儀」（AVH），旨在建立一套超越傳統學術評分體系的知識本體演化觀測協議。它將學術成果視為動態的能量場域，而非靜態的檔案資料，核心目標是客觀地測量一個思想體在學術場域中引發的潛能、衝擊與演化趨勢。
+> 本理論架構提出了一套「學術價值全像儀」（AVH），旨在超越傳統學術體系依賴的靜態評分機制，客觀量化知識的本體演化潛能。它基於八大知識本體演化公理，將學術文本的價值定義為一個六維度的「狀態張量」，涵蓋了意圖、邏輯與物理三個層面，並區分了「突破性離群」與「合群守成」兩種演化模式。
 
-協議基於知識本體演化論的八大公理，透過拓樸演化矩陣，將研究文本的價值解構為意圖、邏輯和物理三個層面。系統不再依賴單純的邊界切割或局部擬合，而是利用高維度的語義矩陣和拓樸分析，量化理論的「離群突破」能量。
+該模型的核心機制是建立一個多階段的定量分析流程：首先，將全文送入本地端進行本體量化；接著，透過多視角探針向外部學術場域發射，並計算出背景能勢母體。最終，系統將本體張量與背景場進行物理幹涉計算，得出整體相位角與語意相近度。
 
-其核心機制計算全域相位角與語意相近度，用以評估新理論與既有學術典範之間的演化夾角與潛在共振。這套系統旨在為學術研究提供一個不受既有典範限制、能識別真正突破性演化趨勢的全新評估視角，從而支持那些挑戰既有結構、追求系統性變革的學術探索。
+這套系統的設計意義在於，它不將觀測值視為主體，而是將學術成果視為一個動態的能勢波包。它提供了一種從全文觀測、外場幹涉到背景量化的完整主權算力管線，旨在為學術研究提供一個更具客觀性和系統性的演化指引。
 
 ---
