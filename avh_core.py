@@ -14,7 +14,7 @@ from datetime import datetime
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V54.0 全文直讀版 - 不分塊、應用實相修正、外部摘要補完、雙核心重排)
+# AVH Genesis Engine (V55.0 摘要主權版 - 無摘要只列殘影，不得進正式背景場)
 # ==============================================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,10 +31,11 @@ RETRIEVAL_ROWS_PER_PROBE = 8
 PROBE_WORD_MIN = 6
 PROBE_WORD_MAX = 24
 DOC_CAPTURE_THRESHOLD = 0.08
+REQUIRE_ABSTRACT_FOR_FINAL = True
 
 ABSTRACT_CACHE = {}
 
-print(f"🧠 [載入本地觀測核心] 啟動 V54.0 全文直讀版 (引擎: {OLLAMA_MODEL_NAME})...")
+print(f"🧠 [載入本地觀測核心] 啟動 V55.0 摘要主權版 (引擎: {OLLAMA_MODEL_NAME})...")
 
 if not os.path.exists(MANIFEST_PATH):
     print(f"⚠️ 遺失底層定義檔：{MANIFEST_PATH}，系統終止觀測。")
@@ -349,7 +350,7 @@ def reconstruct_openalex_abstract(inv_idx):
 def fetch_crossref_abstract_by_doi(doi):
     try:
         url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/55.0"}, timeout=20)
         r.raise_for_status()
         abstract = clean_crossref_abstract(r.json().get("message", {}).get("abstract", ""))
         return abstract, "crossref_doi" if abstract else ("", "")
@@ -360,7 +361,7 @@ def fetch_openalex_abstract_by_doi(doi):
     try:
         doi_url = f"https://doi.org/{doi}"
         url = f"https://api.openalex.org/works?filter=doi:{urllib.parse.quote(doi_url, safe=':/')}&per-page=1"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/55.0"}, timeout=20)
         r.raise_for_status()
         results = r.json().get("results", [])
         if not results:
@@ -373,7 +374,7 @@ def fetch_openalex_abstract_by_doi(doi):
 def fetch_semanticscholar_abstract_by_doi(doi):
     try:
         url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{urllib.parse.quote(doi)}?fields=title,abstract"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/55.0"}, timeout=20)
         r.raise_for_status()
         abstract = normalize_whitespace(r.json().get("abstract", ""))
         return abstract, "semanticscholar" if abstract else ("", "")
@@ -397,7 +398,7 @@ def fetch_external_abstract(doi, title=""):
     return "", ""
 
 # ==============================================================================
-# V54：全文直讀本體評估
+# 全文直讀本體評估
 # ==============================================================================
 
 def evaluate_user_profile(raw_text):
@@ -604,11 +605,12 @@ def repair_application_dimension_if_needed(raw_text, profile):
 def multi_perspective_retrieval_and_rerank(statements, profile):
     if not statements or statements[0] == "核心論述提取失敗":
         print("🌍 [階段 2] 核心論述失效，中斷 Crossref 打撈，系統將自然回歸無人區狀態。")
-        return [], [], 0
+        return [], [], 0, []
 
     global_candidate_pool = []
     retrieval_logs = []
     raw_hits_count = 0
+    shadow_hits_global = []
 
     signature_vec = get_text_vector(profile["retrieval_signature_en"] + " " + profile["primary_statement"])
     anchor_terms = unique_list(profile["implementation_signals"] + profile["application_signals"], 30)
@@ -625,10 +627,10 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
         )
 
         try:
-            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/55.0"}, timeout=20)
             if response.status_code == 429:
                 time.sleep(5)
-                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/55.0"}, timeout=20)
             response.raise_for_status()
         except Exception as e:
             print(f"      ⚠️ API 呼叫失敗 ({e})")
@@ -662,7 +664,7 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
 
             if not abs_text:
                 eval_text = title
-                display_abs = "（此文獻於資料庫與外部補抓來源均無提供摘要，系統已觸發「標題降維比對」機制。）"
+                display_abs = "（此文獻於資料庫與外部補抓來源均無提供摘要，系統已降格為殘影，不參與正式背景場。）"
             else:
                 eval_text = title + " " + abs_text
                 display_abs = abs_text[:900]
@@ -708,30 +710,45 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
                 f"(probe={c['probe_similarity']:.3f}, signature={c['signature_similarity']:.3f})\n"
             )
 
-        effective_hits = [c for c in scored_for_this_stmt if c["similarity"] >= DOC_CAPTURE_THRESHOLD]
+        if REQUIRE_ABSTRACT_FOR_FINAL:
+            effective_hits = [c for c in scored_for_this_stmt if c["similarity"] >= DOC_CAPTURE_THRESHOLD and c["has_abs"]]
+            shadow_hits = [c for c in scored_for_this_stmt if c["similarity"] >= DOC_CAPTURE_THRESHOLD and not c["has_abs"]]
+        else:
+            effective_hits = [c for c in scored_for_this_stmt if c["similarity"] >= DOC_CAPTURE_THRESHOLD]
+            shadow_hits = []
 
         if effective_hits:
             best = effective_hits[0]
             sim_str = f"{best['similarity']:.3f}"
-            abs_marker = "" if best["has_abs"] else " 🪧*(標題降維捕獲)*"
             src_marker = f" ｜摘要源 `{best['abstract_source']}`" if best["abstract_source"] else ""
             status_log = (
-                f"  * 🎯 **有效探針捕獲 (Score >= {DOC_CAPTURE_THRESHOLD:.2f})**："
-                f"[{best['title']}{abs_marker}](https://doi.org/{best['id']}) (Score: `{sim_str}`){src_marker}"
+                f"  * 🎯 **正式背景捕獲（需有摘要）**："
+                f"[{best['title']}](https://doi.org/{best['id']}) (Score: `{sim_str}`){src_marker}"
             )
-            print(f"      ✅ 視角最佳捕獲: {best['title'][:40]}... (Score: {sim_str})")
+            print(f"      ✅ 視角正式捕獲: {best['title'][:40]}... (Score: {sim_str})")
         else:
-            status_log = f"  * ⚠️ **打撈落空**：此視角皆低於 {DOC_CAPTURE_THRESHOLD:.2f} 門檻，已被系統物理抹殺。"
-            print(f"      ⚠️ 視角落空: 捕獲節點皆低於 {DOC_CAPTURE_THRESHOLD:.2f} 門檻。")
+            status_log = f"  * ⚠️ **正式背景落空**：此視角沒有任何「有摘要」且分數達標的文獻。"
+            print(f"      ⚠️ 視角正式背景落空：無摘要合格文獻。")
 
-        retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n{top3_log}{status_log}")
+        if shadow_hits:
+            best_shadow = shadow_hits[0]
+            shadow_log = (
+                f"  * 🪧 **殘影記錄（僅標題，不納入背景場）**："
+                f"[{best_shadow['title']}](https://doi.org/{best_shadow['id']}) (Score: `{best_shadow['similarity']:.3f}`)"
+            )
+            shadow_hits_global.extend(shadow_hits[:3])
+            print(f"      🪧 視角殘影: {best_shadow['title'][:40]}... (Score: {best_shadow['similarity']:.3f})")
+        else:
+            shadow_log = "  * 🪧 **殘影記錄**：無"
+
+        retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n{top3_log}{status_log}\n{shadow_log}")
 
         global_candidate_pool.extend(effective_hits)
 
-    print(f"🌍 [全域顯化] 總計 {len(global_candidate_pool)} 篇有效文獻進入全域池，啟動雙簽名聚合排序...")
+    print(f"🌍 [全域顯化] 正式背景池共有 {len(global_candidate_pool)} 篇摘要可驗證文獻，啟動雙簽名聚合排序...")
 
     if not global_candidate_pool:
-        return [], retrieval_logs, raw_hits_count
+        return [], retrieval_logs, raw_hits_count, shadow_hits_global
 
     aggregated = {}
     for c in global_candidate_pool:
@@ -780,7 +797,7 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
             + agg["max_probe_similarity"] * 0.05
             + min(source_count, 4) * 0.05
             + min(agg["hit_count"], 4) * 0.03
-            + (0.02 if agg["has_abs"] else 0.0)
+            + 0.02
         )
         merged_candidates.append({
             "id": agg["id"],
@@ -788,7 +805,7 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
             "abstract": agg["abstract"],
             "author": agg["author"],
             "year": agg["year"],
-            "has_abs": agg["has_abs"],
+            "has_abs": True,
             "abstract_source": agg["abstract_source"],
             "externally_fetched": agg["externally_fetched"],
             "similarity": round(agg["max_similarity"], 4),
@@ -833,8 +850,8 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
         if len(final_papers) >= 8:
             break
 
-    print(f"🌍 全域收斂完成：從總池中萃取出 {len(final_papers)} 篇絕對最強文獻，準備進入六維量化...")
-    return final_papers, retrieval_logs, raw_hits_count
+    print(f"🌍 全域收斂完成：從正式背景池中萃取出 {len(final_papers)} 篇摘要可驗證文獻，準備進入六維量化...")
+    return final_papers, retrieval_logs, raw_hits_count, shadow_hits_global
 
 # ==============================================================================
 # 背景量化
@@ -842,7 +859,7 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
 
 def evaluate_background_papers(final_papers, core_statement, retrieval_signature_en):
     if not final_papers:
-        return {"papers": [], "batch_log": "無背景文獻。"}
+        return {"papers": [], "batch_log": "無正式背景文獻。"}
 
     print(f"📚 [階段 4] 啟動「切片吞吐」模式，逐篇量化 {len(final_papers)} 篇背景文獻以保護 VRAM...")
     scored_papers = []
@@ -883,7 +900,7 @@ def evaluate_background_papers(final_papers, core_statement, retrieval_signature
                 "title": paper["title"],
                 "note": normalize_whitespace(res.get("note", "")),
                 "scores": {k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS},
-                "has_abs": paper.get("has_abs", True),
+                "has_abs": True,
                 "source_count": paper.get("source_count", 1),
                 "abstract_source": paper.get("abstract_source", "")
             })
@@ -893,7 +910,7 @@ def evaluate_background_papers(final_papers, core_statement, retrieval_signature
 
         time.sleep(1)
 
-    synthetic_batch_log = f"系統採用切片吞吐模式，成功量化全域最強的 {len(scored_papers)}/{len(final_papers)} 篇文獻。"
+    synthetic_batch_log = f"系統採用切片吞吐模式，成功量化正式背景池中的 {len(scored_papers)}/{len(final_papers)} 篇文獻。"
     return {"papers": scored_papers, "batch_log": synthetic_batch_log}
 
 # ==============================================================================
@@ -1001,11 +1018,20 @@ def format_reference_records(scored_papers):
     rows = []
     for p in scored_papers:
         doi_link = f"https://doi.org/{p['id']}" if p["id"] != "Unknown" else "#"
-        abs_marker = "" if p.get("has_abs", True) else " 🪧*(標題降維捕獲)*"
         hit_marker = f" ｜多視角命中 `{p.get('source_count', 1)}`" if p.get("source_count", 1) > 1 else ""
         src_marker = f" ｜摘要源 `{p.get('abstract_source', '')}`" if p.get("abstract_source", "") else ""
-        rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}**{abs_marker}{hit_marker}{src_marker}")
+        rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}**{hit_marker}{src_marker}")
     return rows
+
+def format_shadow_records(shadow_hits):
+    rows = []
+    for s in shadow_hits[:12]:
+        doi_link = f"https://doi.org/{s['id']}" if s["id"] != "Unknown" else "#"
+        rows.append(
+            f"- [DOI 連結]({doi_link}) **{s['title']}** ｜Score `{s['similarity']}` ｜"
+            f" probe `{s['probe_similarity']}` ｜ signature `{s['signature_similarity']}`"
+        )
+    return rows if rows else ["- 無"]
 
 def generate_summary(raw_text, global_relation, global_angle, global_proximity):
     prompt = f"""
@@ -1045,14 +1071,17 @@ def process_avh_manifestation(source_path):
         state_info = MANIFEST["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
 
         try:
-            final_papers, retrieval_logs, raw_hits_count = multi_perspective_retrieval_and_rerank(user_profile["valid_statements"], user_profile)
+            final_papers, retrieval_logs, raw_hits_count, shadow_hits = multi_perspective_retrieval_and_rerank(user_profile["valid_statements"], user_profile)
         except Exception as e:
-            final_papers, retrieval_logs, raw_hits_count = [], [f"打撈或收斂失敗（{e}）"], 0
+            final_papers, retrieval_logs, raw_hits_count, shadow_hits = [], [f"打撈或收斂失敗（{e}）"], 0, []
 
         scored_background = evaluate_background_papers(final_papers, user_profile["primary_statement"], user_profile["retrieval_signature_en"]) if final_papers else {"papers": []}
 
         if not scored_background["papers"]:
-            if final_papers:
+            if shadow_hits:
+                baseline_status = "Void（僅有標題殘影：無摘要可驗證母體）"
+                background_batch_log = "本輪存在若干高分標題殘影，但因無摘要，不被允許進入正式背景場。系統誠實回到無人區。"
+            elif final_papers:
                 baseline_status = f"Void（觀測破裂：{len(final_papers)} 篇背景文獻量化全數失敗）"
                 background_batch_log = "打撈已保留文獻，但背景文獻逐篇量化時 LLM 發生崩潰，無法形成有效母體。"
             else:
@@ -1067,7 +1096,11 @@ def process_avh_manifestation(source_path):
             global_relation = "無人區"
             summary = "本理論架構目前處於無人區狀態；外部鄰近文獻尚不足以形成穩定背景母體，因此與現有學界的方向關係暫時不可定義。"
         else:
-            baseline_status = f"Background Field Established（全域能勢建構：{len(final_papers)} 鄰域節點）"
+            if len(final_papers) < 8:
+                baseline_status = f"Sparse Reference Field（摘要可驗證鄰域：{len(final_papers)} 節點）"
+            else:
+                baseline_status = f"Background Field Established（全域能勢建構：{len(final_papers)} 鄰域節點）"
+
             background_batch_log = scored_background["batch_log"]
 
             vector_data = build_vector_logs(user_profile, scored_background["papers"])
@@ -1098,7 +1131,9 @@ def process_avh_manifestation(source_path):
                 "user_dimension_logs": format_user_dimension_logs(user_profile),
                 "raw_hits": raw_hits_count,
                 "final_hits": len(final_papers) if final_papers else 0,
+                "shadow_hits_count": len(shadow_hits),
                 "retrieval_logs": retrieval_logs,
+                "shadow_records": format_shadow_records(shadow_hits),
                 "background_batch_log": background_batch_log,
                 "paper_records": format_reference_records(scored_background["papers"]),
                 "vector_logs": vector_logs,
@@ -1128,6 +1163,7 @@ def generate_trajectory_log(target_file, data):
     retrieval_text = "\n".join(meta["retrieval_logs"])
     vector_logs_text = "\n\n".join(meta["vector_logs"])
     papers_text = "\n".join(meta["paper_records"])
+    shadow_text = "\n".join(meta["shadow_records"])
     probe_str = " ｜ ".join(meta["valid_statements"]) if meta["valid_statements"] else "未釋放"
     impl_str = " ｜ ".join(meta["implementation_signals"]) if meta["implementation_signals"] else "未萃取"
     app_sig_str = " ｜ ".join(meta["application_signals"]) if meta["application_signals"] else "未萃取"
@@ -1151,11 +1187,13 @@ def generate_trajectory_log(target_file, data):
         f"{user_logs_text}\n\n"
         f"---\n"
         f"### 2. 🎣 背景能勢打撈（Background Field Retrieval）\n"
-        f"* **場域建構狀態（Field Status）**：`{meta['baseline_status']}` （多視角搜索共 {meta['raw_hits']} 篇 → 全域收斂至 {meta['final_hits']} 篇）\n"
+        f"* **場域建構狀態（Field Status）**：`{meta['baseline_status']}` （多視角搜索共 {meta['raw_hits']} 篇 → 正式背景收斂至 {meta['final_hits']} 篇；標題殘影 {meta['shadow_hits_count']} 筆）\n"
         f"* **光譜透析多視角打撈日誌（Spectrum Dialysis Retrieval Log）**：\n"
         f"{retrieval_text}\n\n"
+        f"* **殘影區（Title-only Shadow Hits，不參與背景場）**：\n"
+        f"{shadow_text}\n\n"
         f"* **背景批次量化摘要（Batch Quantification Log）**：_{meta['background_batch_log']}_\n"
-        f"* **全域收斂之能勢節點（Top 8 Global Reference Nodes）**：\n"
+        f"* **全域收斂之正式能勢節點（Abstract-backed Global Reference Nodes）**：\n"
         f"{papers_text}\n\n"
         f"---\n"
         f"### 3. 📐 向量干涉量化（Quantified Vector Interference）\n"
@@ -1199,6 +1237,7 @@ def export_wordpress_html(basename, data):
         f"    <p><strong>整體相位角：</strong>{html.escape(str(meta['global_angle']))}</p>\n"
         f"    <p><strong>整體語意相近度：</strong>{html.escape(str(meta['global_proximity']))} / 100</p>\n"
         f"    <p><strong>理論導讀摘要：</strong><br>{safe_summary}</p>\n"
+        f"    <p><strong>標題殘影數：</strong>{meta['shadow_hits_count']}</p>\n"
         f"    <p>物理時間戳：{timestamp_str}</p>\n"
         "  </div>\n"
         "</div>\n"
@@ -1231,7 +1270,8 @@ def export_latex(basename, data):
         f"背景狀態：[{data['baseline_hex']}]\n\n"
         f"整體場域關係：{simple_escape(str(meta['global_relation']))}\n\n"
         f"整體相位角：{simple_escape(str(meta['global_angle']))}\n\n"
-        f"整體語意相近度：{simple_escape(str(meta['global_proximity']))}/100\n"
+        f"整體語意相近度：{simple_escape(str(meta['global_proximity']))}/100\n\n"
+        f"標題殘影數：{meta['shadow_hits_count']}\n"
         "\\end{abstract}\n\n"
         f"{safe_text}\n\n"
         "\\end{document}\n"
@@ -1285,7 +1325,7 @@ if __name__ == "__main__":
     success_count = 0
 
     with open(log_path, "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V54.0 全文直讀修正版\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V55.0 摘要主權版\n---\n")
 
         for i, source in enumerate(md_files):
             print(f"\n{'=' * 60}")
