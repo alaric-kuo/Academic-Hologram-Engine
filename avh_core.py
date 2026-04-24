@@ -14,7 +14,7 @@ from datetime import datetime
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V53.0 多視角直讀版 - AI直讀全文、8探針外發、全域能勢池收斂)
+# AVH Genesis Engine (V54.0 全文直讀版 - 不分塊、應用實相修正、外部摘要補完、雙核心重排)
 # ==============================================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,13 +23,18 @@ MANIFEST_PATH = os.path.join(BASE_DIR, "avh_manifest.json")
 OLLAMA_MODEL_NAME = "gemma4"
 OLLAMA_API_URL = "http://localhost:11434/api/chat"
 
-PRIMARY_STATEMENT_COUNT = 8
+FULLTEXT_NUM_CTX = 32768
+SUMMARY_NUM_CTX = 32768
+BACKGROUND_NUM_CTX = 6144
+
 RETRIEVAL_ROWS_PER_PROBE = 8
 PROBE_WORD_MIN = 6
-PROBE_WORD_MAX = 22
-PROBE_SIM_THRESHOLD = 0.05
+PROBE_WORD_MAX = 24
+DOC_CAPTURE_THRESHOLD = 0.08
 
-print(f"🧠 [載入本地觀測核心] 啟動 V53.0 多視角直讀版 (引擎: {OLLAMA_MODEL_NAME})...")
+ABSTRACT_CACHE = {}
+
+print(f"🧠 [載入本地觀測核心] 啟動 V54.0 全文直讀版 (引擎: {OLLAMA_MODEL_NAME})...")
 
 if not os.path.exists(MANIFEST_PATH):
     print(f"⚠️ 遺失底層定義檔：{MANIFEST_PATH}，系統終止觀測。")
@@ -41,15 +46,23 @@ with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
 DIMENSION_KEYS = list(MANIFEST["dimensions"].keys())
 
 # ==============================================================================
-# 語義向量比對引擎 (Probe ↔ Crossref 文獻)
+# 語義向量比對引擎
 # ==============================================================================
 
 STOP_WORDS = {
     "the", "and", "of", "to", "a", "in", "for", "is", "on", "that", "by", "this",
     "with", "i", "you", "it", "not", "or", "be", "are", "from", "at", "as", "your",
     "all", "have", "new", "we", "an", "was", "can", "will", "via", "using", "based",
-    "proposing", "propose", "study", "approach", "method"
+    "proposing", "propose", "study", "approach", "method", "methods", "paper",
+    "research", "article", "system", "current"
 }
+
+APPLICATION_EVIDENCE_PATTERNS = [
+    r"\bcrossref\b", r"\bollama\b", r"\bcosine\b", r"\btensor\b", r"\bjson\b",
+    r"\bmarkdown\b", r"\bhtml\b", r"\blatex\b", r"\btex\b", r"\bgit\b",
+    r"\bvector\b", r"\bengine\b", r"\blog\b", r"\bapi\b", r"\bprobe\b",
+    r"\bretrieval\b", r"\bwordpress\b", r"\bexport\b", r"\bmd\b"
+]
 
 def get_text_vector(text):
     words = re.findall(r'\b[a-zA-Z]{3,}\b', str(text).lower())
@@ -66,8 +79,22 @@ def compute_dict_cosine(d1, d2):
         return 0.0
     return float(numerator) / denominator
 
+def keyword_overlap_score(keywords, text):
+    kw_tokens = set()
+    for kw in keywords:
+        for t in re.findall(r'\b[a-zA-Z]{3,}\b', str(kw).lower()):
+            if t not in STOP_WORDS:
+                kw_tokens.add(t)
+
+    if not kw_tokens:
+        return 0.0
+
+    text_tokens = set(re.findall(r'\b[a-zA-Z]{3,}\b', str(text).lower()))
+    hit = len(kw_tokens & text_tokens)
+    return hit / len(kw_tokens)
+
 # ==============================================================================
-# 核心通訊層 (Local LLM)
+# 核心通訊層
 # ==============================================================================
 
 def call_local_llm(messages, json_mode=False, temperature=0.0, num_ctx=8192):
@@ -85,13 +112,13 @@ def call_local_llm(messages, json_mode=False, temperature=0.0, num_ctx=8192):
     start_time = time.time()
 
     try:
-        response = requests.post(OLLAMA_API_URL, json=payload, timeout=300)
+        response = requests.post(OLLAMA_API_URL, json=payload, timeout=420)
         response.raise_for_status()
         elapsed = time.time() - start_time
         print(f"   ↳ 🟢 [觀測完成] 耗時 {elapsed:.1f} 秒，實體質量成功顯化。")
         return response.json()["message"]["content"]
     except requests.exceptions.Timeout:
-        print("\n❌ [邊界破裂] 運算超過 300 秒！資訊熵過載導致引擎超時。")
+        print("\n❌ [邊界破裂] 運算超過 420 秒！資訊熵過載導致引擎超時。")
         sys.exit(1)
     except requests.exceptions.ConnectionError:
         print("\n❌ [邊界破裂] 無法連線至 Ollama。模型可能因 VRAM 溢出而崩潰。")
@@ -132,15 +159,15 @@ def parse_llm_json(response_text):
 
     if end_idx == -1:
         raise ValueError("找不到完整 JSON 結尾。")
-    clean_json = text[start_idx:end_idx + 1]
 
+    clean_json = text[start_idx:end_idx + 1]
     try:
         return json.loads(clean_json, strict=False)
     except Exception:
         return json.loads(re.sub(r"(?<!\\)\n", " ", clean_json), strict=False)
 
 # ==============================================================================
-# 工具與數學核心
+# 基礎工具
 # ==============================================================================
 
 def normalize_whitespace(text):
@@ -238,6 +265,57 @@ def build_dimensions_prompt():
     ]
     return json.dumps(payload, ensure_ascii=False)
 
+def unique_list(seq, limit=None):
+    seen = set()
+    out = []
+    for item in seq:
+        s = normalize_whitespace(item)
+        if not s:
+            continue
+        key = s.lower()
+        if key not in seen:
+            seen.add(key)
+            out.append(s)
+        if limit and len(out) >= limit:
+            break
+    return out
+
+def normalize_statement(stmt):
+    s = normalize_whitespace(stmt)
+    s = s.strip("`\"' ")
+    s = re.sub(r"\s+", " ", s)
+    return s
+
+def is_generic_probe_statement(stmt):
+    s = normalize_statement(stmt).lower()
+    bad_patterns = [
+        r"^we must\b",
+        r"^the system requires\b",
+        r"^a study on\b",
+        r"^proposing a new\b",
+        r"^this paper\b",
+        r"^we propose\b",
+        r"^an approach to\b",
+        r"^it is necessary to\b"
+    ]
+    return any(re.search(p, s) for p in bad_patterns)
+
+def is_valid_probe_statement(stmt):
+    s = normalize_statement(stmt)
+    word_count = len(re.findall(r'\b[a-zA-Z]+\b', s))
+    if word_count < PROBE_WORD_MIN or word_count > PROBE_WORD_MAX:
+        return False
+    if is_generic_probe_statement(s):
+        return False
+    return True
+
+def is_similar_title(t1, t2):
+    w1 = set(re.findall(r'\w+', str(t1).lower()))
+    w2 = set(re.findall(r'\w+', str(t2).lower()))
+    if not w1 or not w2:
+        return False
+    return (len(w1 & w2) / len(w1 | w2)) > 0.5
+
 def aggregate_background(scored_papers):
     mean_scores = {}
     peak_scores = {}
@@ -250,6 +328,577 @@ def aggregate_background(scored_papers):
         peak_papers[key] = peak_paper
     background_hex = sign_to_binary({k: mean_scores[k] for k in DIMENSION_KEYS})
     return mean_scores, peak_scores, peak_papers, background_hex
+
+# ==============================================================================
+# 外部摘要補完層
+# ==============================================================================
+
+def reconstruct_openalex_abstract(inv_idx):
+    if not inv_idx or not isinstance(inv_idx, dict):
+        return ""
+    pos_map = {}
+    for word, positions in inv_idx.items():
+        for pos in positions:
+            pos_map[pos] = word
+    if not pos_map:
+        return ""
+    max_pos = max(pos_map.keys())
+    words = [pos_map.get(i, "") for i in range(max_pos + 1)]
+    return normalize_whitespace(" ".join(words))
+
+def fetch_crossref_abstract_by_doi(doi):
+    try:
+        url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}"
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r.raise_for_status()
+        abstract = clean_crossref_abstract(r.json().get("message", {}).get("abstract", ""))
+        return abstract, "crossref_doi" if abstract else ("", "")
+    except Exception:
+        return "", ""
+
+def fetch_openalex_abstract_by_doi(doi):
+    try:
+        doi_url = f"https://doi.org/{doi}"
+        url = f"https://api.openalex.org/works?filter=doi:{urllib.parse.quote(doi_url, safe=':/')}&per-page=1"
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r.raise_for_status()
+        results = r.json().get("results", [])
+        if not results:
+            return "", ""
+        abstract = reconstruct_openalex_abstract(results[0].get("abstract_inverted_index", {}))
+        return abstract, "openalex" if abstract else ("", "")
+    except Exception:
+        return "", ""
+
+def fetch_semanticscholar_abstract_by_doi(doi):
+    try:
+        url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{urllib.parse.quote(doi)}?fields=title,abstract"
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+        r.raise_for_status()
+        abstract = normalize_whitespace(r.json().get("abstract", ""))
+        return abstract, "semanticscholar" if abstract else ("", "")
+    except Exception:
+        return "", ""
+
+def fetch_external_abstract(doi, title=""):
+    if not doi or doi == "Unknown":
+        return "", ""
+
+    if doi in ABSTRACT_CACHE:
+        return ABSTRACT_CACHE[doi]
+
+    for fn in [fetch_crossref_abstract_by_doi, fetch_openalex_abstract_by_doi, fetch_semanticscholar_abstract_by_doi]:
+        abstract, source = fn(doi)
+        if abstract:
+            ABSTRACT_CACHE[doi] = (abstract, source)
+            return abstract, source
+
+    ABSTRACT_CACHE[doi] = ("", "")
+    return "", ""
+
+# ==============================================================================
+# V54：全文直讀本體評估
+# ==============================================================================
+
+def evaluate_user_profile(raw_text):
+    sys_prompt = f"""
+你是一台極度嚴謹的「學術本體論量化儀器」。
+你現在必須直接閱讀全文，不准只抓前段摘要，不准把後段實作內容忽略。
+請對全文做六維量化、輸出 8 句不同角度的英文核心論述，並保留實作/應用證據。只能回傳合法 JSON。
+
+維度定義：
+{build_dimensions_prompt()}
+
+規則：
+1. 每維回傳 score，範圍 -100 到 +100。
+2. 每維回傳 confidence，範圍 0 到 100。
+3. reason 必須是客觀中文短語，禁止神祕學語彙。
+4. primary_statement 必須是最能代表全文整體骨架的英文核心論述，不可只是口號。
+5. core_statements_8 必須是 8 句不同角度的英文探針。每句 <= 24 個英文單字。
+6. implementation_signals：列出文中出現的具體實作證據，例如引擎、Crossref、Cosine、Tensor、JSON、Ollama、md/html/tex、Git、自動化輸出等。
+7. application_signals：列出文中可被視為「應用實相」的證據。只要文本明確描述可執行流程、引擎、輸出資產、觀測日誌、HTML/LaTeX/Markdown 實體，就不能把 application 判為純理論停留。
+8. retrieval_signature_en：用 1 句英文寫出「拿去和外部文獻重新比對」時最穩定的全文簽名，不能空泛。
+9. absolutely_forbidden_targets：列出作者正在批判、排除或推翻的舊概念，避免把反對對象誤當支持內容。
+
+JSON 結構：
+{{
+  "retrieval_signature_en": "英文全文簽名",
+  "primary_statement": "英文核心論述",
+  "core_statements_8": ["句1","句2","句3","句4","句5","句6","句7","句8"],
+  "implementation_signals": ["證據1","證據2"],
+  "application_signals": ["證據1","證據2"],
+  "absolutely_forbidden_targets": ["舊概念1","舊概念2"],
+  "academic_fingerprint": "中文學術指紋",
+  "value_intent_score": 85,
+  "value_intent_confidence": 92,
+  "value_intent_reason": "說明",
+  "governance_score": 70,
+  "governance_confidence": 88,
+  "governance_reason": "說明",
+  "cognition_score": 60,
+  "cognition_confidence": 90,
+  "cognition_reason": "說明",
+  "architecture_score": 40,
+  "architecture_confidence": 85,
+  "architecture_reason": "說明",
+  "expansion_score": 30,
+  "expansion_confidence": 80,
+  "expansion_reason": "說明",
+  "application_score": -10,
+  "application_confidence": 75,
+  "application_reason": "說明"
+}}
+""".strip()
+
+    print("🕸️ [階段 1] 全文直讀：直接吞入全文，輸出六維量化、8 重探針與全文簽名...")
+    user_prompt = f"【全文開始】\n{raw_text}\n【全文結束】\n⚠️ 只能輸出 JSON。"
+
+    res = parse_llm_json(
+        call_local_llm(
+            [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
+            json_mode=True,
+            num_ctx=FULLTEXT_NUM_CTX
+        )
+    )
+
+    raw_primary = normalize_statement(res.get("primary_statement", ""))
+    raw_signature = normalize_statement(res.get("retrieval_signature_en", ""))
+    raw_candidates = res.get("core_statements_8", [])
+
+    valid_statements = []
+    if isinstance(raw_candidates, list):
+        for cand in raw_candidates:
+            cand_str = normalize_statement(cand)
+            if is_valid_probe_statement(cand_str):
+                valid_statements.append(cand_str)
+            else:
+                print(f"   ↳ [過濾剔除] Probe 格式不合或過度口號化：{cand_str}")
+
+    valid_statements = unique_list(valid_statements, 12)
+
+    if raw_primary and is_valid_probe_statement(raw_primary):
+        if raw_primary.lower() not in {s.lower() for s in valid_statements}:
+            valid_statements.insert(0, raw_primary)
+
+    if not valid_statements:
+        print("   ↳ ⚠️ [容錯介入] 全文直讀未產生有效探針，啟動標題淬取...")
+        match = re.search(r'(?:#+)\s*([A-Za-z0-9\-\s:]+)', raw_text)
+        if not match:
+            match = re.search(r'\(([A-Za-z0-9\-\s]{10,80})\)', raw_text)
+        if not match:
+            match = re.search(r'([A-Za-z0-9\-\s]{15,80})', raw_text)
+        fallback = normalize_statement(match.group(1)) if match else "核心論述提取失敗"
+        valid_statements = [fallback]
+
+    primary_statement = raw_primary if raw_primary and is_valid_probe_statement(raw_primary) else valid_statements[0]
+    retrieval_signature = raw_signature if raw_signature else primary_statement
+
+    print(f"   ↳ 🎯 [多視角展開] 成功釋放 {len(valid_statements)} 組有效探針：")
+    for i, stmt in enumerate(valid_statements, 1):
+        head = "Primary" if stmt == primary_statement else f"Probe {i}"
+        print(f"      - [{head}] {stmt}")
+
+    try:
+        by_key = {}
+        for k in DIMENSION_KEYS:
+            if f"{k}_score" not in res or f"{k}_confidence" not in res:
+                raise ValueError(f"缺少維度分數或置信度：{k}")
+            by_key[k] = {
+                "signed_score": res.get(f"{k}_score", 0),
+                "confidence": res.get(f"{k}_confidence", 0),
+                "reason": str(res.get(f"{k}_reason", "無"))
+            }
+    except Exception as e:
+        print(f"⚠️ [維度破裂] LLM 遺失必要欄位！原因：{e}")
+        by_key = {
+            k: {"signed_score": 0, "confidence": 0, "reason": "全文量化失敗，啟動保底"}
+            for k in DIMENSION_KEYS
+        }
+
+    profile = {
+        "retrieval_signature_en": retrieval_signature,
+        "primary_statement": normalize_whitespace(primary_statement),
+        "valid_statements": valid_statements,
+        "implementation_signals": unique_list(res.get("implementation_signals", []) if isinstance(res.get("implementation_signals", []), list) else [], 20),
+        "application_signals": unique_list(res.get("application_signals", []) if isinstance(res.get("application_signals", []), list) else [], 20),
+        "forbidden_targets": unique_list(res.get("absolutely_forbidden_targets", []) if isinstance(res.get("absolutely_forbidden_targets", []), list) else [], 20),
+        "academic_fingerprint": normalize_whitespace(res.get("academic_fingerprint", "預設紀錄")),
+        "scores": {k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS},
+        "confidences": {k: enforce_confidence(by_key[k].get("confidence"), k) for k in DIMENSION_KEYS},
+        "reasons": {k: normalize_whitespace(by_key[k].get("reason", "")) for k in DIMENSION_KEYS},
+    }
+    profile["hex_code"] = sign_to_binary(profile["scores"])
+    return profile
+
+def repair_application_dimension_if_needed(raw_text, profile):
+    app_score = profile["scores"]["application"]
+
+    regex_hits = 0
+    raw_lower = raw_text.lower()
+    for p in APPLICATION_EVIDENCE_PATTERNS:
+        if re.search(p, raw_lower):
+            regex_hits += 1
+
+    evidence_count = len(profile["implementation_signals"]) + len(profile["application_signals"])
+    strong_evidence = evidence_count >= 3 or regex_hits >= 6
+
+    if app_score > 0 or not strong_evidence:
+        return profile
+
+    print("   ↳ 🛠️ [應用實相校正] 偵測到全文存在明確實作/輸出證據，但 D6 <= 0，啟動全文再判定...")
+
+    sys_prompt = """
+你是一台「應用實相矛盾校正器」。
+只重新判斷 application 維度。
+若全文已存在可執行引擎、Crossref 打撈、Cosine 計算、Tensor、JSON、Ollama、本地管線、md/html/tex 輸出、Git 自動化、觀測日誌、HTML 實體、LaTeX 原始碼等，就不能把 application 判成純理論停留。
+只能回傳 JSON：
+{
+  "application_score": 0,
+  "application_confidence": 0,
+  "application_reason": "中文短語"
+}
+""".strip()
+
+    user_prompt = (
+        f"【全文】\n{raw_text}\n\n"
+        f"【原始 application 判定】score={app_score}, reason={profile['reasons']['application']}\n"
+        f"【implementation_signals】{json.dumps(profile['implementation_signals'], ensure_ascii=False)}\n"
+        f"【application_signals】{json.dumps(profile['application_signals'], ensure_ascii=False)}"
+    )
+
+    try:
+        res = parse_llm_json(
+            call_local_llm(
+                [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
+                json_mode=True,
+                num_ctx=FULLTEXT_NUM_CTX
+            )
+        )
+
+        repaired_score = enforce_score(res.get("application_score", app_score), "application_score")
+        repaired_conf = enforce_confidence(res.get("application_confidence", profile["confidences"]["application"]), "application_confidence")
+        repaired_reason = normalize_whitespace(res.get("application_reason", profile["reasons"]["application"]))
+
+        if repaired_score <= 0 and strong_evidence:
+            repaired_score = max(35, app_score)
+            repaired_conf = max(90, repaired_conf)
+            repaired_reason = "全文已明確存在可執行引擎、檢索、向量運算與 md/html/tex 輸出，依應用實相定義校正為弱正值"
+
+        if repaired_score != app_score:
+            print(f"      ✅ 應用實相已修正：{app_score} -> {repaired_score}")
+
+        profile["scores"]["application"] = repaired_score
+        profile["confidences"]["application"] = repaired_conf
+        profile["reasons"]["application"] = repaired_reason
+        profile["hex_code"] = sign_to_binary(profile["scores"])
+        return profile
+
+    except Exception as e:
+        print(f"      ⚠️ 應用實相校正失敗，保留原值 ({e})")
+        return profile
+
+# ==============================================================================
+# 背景能勢打撈與雙簽名重排
+# ==============================================================================
+
+def multi_perspective_retrieval_and_rerank(statements, profile):
+    if not statements or statements[0] == "核心論述提取失敗":
+        print("🌍 [階段 2] 核心論述失效，中斷 Crossref 打撈，系統將自然回歸無人區狀態。")
+        return [], [], 0
+
+    global_candidate_pool = []
+    retrieval_logs = []
+    raw_hits_count = 0
+
+    signature_vec = get_text_vector(profile["retrieval_signature_en"] + " " + profile["primary_statement"])
+    anchor_terms = unique_list(profile["implementation_signals"] + profile["application_signals"], 30)
+
+    print(f"🌍 [階段 2 & 3] 啟動多視角打撈與全域顯化 (共 {len(statements)} 組有效探針，最大搜索量 {len(statements) * RETRIEVAL_ROWS_PER_PROBE} 篇)...")
+
+    for idx, stmt in enumerate(statements):
+        print(f"   ↳ ⏳ [視角 {idx + 1}/{len(statements)}] 發射論述: {stmt}")
+        stmt_vec = get_text_vector(stmt)
+
+        url = (
+            f"https://api.crossref.org/works?"
+            f"query={urllib.parse.quote(stmt)}&select=DOI,title,abstract,author,issued&rows={RETRIEVAL_ROWS_PER_PROBE}"
+        )
+
+        try:
+            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+            if response.status_code == 429:
+                time.sleep(5)
+                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/54.0"}, timeout=20)
+            response.raise_for_status()
+        except Exception as e:
+            print(f"      ⚠️ API 呼叫失敗 ({e})")
+            retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n  * ⚠️ 打撈落空：Crossref API 呼叫失敗或超時")
+            continue
+
+        items = response.json().get("message", {}).get("items", [])
+        raw_hits_count += len(items)
+
+        if not items:
+            print("      ⚠️ API 回傳 0 篇")
+            retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n  * ⚠️ 打撈落空：Crossref 回傳 0 篇 (API Zero Items)")
+            continue
+
+        scored_for_this_stmt = []
+        for paper in items:
+            title_list = paper.get("title")
+            title = normalize_whitespace(title_list[0] if title_list else "Unknown")
+            doi = str(paper.get("DOI", "Unknown")).strip()
+
+            abs_text = clean_crossref_abstract(paper.get("abstract", ""))
+            abs_source = "crossref_list" if abs_text else ""
+            externally_fetched = False
+
+            if not abs_text and doi and doi != "Unknown":
+                ext_abs, ext_source = fetch_external_abstract(doi, title=title)
+                if ext_abs:
+                    abs_text = ext_abs
+                    abs_source = ext_source
+                    externally_fetched = True
+
+            if not abs_text:
+                eval_text = title
+                display_abs = "（此文獻於資料庫與外部補抓來源均無提供摘要，系統已觸發「標題降維比對」機制。）"
+            else:
+                eval_text = title + " " + abs_text
+                display_abs = abs_text[:900]
+
+            paper_vec = get_text_vector(eval_text)
+            probe_sim = compute_dict_cosine(stmt_vec, paper_vec)
+            signature_sim = compute_dict_cosine(signature_vec, paper_vec)
+            anchor_sim = keyword_overlap_score(anchor_terms, eval_text)
+
+            combined_score = probe_sim * 0.45 + signature_sim * 0.45 + anchor_sim * 0.10
+            if not abs_text:
+                combined_score *= 0.88
+
+            authors = paper.get("author", [])
+            first_author = str(authors[0].get("family", "")).lower().strip() if authors else "unknown"
+            try:
+                year = int(paper.get("issued", {}).get("date-parts", [[0]])[0][0])
+            except Exception:
+                year = 0
+
+            scored_for_this_stmt.append({
+                "id": doi,
+                "title": title,
+                "abstract": display_abs,
+                "author": first_author,
+                "year": year,
+                "source_statement": stmt,
+                "probe_similarity": round(probe_sim, 4),
+                "signature_similarity": round(signature_sim, 4),
+                "anchor_similarity": round(anchor_sim, 4),
+                "similarity": round(combined_score, 4),
+                "has_abs": bool(abs_text),
+                "abstract_source": abs_source,
+                "externally_fetched": externally_fetched
+            })
+
+        scored_for_this_stmt.sort(key=lambda x: x["similarity"], reverse=True)
+
+        top3_log = "  * 📊 **Top 3 綜合命中度**：\n"
+        for i, c in enumerate(scored_for_this_stmt[:3]):
+            top3_log += (
+                f"    {i + 1}. `[{c['similarity']:.3f}]` {c['title'][:60]}... "
+                f"(probe={c['probe_similarity']:.3f}, signature={c['signature_similarity']:.3f})\n"
+            )
+
+        effective_hits = [c for c in scored_for_this_stmt if c["similarity"] >= DOC_CAPTURE_THRESHOLD]
+
+        if effective_hits:
+            best = effective_hits[0]
+            sim_str = f"{best['similarity']:.3f}"
+            abs_marker = "" if best["has_abs"] else " 🪧*(標題降維捕獲)*"
+            src_marker = f" ｜摘要源 `{best['abstract_source']}`" if best["abstract_source"] else ""
+            status_log = (
+                f"  * 🎯 **有效探針捕獲 (Score >= {DOC_CAPTURE_THRESHOLD:.2f})**："
+                f"[{best['title']}{abs_marker}](https://doi.org/{best['id']}) (Score: `{sim_str}`){src_marker}"
+            )
+            print(f"      ✅ 視角最佳捕獲: {best['title'][:40]}... (Score: {sim_str})")
+        else:
+            status_log = f"  * ⚠️ **打撈落空**：此視角皆低於 {DOC_CAPTURE_THRESHOLD:.2f} 門檻，已被系統物理抹殺。"
+            print(f"      ⚠️ 視角落空: 捕獲節點皆低於 {DOC_CAPTURE_THRESHOLD:.2f} 門檻。")
+
+        retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n{top3_log}{status_log}")
+
+        global_candidate_pool.extend(effective_hits)
+
+    print(f"🌍 [全域顯化] 總計 {len(global_candidate_pool)} 篇有效文獻進入全域池，啟動雙簽名聚合排序...")
+
+    if not global_candidate_pool:
+        return [], retrieval_logs, raw_hits_count
+
+    aggregated = {}
+    for c in global_candidate_pool:
+        key = c["id"] if c["id"] != "Unknown" else c["title"].lower()
+
+        if key not in aggregated:
+            aggregated[key] = {
+                "id": c["id"],
+                "title": c["title"],
+                "abstract": c["abstract"],
+                "author": c["author"],
+                "year": c["year"],
+                "has_abs": c["has_abs"],
+                "abstract_source": c["abstract_source"],
+                "externally_fetched": c["externally_fetched"],
+                "max_similarity": c["similarity"],
+                "sum_similarity": c["similarity"],
+                "hit_count": 1,
+                "source_statements": {c["source_statement"]},
+                "max_probe_similarity": c["probe_similarity"],
+                "max_signature_similarity": c["signature_similarity"],
+            }
+        else:
+            agg = aggregated[key]
+            agg["max_similarity"] = max(agg["max_similarity"], c["similarity"])
+            agg["sum_similarity"] += c["similarity"]
+            agg["hit_count"] += 1
+            agg["source_statements"].add(c["source_statement"])
+            agg["max_probe_similarity"] = max(agg["max_probe_similarity"], c["probe_similarity"])
+            agg["max_signature_similarity"] = max(agg["max_signature_similarity"], c["signature_similarity"])
+            if c["similarity"] >= agg["max_similarity"]:
+                agg["title"] = c["title"]
+                agg["abstract"] = c["abstract"]
+                agg["has_abs"] = c["has_abs"]
+                agg["abstract_source"] = c["abstract_source"]
+                agg["externally_fetched"] = c["externally_fetched"]
+
+    merged_candidates = []
+    for agg in aggregated.values():
+        source_count = len(agg["source_statements"])
+        avg_similarity = agg["sum_similarity"] / agg["hit_count"]
+        global_score = (
+            agg["max_similarity"] * 0.55
+            + avg_similarity * 0.20
+            + agg["max_signature_similarity"] * 0.10
+            + agg["max_probe_similarity"] * 0.05
+            + min(source_count, 4) * 0.05
+            + min(agg["hit_count"], 4) * 0.03
+            + (0.02 if agg["has_abs"] else 0.0)
+        )
+        merged_candidates.append({
+            "id": agg["id"],
+            "title": agg["title"],
+            "abstract": agg["abstract"],
+            "author": agg["author"],
+            "year": agg["year"],
+            "has_abs": agg["has_abs"],
+            "abstract_source": agg["abstract_source"],
+            "externally_fetched": agg["externally_fetched"],
+            "similarity": round(agg["max_similarity"], 4),
+            "avg_similarity": round(avg_similarity, 4),
+            "hit_count": agg["hit_count"],
+            "source_count": source_count,
+            "source_statements": sorted(list(agg["source_statements"])),
+            "max_probe_similarity": round(agg["max_probe_similarity"], 4),
+            "max_signature_similarity": round(agg["max_signature_similarity"], 4),
+            "global_score": round(global_score, 4),
+        })
+
+    merged_candidates.sort(
+        key=lambda x: (
+            x["global_score"],
+            x["max_signature_similarity"],
+            x["similarity"],
+            x["source_count"]
+        ),
+        reverse=True
+    )
+
+    final_papers = []
+    seen_dois = set()
+    seen_titles = []
+
+    for candidate in merged_candidates:
+        if candidate["id"] in seen_dois:
+            continue
+
+        is_dup = False
+        for st in seen_titles:
+            if is_similar_title(candidate["title"], st):
+                is_dup = True
+                break
+
+        if not is_dup:
+            final_papers.append(candidate)
+            seen_dois.add(candidate["id"])
+            seen_titles.append(candidate["title"])
+
+        if len(final_papers) >= 8:
+            break
+
+    print(f"🌍 全域收斂完成：從總池中萃取出 {len(final_papers)} 篇絕對最強文獻，準備進入六維量化...")
+    return final_papers, retrieval_logs, raw_hits_count
+
+# ==============================================================================
+# 背景量化
+# ==============================================================================
+
+def evaluate_background_papers(final_papers, core_statement, retrieval_signature_en):
+    if not final_papers:
+        return {"papers": [], "batch_log": "無背景文獻。"}
+
+    print(f"📚 [階段 4] 啟動「切片吞吐」模式，逐篇量化 {len(final_papers)} 篇背景文獻以保護 VRAM...")
+    scored_papers = []
+
+    for i, paper in enumerate(final_papers):
+        print(f"   ↳ ⏳ [切片吞吐 {i + 1}/{len(final_papers)}] 正在消化: {paper['title'][:30]}...")
+        sys_prompt = f"""
+觀測原點 primary_statement："{core_statement}"
+全文檢索簽名 retrieval_signature_en："{retrieval_signature_en}"
+
+請量化以下這【1】篇文獻。維度定義：
+{build_dimensions_prompt()}
+
+回傳扁平化 JSON 格式：
+{{
+  "note": "短中文",
+  "value_intent_score": 25,
+  "governance_score": 10,
+  "cognition_score": 40,
+  "architecture_score": 35,
+  "expansion_score": 20,
+  "application_score": -15
+}}
+""".strip()
+        user_prompt = f"【待測背景文獻】\n{json.dumps(paper, ensure_ascii=False)}"
+
+        try:
+            res = parse_llm_json(
+                call_local_llm(
+                    [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
+                    json_mode=True,
+                    num_ctx=BACKGROUND_NUM_CTX
+                )
+            )
+            by_key = {k: {"signed_score": res.get(f"{k}_score", 0)} for k in DIMENSION_KEYS}
+            scored_papers.append({
+                "id": paper["id"],
+                "title": paper["title"],
+                "note": normalize_whitespace(res.get("note", "")),
+                "scores": {k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS},
+                "has_abs": paper.get("has_abs", True),
+                "source_count": paper.get("source_count", 1),
+                "abstract_source": paper.get("abstract_source", "")
+            })
+        except Exception as e:
+            print(f"      ⚠️ 該篇文獻消化失敗，觸發動態卸力，直接略過 ({e})")
+            continue
+
+        time.sleep(1)
+
+    synthetic_batch_log = f"系統採用切片吞吐模式，成功量化全域最強的 {len(scored_papers)}/{len(final_papers)} 篇文獻。"
+    return {"papers": scored_papers, "batch_log": synthetic_batch_log}
+
+# ==============================================================================
+# 本體與背景向量干涉
+# ==============================================================================
 
 def build_vector_logs(user_profile, scored_papers):
     user_scores = user_profile["scores"]
@@ -354,7 +1003,8 @@ def format_reference_records(scored_papers):
         doi_link = f"https://doi.org/{p['id']}" if p["id"] != "Unknown" else "#"
         abs_marker = "" if p.get("has_abs", True) else " 🪧*(標題降維捕獲)*"
         hit_marker = f" ｜多視角命中 `{p.get('source_count', 1)}`" if p.get("source_count", 1) > 1 else ""
-        rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}**{abs_marker}{hit_marker}")
+        src_marker = f" ｜摘要源 `{p.get('abstract_source', '')}`" if p.get("abstract_source", "") else ""
+        rows.append(f"- [DOI 連結]({doi_link}) **{p['title']}**{abs_marker}{hit_marker}{src_marker}")
     return rows
 
 def generate_summary(raw_text, global_relation, global_angle, global_proximity):
@@ -363,424 +1013,20 @@ def generate_summary(raw_text, global_relation, global_angle, global_proximity):
 整體相位角：約 {global_angle} 度。
 整體語意相近度：約 {global_proximity} / 100。
 
-請根據下文，撰寫 180-240 字中文理論導讀。第一句必須以「本理論架構...」開頭。客觀不神話化。
+請根據下文全文，撰寫 180-240 字中文理論導讀。第一句必須以「本理論架構...」開頭。客觀不神話化。
 """.strip()
     try:
         res_text = call_local_llm(
-            [{"role": "system", "content": prompt}, {"role": "user", "content": raw_text[:4000]}],
+            [{"role": "system", "content": prompt}, {"role": "user", "content": raw_text}],
             temperature=0.2,
-            num_ctx=8192
+            num_ctx=SUMMARY_NUM_CTX
         )
         return zhconv.convert(res_text.strip(), "zh-tw")
     except Exception:
         return f"本理論架構目前與背景場的整體關係為{global_relation}，相位角約為 {global_angle} 度，語意相近度約為 {global_proximity} / 100。由於生成階段發生偏移，系統暫以保底敘述輸出。"
 
-def is_similar_title(t1, t2):
-    w1 = set(re.findall(r'\w+', str(t1).lower()))
-    w2 = set(re.findall(r'\w+', str(t2).lower()))
-    if not w1 or not w2:
-        return False
-    return (len(w1 & w2) / len(w1 | w2)) > 0.5
-
-def normalize_statement(stmt):
-    s = normalize_whitespace(stmt)
-    s = s.strip("`\"' ")
-    s = re.sub(r"\s+", " ", s)
-    return s
-
-def is_valid_probe_statement(stmt):
-    s = normalize_statement(stmt)
-    word_count = len(re.findall(r'\b[a-zA-Z]+\b', s))
-    if word_count < PROBE_WORD_MIN or word_count > PROBE_WORD_MAX:
-        return False
-    bad_patterns = [
-        r"^a study on\b",
-        r"^proposing a new\b",
-        r"^this paper\b",
-        r"^we propose\b",
-        r"^an approach to\b"
-    ]
-    lower = s.lower()
-    if any(re.search(p, lower) for p in bad_patterns):
-        return False
-    return True
-
-def dedupe_statements(statements):
-    seen = set()
-    out = []
-    for stmt in statements:
-        s = normalize_statement(stmt)
-        if not s:
-            continue
-        key = s.lower()
-        if key not in seen:
-            seen.add(key)
-            out.append(s)
-    return out
-
 # ==============================================================================
-# AVH 推演邏輯層
-# ==============================================================================
-
-def evaluate_user_profile(raw_text):
-    sys_prompt = f"""
-你是一台極度嚴謹的「學術本體論量化儀器」。
-請根據文本內容，對 6 個維度做定量評估。絕對只能回傳合法的 JSON 格式。
-
-維度定義：
-{build_dimensions_prompt()}
-
-量化規則：
-1. 每維回傳 score，範圍 -100 到 +100 的整數。
-2. 每維回傳 confidence (置信度)，範圍 0 到 100 的整數。
-3. reason 必須是客觀的中文短語。絕對禁止使用神祕學或算命語彙。
-4. keywords_26：請「消化過」作者的真實意圖後，提取恰好 26 個作者「絕對支持、建構或倡導」的高維專有名詞 (英文)。
-   ⚠️ 意圖濾波器：絕對禁止提取作者「反對、批判或欲推翻」的舊有概念！
-5. primary_statement：請直接給出你認為最能代表全文的英文核心論述。
-6. core_statements_8：請直接根據全文內容提出 8 套英文核心論述。它們是外發探針，不需要再由程式用關鍵字二次組裝。
-   ⚠️ 每套必須控制在 22 個英文單字以內，結合 [問題場域] 與 [機制]。嚴禁空泛廢話。
-
-⚠️ 絕對禁止更改以下扁平 JSON 結構中的英文 Key 名稱：
-{{
-  "primary_statement": "最能代表全文的英文核心論述",
-  "keywords_26": ["kw1", "kw2", "...", "kw26"],
-  "core_statements_8": [
-    "候選核心論述1", "候選核心論述2", "候選核心論述3", "候選核心論述4",
-    "候選核心論述5", "候選核心論述6", "候選核心論述7", "候選核心論述8"
-  ],
-  "academic_fingerprint": "你的中文學術指紋",
-  "value_intent_score": 85,
-  "value_intent_confidence": 92,
-  "value_intent_reason": "說明",
-  "governance_score": 70,
-  "governance_confidence": 88,
-  "governance_reason": "說明",
-  "cognition_score": 60,
-  "cognition_confidence": 90,
-  "cognition_reason": "說明",
-  "architecture_score": 40,
-  "architecture_confidence": 85,
-  "architecture_reason": "說明",
-  "expansion_score": 30,
-  "expansion_confidence": 80,
-  "expansion_reason": "說明",
-  "application_score": -10,
-  "application_confidence": 75,
-  "application_reason": "說明"
-}}
-""".strip()
-
-    print("🕸️ [階段 1] 多視角直讀：AI 直接閱讀全文，釋放 26 維關鍵字與 8 重外發探針...")
-    user_prompt = f"【觀測目標質量開始】\n{raw_text[:4000]}\n【觀測目標質量結束】\n⚠️ 系統底層約束：只輸出 JSON。"
-
-    res = parse_llm_json(
-        call_local_llm(
-            [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
-            json_mode=True,
-            num_ctx=8192
-        )
-    )
-
-    raw_keywords = res.get("keywords_26", [])
-    raw_candidates = res.get("core_statements_8", [])
-    raw_primary = normalize_statement(res.get("primary_statement", ""))
-
-    valid_statements = []
-    if isinstance(raw_candidates, list):
-        for cand in raw_candidates:
-            cand_str = normalize_statement(cand)
-            if is_valid_probe_statement(cand_str):
-                valid_statements.append(cand_str)
-            else:
-                print(f"   ↳ [過濾剔除] Probe 格式不合：{cand_str}")
-
-    valid_statements = dedupe_statements(valid_statements)
-
-    if raw_primary and is_valid_probe_statement(raw_primary):
-        if raw_primary.lower() not in {s.lower() for s in valid_statements}:
-            valid_statements.insert(0, raw_primary)
-
-    if not valid_statements:
-        print("   ↳ ⚠️ [容錯介入] 大腦未回傳有效探針，啟動標題淬取...")
-        match = re.search(r'(?:#+)\s*([A-Za-z0-9\-\s:]+)', raw_text)
-        if not match:
-            match = re.search(r'\(([A-Za-z0-9\-\s]{10,80})\)', raw_text)
-        if not match:
-            match = re.search(r'([A-Za-z0-9\-\s]{15,80})', raw_text)
-        fallback = normalize_statement(match.group(1)) if match else "核心論述提取失敗"
-        valid_statements = [fallback]
-
-    primary_statement = raw_primary if raw_primary and is_valid_probe_statement(raw_primary) else valid_statements[0]
-
-    print(f"   ↳ 🎯 [多視角展開] 成功釋放 {len(valid_statements)} 組有效探針：")
-    for i, stmt in enumerate(valid_statements, 1):
-        head = "Primary" if stmt == primary_statement else f"Probe {i}"
-        print(f"      - [{head}] {stmt}")
-
-    try:
-        by_key = {}
-        for k in DIMENSION_KEYS:
-            if f"{k}_score" not in res or f"{k}_confidence" not in res:
-                raise ValueError(f"缺少維度分數或置信度：{k}")
-            by_key[k] = {
-                "signed_score": res.get(f"{k}_score", 0),
-                "confidence": res.get(f"{k}_confidence", 0),
-                "reason": str(res.get(f"{k}_reason", "無"))
-            }
-    except Exception as e:
-        print(f"⚠️ [維度破裂] LLM 拒絕執行標準量化或遺失必要欄位！原因：{e}")
-        by_key = {
-            k: {"signed_score": 0, "confidence": 0, "reason": "大腦認定理論已完備，拒絕量化"}
-            for k in DIMENSION_KEYS
-        }
-
-    return {
-        "primary_statement": normalize_whitespace(primary_statement),
-        "valid_statements": valid_statements,
-        "keywords": [str(k) for k in raw_keywords] if isinstance(raw_keywords, list) else [],
-        "academic_fingerprint": normalize_whitespace(res.get("academic_fingerprint", "預設紀錄")),
-        "scores": {k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS},
-        "confidences": {k: enforce_confidence(by_key[k].get("confidence"), k) for k in DIMENSION_KEYS},
-        "reasons": {k: normalize_whitespace(by_key[k].get("reason", "")) for k in DIMENSION_KEYS},
-        "hex_code": sign_to_binary({k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS})
-    }
-
-def multi_perspective_retrieval_and_rerank(statements, raw_text):
-    """
-    V53 核心改動：
-    1. 不再先用英文關鍵字 cosine 內部收斂成單句。
-    2. 所有 AI 生成的有效 probe 都直接外發 Crossref。
-    3. 文獻排序依 probe ↔ 文獻的匹配度，以及多視角命中次數聚合。
-    """
-    if not statements or statements[0] == "核心論述提取失敗":
-        print("🌍 [階段 2] 核心論述失效，中斷 Crossref 打撈，系統將自然回歸無人區狀態。")
-        return [], [], 0
-
-    global_candidate_pool = []
-    retrieval_logs = []
-    raw_hits_count = 0
-
-    print(f"🌍 [階段 2 & 3] 啟動多視角打撈與全域顯化 (共 {len(statements)} 組有效探針，最大搜索量 {len(statements) * RETRIEVAL_ROWS_PER_PROBE} 篇)...")
-
-    for idx, stmt in enumerate(statements):
-        print(f"   ↳ ⏳ [視角 {idx + 1}/{len(statements)}] 發射論述: {stmt}")
-        stmt_vec = get_text_vector(stmt)
-
-        url = (
-            f"https://api.crossref.org/works?"
-            f"query={urllib.parse.quote(stmt)}&select=DOI,title,abstract,author,issued&rows={RETRIEVAL_ROWS_PER_PROBE}"
-        )
-
-        try:
-            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/53.0"}, timeout=20)
-            if response.status_code == 429:
-                time.sleep(5)
-                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/53.0"}, timeout=20)
-            response.raise_for_status()
-        except Exception as e:
-            print(f"      ⚠️ API 呼叫失敗 ({e})")
-            retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n  * ⚠️ 打撈落空：Crossref API 呼叫失敗或超時")
-            continue
-
-        items = response.json().get("message", {}).get("items", [])
-        raw_hits_count += len(items)
-
-        if not items:
-            print("      ⚠️ API 回傳 0 篇")
-            retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n  * ⚠️ 打撈落空：Crossref 回傳 0 篇 (API Zero Items)")
-            continue
-
-        scored_for_this_stmt = []
-        for paper in items:
-            title_list = paper.get("title")
-            title = normalize_whitespace(title_list[0] if title_list else "Unknown")
-            doi = str(paper.get("DOI", "Unknown")).strip()
-            abs_text = clean_crossref_abstract(paper.get("abstract", ""))
-
-            if not abs_text:
-                eval_text = title
-                display_abs = "（此文獻於資料庫中無提供摘要，系統已觸發「標題降維比對」機制。）"
-            else:
-                eval_text = title + " " + abs_text
-                display_abs = abs_text[:900]
-
-            paper_vec = get_text_vector(eval_text)
-            sim = compute_dict_cosine(stmt_vec, paper_vec)
-
-            authors = paper.get("author", [])
-            first_author = str(authors[0].get("family", "")).lower().strip() if authors else "unknown"
-            try:
-                year = int(paper.get("issued", {}).get("date-parts", [[0]])[0][0])
-            except Exception:
-                year = 0
-
-            scored_for_this_stmt.append({
-                "id": doi,
-                "title": title,
-                "abstract": display_abs,
-                "author": first_author,
-                "year": year,
-                "source_statement": stmt,
-                "similarity": sim,
-                "has_abs": bool(abs_text)
-            })
-
-        scored_for_this_stmt.sort(key=lambda x: x["similarity"], reverse=True)
-
-        top3_log = "  * 📊 **Top 3 探針命中度**：\n"
-        for i, c in enumerate(scored_for_this_stmt[:3]):
-            top3_log += f"    {i + 1}. `[{c['similarity']:.3f}]` {c['title'][:60]}...\n"
-
-        effective_hits = [c for c in scored_for_this_stmt if c["similarity"] >= PROBE_SIM_THRESHOLD]
-
-        if effective_hits:
-            best = effective_hits[0]
-            sim_str = f"{best['similarity']:.3f}"
-            abs_marker = "" if best["has_abs"] else " 🪧*(標題降維捕獲)*"
-            status_log = f"  * 🎯 **有效探針捕獲 (Cos >= {PROBE_SIM_THRESHOLD:.2f})**：[{best['title']}{abs_marker}](https://doi.org/{best['id']}) (Cos: `{sim_str}`)"
-            print(f"      ✅ 視角最佳捕獲: {best['title'][:40]}... (Cosine: {sim_str})")
-        else:
-            status_log = f"  * ⚠️ **打撈落空**：此視角皆為低於 {PROBE_SIM_THRESHOLD:.2f} 門檻的弱命中，已被系統物理抹殺。"
-            print(f"      ⚠️ 視角落空: 捕獲節點 Cosine 皆小於 {PROBE_SIM_THRESHOLD:.2f} 門檻，已被抹殺。")
-
-        retrieval_logs.append(f"* **視角 {idx + 1}** `{stmt}`\n{top3_log}{status_log}")
-
-        global_candidate_pool.extend(effective_hits)
-
-    print(f"🌍 [全域顯化] 總計 {len(global_candidate_pool)} 篇有效文獻進入全域池，啟動多視角聚合排序...")
-
-    if not global_candidate_pool:
-        return [], retrieval_logs, raw_hits_count
-
-    aggregated = {}
-    for c in global_candidate_pool:
-        key = c["id"] if c["id"] != "Unknown" else c["title"].lower()
-        if key not in aggregated:
-            aggregated[key] = {
-                "id": c["id"],
-                "title": c["title"],
-                "abstract": c["abstract"],
-                "author": c["author"],
-                "year": c["year"],
-                "has_abs": c["has_abs"],
-                "max_similarity": c["similarity"],
-                "sum_similarity": c["similarity"],
-                "hit_count": 1,
-                "source_statements": {c["source_statement"]},
-            }
-        else:
-            agg = aggregated[key]
-            agg["max_similarity"] = max(agg["max_similarity"], c["similarity"])
-            agg["sum_similarity"] += c["similarity"]
-            agg["hit_count"] += 1
-            agg["source_statements"].add(c["source_statement"])
-            if c["similarity"] > agg["max_similarity"]:
-                agg["title"] = c["title"]
-                agg["abstract"] = c["abstract"]
-                agg["has_abs"] = c["has_abs"]
-
-    merged_candidates = []
-    for agg in aggregated.values():
-        source_count = len(agg["source_statements"])
-        avg_similarity = agg["sum_similarity"] / agg["hit_count"]
-        global_score = agg["max_similarity"] * 0.7 + avg_similarity * 0.2 + min(source_count, 4) * 0.05 + min(agg["hit_count"], 4) * 0.05
-        merged_candidates.append({
-            "id": agg["id"],
-            "title": agg["title"],
-            "abstract": agg["abstract"],
-            "author": agg["author"],
-            "year": agg["year"],
-            "has_abs": agg["has_abs"],
-            "similarity": round(agg["max_similarity"], 4),
-            "avg_similarity": round(avg_similarity, 4),
-            "hit_count": agg["hit_count"],
-            "source_count": source_count,
-            "source_statements": sorted(list(agg["source_statements"])),
-            "global_score": round(global_score, 4),
-        })
-
-    merged_candidates.sort(key=lambda x: (x["global_score"], x["similarity"], x["source_count"]), reverse=True)
-
-    final_papers = []
-    seen_dois = set()
-    seen_titles = []
-
-    for candidate in merged_candidates:
-        if candidate["id"] in seen_dois:
-            continue
-
-        is_dup = False
-        for st in seen_titles:
-            if is_similar_title(candidate["title"], st):
-                is_dup = True
-                break
-
-        if not is_dup:
-            final_papers.append(candidate)
-            seen_dois.add(candidate["id"])
-            seen_titles.append(candidate["title"])
-
-        if len(final_papers) >= 8:
-            break
-
-    print(f"🌍 全域收斂完成：從總池中萃取出 {len(final_papers)} 篇絕對最強文獻，準備進入六維量化...")
-    return final_papers, retrieval_logs, raw_hits_count
-
-def evaluate_background_papers(final_papers, core_statement):
-    if not final_papers:
-        return {"papers": [], "batch_log": "無背景文獻。"}
-
-    print(f"📚 [階段 4] 啟動「切片吞吐」模式，逐篇量化 {len(final_papers)} 篇背景文獻以保護 VRAM...")
-    scored_papers = []
-
-    for i, paper in enumerate(final_papers):
-        print(f"   ↳ ⏳ [切片吞吐 {i + 1}/{len(final_papers)}] 正在消化: {paper['title'][:30]}...")
-        sys_prompt = f"""
-觀測原點："{core_statement}"
-請量化以下這【1】篇文獻。維度定義：
-{build_dimensions_prompt()}
-
-回傳扁平化 JSON 格式：
-{{
-  "note": "短中文",
-  "value_intent_score": 25,
-  "governance_score": 10,
-  "cognition_score": 40,
-  "architecture_score": 35,
-  "expansion_score": 20,
-  "application_score": -15
-}}
-""".strip()
-        user_prompt = f"【待測背景文獻】\n{json.dumps(paper, ensure_ascii=False)}"
-
-        try:
-            res = parse_llm_json(
-                call_local_llm(
-                    [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user_prompt}],
-                    json_mode=True,
-                    num_ctx=4096
-                )
-            )
-            by_key = {k: {"signed_score": res.get(f"{k}_score", 0)} for k in DIMENSION_KEYS}
-            scored_papers.append({
-                "id": paper["id"],
-                "title": paper["title"],
-                "note": normalize_whitespace(res.get("note", "")),
-                "scores": {k: enforce_score(by_key[k].get("signed_score"), k) for k in DIMENSION_KEYS},
-                "has_abs": paper.get("has_abs", True),
-                "source_count": paper.get("source_count", 1)
-            })
-        except Exception as e:
-            print(f"      ⚠️ 該篇文獻消化失敗，觸發動態卸力，直接略過 ({e})")
-            continue
-
-        time.sleep(1)
-
-    synthetic_batch_log = f"系統採用切片吞吐模式，成功量化全域最強的 {len(scored_papers)}/{len(final_papers)} 篇文獻。"
-    return {"papers": scored_papers, "batch_log": synthetic_batch_log}
-
-# ==============================================================================
-# 檔案與輸出控制層
+# 主推演流程
 # ==============================================================================
 
 def process_avh_manifestation(source_path):
@@ -788,19 +1034,22 @@ def process_avh_manifestation(source_path):
     try:
         with open(source_path, "r", encoding="utf-8") as file:
             raw_text = file.read()
+
         if len(raw_text.strip()) < 100:
             return None
 
         user_profile = evaluate_user_profile(raw_text)
+        user_profile = repair_application_dimension_if_needed(raw_text, user_profile)
+
         user_hex = user_profile["hex_code"]
         state_info = MANIFEST["states"].get(user_hex, {"name": "未知狀態", "desc": "缺乏觀測紀錄"})
 
         try:
-            final_papers, retrieval_logs, raw_hits_count = multi_perspective_retrieval_and_rerank(user_profile["valid_statements"], raw_text)
+            final_papers, retrieval_logs, raw_hits_count = multi_perspective_retrieval_and_rerank(user_profile["valid_statements"], user_profile)
         except Exception as e:
             final_papers, retrieval_logs, raw_hits_count = [], [f"打撈或收斂失敗（{e}）"], 0
 
-        scored_background = evaluate_background_papers(final_papers, user_profile["primary_statement"]) if final_papers else {"papers": []}
+        scored_background = evaluate_background_papers(final_papers, user_profile["primary_statement"], user_profile["retrieval_signature_en"]) if final_papers else {"papers": []}
 
         if not scored_background["papers"]:
             if final_papers:
@@ -840,8 +1089,11 @@ def process_avh_manifestation(source_path):
             "full_text": raw_text,
             "meta_data": {
                 "primary_statement": user_profile["primary_statement"],
-                "keywords": user_profile["keywords"],
+                "retrieval_signature_en": user_profile["retrieval_signature_en"],
                 "valid_statements": user_profile["valid_statements"],
+                "implementation_signals": user_profile["implementation_signals"],
+                "application_signals": user_profile["application_signals"],
+                "forbidden_targets": user_profile["forbidden_targets"],
                 "academic_fingerprint": user_profile["academic_fingerprint"],
                 "user_dimension_logs": format_user_dimension_logs(user_profile),
                 "raw_hits": raw_hits_count,
@@ -862,6 +1114,10 @@ def process_avh_manifestation(source_path):
         print(f"❌ 處理失敗: {e}")
         return None
 
+# ==============================================================================
+# 輸出層
+# ==============================================================================
+
 def generate_trajectory_log(target_file, data):
     now = datetime.now().astimezone()
     tz_name = now.tzname() or "CST"
@@ -872,8 +1128,9 @@ def generate_trajectory_log(target_file, data):
     retrieval_text = "\n".join(meta["retrieval_logs"])
     vector_logs_text = "\n\n".join(meta["vector_logs"])
     papers_text = "\n".join(meta["paper_records"])
-    kw_str = ", ".join(meta["keywords"]) if meta["keywords"] else "未萃取"
     probe_str = " ｜ ".join(meta["valid_statements"]) if meta["valid_statements"] else "未釋放"
+    impl_str = " ｜ ".join(meta["implementation_signals"]) if meta["implementation_signals"] else "未萃取"
+    app_sig_str = " ｜ ".join(meta["application_signals"]) if meta["application_signals"] else "未萃取"
 
     return (
         f"## 📡 AVH 技術觀測日誌：`{target_file}`\n"
@@ -884,8 +1141,10 @@ def generate_trajectory_log(target_file, data):
         f"* 🛡️ **本體論絕對指紋（Ontology Hex）**：`[{data['user_hex']}]` - **{data['state_name']}**\n"
         f"  * 📜 **演化實相（State Manifest）**：_{data['state_desc']}_\n"
         f"* **絕對核心論述（Primary Statement）**：`{meta['primary_statement']}`\n"
+        f"* **全文檢索簽名（Retrieval Signature）**：`{meta['retrieval_signature_en']}`\n"
         f"* **多視角外發探針（Probe Set）**：`{probe_str}`\n"
-        f"* **弦論二十六維純淨關鍵字（26 Keywords）**：`{kw_str}`\n\n"
+        f"* **實作證據（Implementation Signals）**：`{impl_str}`\n"
+        f"* **應用證據（Application Signals）**：`{app_sig_str}`\n\n"
         f"**學術指紋（Academic Fingerprint）**：\n"
         f"> {meta['academic_fingerprint']}\n\n"
         f"**詳細本體量化儀表板（Ontology Quantification Dashboard）**：\n\n"
@@ -932,6 +1191,7 @@ def export_wordpress_html(basename, data):
         "  <div class=\"avh-seal\" style=\"border: 2px solid #333; padding: 20px; background: #fafafa; margin-top: 30px;\">\n"
         "    <h3>📡 學術價值全像儀（AVH）主權算力認證</h3>\n"
         f"    <p><strong>絕對核心論述：</strong>{html.escape(meta['primary_statement'])}</p>\n"
+        f"    <p><strong>全文檢索簽名：</strong>{html.escape(meta['retrieval_signature_en'])}</p>\n"
         f"    <p><strong>本體狀態：</strong>[ {html.escape(data['user_hex'])} ] - {html.escape(data['state_name'])}</p>\n"
         f"    <p><em>「{html.escape(data['state_desc'])}」</em></p>\n"
         f"    <p><strong>背景狀態：</strong>[ {html.escape(data['baseline_hex'])} ]</p>\n"
@@ -965,6 +1225,7 @@ def export_latex(basename, data):
         "\\maketitle\n"
         "\\begin{abstract}\n"
         f"核心論述：{simple_escape(meta['primary_statement'])}\n\n"
+        f"全文檢索簽名：{simple_escape(meta['retrieval_signature_en'])}\n\n"
         f"本體狀態：[{data['user_hex']}] {simple_escape(data['state_name'])}\n\n"
         f"演化實相：{simple_escape(data['state_desc'])}\n\n"
         f"背景狀態：[{data['baseline_hex']}]\n\n"
@@ -1024,7 +1285,7 @@ if __name__ == "__main__":
     success_count = 0
 
     with open(log_path, "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V53.0 多視角直讀版\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V54.0 全文直讀修正版\n---\n")
 
         for i, source in enumerate(md_files):
             print(f"\n{'=' * 60}")
