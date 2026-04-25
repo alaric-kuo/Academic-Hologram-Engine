@@ -1,0 +1,97 @@
+PS D:\Github Pool\Academic-Value-Hologram>  d:; cd 'd:\Github Pool\Academic-Value-Hologram'; & 'c:\Users\USER\AppData\Local\Microsoft\WindowsApps\python3.13.exe' 'c:\Users\USER\.vscode\extensions\ms-python.debugpy-2025.18.0-win32-x64\bundled\libs\debugpy\launcher' '63844' '--' 'D:\Github Pool\Academic-Value-Hologram\avh_core.py' 
+C:\Users\USER\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\zhconv\zhconv.py:33: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream
+🧠 [載入本地觀測核心] 啟動 V60.0 (引擎: gemma4)...
+
+============================================================
+🚀 [物理觀測啟動] 處理進度 1/1: README.md
+============================================================
+
+🌊 [波包掃描] 實體源碼：README.md
+🕸️ [階段 1] 全文直讀：直接吞入全文，輸出六維量化、主題錨點、8 重探針與全文簽名...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=3079 ｜ user=7275 ｜ assistant=0 ｜ framing=707 ｜ payload=11061 ｜ mode=json ｜ ctx=32768
+   ↳ 🟢 [觀測完成] 耗時 88.0 秒，實體質量成功顯化。
+   ↳ 🎯 [主題錨點] Academic Value Hologram, Knowledge Ontology Evolution
+   ↳ 🎯 [核心論述] The Academic Value Hologram (AVH) proposes a multi-dimensional, topological framework to measure knowledge evolution potential, moving beyond traditional citation metrics.
+   ↳ 🎯 [多視角展開] 成功釋放 8 組有效探針：
+      - [Probe 1] The AVH measures knowledge evolution potential using a six-dimensional state tensor.
+      - [Probe 2] Academic Value Hologram, Knowledge Ontology Evolution: It analyzes how ideas impact academic fields, rather than merely scoring papers.
+      - [Probe 3] Knowledge evolution is modeled as a dynamic energy field, not static data points.
+      - [Probe 4] Academic Value Hologram, Knowledge Ontology Evolution: The system quantifies the full-text observation and background field interference.
+      - [Probe 5] Academic Value Hologram, Knowledge Ontology Evolution: The protocol requires verifiable abstracts for background field participation.
+      - [Probe 6] Academic Value Hologram, Knowledge Ontology Evolution: It establishes a complete sovereign pipeline from observation to publication output.
+      - [Probe 7] Academic Value Hologram, Knowledge Ontology Evolution: The core mechanism involves calculating global phase angles and energy differences.
+      - [Probe 8] Academic Value Hologram, Knowledge Ontology Evolution: The system output includes observation logs, HTML display, and LaTeX source code.
+🌍 [階段 2] 多視角打撈啟動 (共 8 組有效探針，最大搜索量 64 篇)...
+   ↳ ⏳ [視角 1/8] 發射論述: The AVH measures knowledge evolution potential using a six-dimensional state tensor.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=1 ｜ abstract-ok=1
+      ✅ 視角正式捕獲: Tensor product of finite dimensional nil... (Score: 0.240)
+   ↳ ⏳ [視角 2/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: It analyzes how ideas impact academic fields, rather than merely scoring papers.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=3 ｜ abstract-ok=3
+      ✅ 視角正式捕獲: Academic Style Marker Ontology Design... (Score: 0.147)
+   ↳ ⏳ [視角 3/8] 發射論述: Knowledge evolution is modeled as a dynamic energy field, not static data points.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=2 ｜ abstract-ok=2
+      ✅ 視角正式捕獲: A Static–Dynamic Temporal Knowledge Grap... (Score: 0.195)
+   ↳ ⏳ [視角 4/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: The system quantifies the full-text observation and background field interference.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=8 ｜ abstract-ok=7
+      ✅ 視角正式捕獲: Named Entity Recognition for Ontology Po... (Score: 0.210)
+   ↳ ⏳ [視角 5/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: The protocol requires verifiable abstracts for background field participation.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=8 ｜ abstract-ok=6
+      ✅ 視角正式捕獲: Named Entity Recognition for Ontology Po... (Score: 0.210)
+      🪧 視角殘影: 8. Participation and Knowledge. Problems... (Score: 0.185)
+   ↳ ⏳ [視角 6/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: It establishes a complete sovereign pipeline from observation to publication output.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=6 ｜ abstract-ok=6
+      ✅ 視角正式捕獲: Publication Output of Academic Librarian... (Score: 0.145)
+   ↳ ⏳ [視角 7/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: The core mechanism involves calculating global phase angles and energy differences.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=7 ｜ abstract-ok=4
+      ✅ 視角正式捕獲: Academic Style Marker Ontology Design... (Score: 0.130)
+      🪧 視角殘影: Calculating the Computer-Generated Holog... (Score: 0.164)
+   ↳ ⏳ [視角 8/8] 發射論述: Academic Value Hologram, Knowledge Ontology Evolution: The system output includes observation logs, HTML display, and LaTeX source code.
+      ↳ [Probe 進度] raw=8 ｜ title-pass=0 ｜ abstract-ok=0
+      ⚠️ 視角正式背景落空：無標題主題相關的摘要合格文獻。
+🌍 [階段 3] 全域顯化啟動：正式背景池共有 29 篇摘要可驗證文獻，開始聚合排序...
+🌍 全域收斂完成：從正式背景池中萃取出 8 篇摘要可驗證文獻，準備進入六維量化...
+📚 [階段 4] 啟動「切片吞吐」模式，逐篇量化 8 篇背景文獻以保護 VRAM...
+   ↳ ⏳ [切片吞吐 1/8] 正在消化: Academic Style Marker Ontology...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=2056 ｜ assistant=0 ｜ framing=372 ｜ payload=4188 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 61.3 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 2/8] 正在消化: Facilitating Ontology Co-evolu...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1548 ｜ assistant=0 ｜ framing=370 ｜ payload=3678 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 58.8 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 3/8] 正在消化: Named Entity Recognition for O...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1693 ｜ assistant=0 ｜ framing=366 ｜ payload=3819 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 53.0 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 4/8] 正在消化: Tensor product of finite dimen...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1189 ｜ assistant=0 ｜ framing=364 ｜ payload=3313 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 51.7 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 5/8] 正在消化: A Static–Dynamic Temporal Know...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1505 ｜ assistant=0 ｜ framing=364 ｜ payload=3629 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 62.2 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 6/8] 正在消化: Ontology mapping using backgro...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=915 ｜ assistant=0 ｜ framing=364 ｜ payload=3039 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 46.5 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 7/8] 正在消化: MS-ONTO - Model and System for...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1514 ｜ assistant=0 ｜ framing=364 ｜ payload=3638 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 61.1 秒，實體質量成功顯化。
+   ↳ ⏳ [切片吞吐 8/8] 正在消化: Intelligent static and dynamic...
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=1760 ｜ user=1481 ｜ assistant=0 ｜ framing=364 ｜ payload=3605 ｜ mode=json ｜ ctx=6144
+   ↳ 🟢 [觀測完成] 耗時 66.9 秒，實體質量成功顯化。
+   ↳ ⚡ [物理探測] 資訊熵拆解：system=125 ｜ user=7247 ｜ assistant=0 ｜ framing=444 ｜ payload=7816 ｜ mode=text ｜ ctx=32768
+   ↳ 🟢 [觀測完成] 耗時 52.5 秒，實體質量成功顯化。
+
+❄️ [物理散熱] 實體質量處理完畢，強制進入 5 秒冷卻期，釋放 GPU VRAM 壓力...
+
+🚀 [本地自動化] 正在推送到 GitHub...
+[main 434fda4] 🌌 自動顯化：本地算力推演定錨 (2026-04-25 20:24 Taipei Standard Time)
+ 4 files changed, 121 insertions(+), 132 deletions(-)
+Enumerating objects: 11, done.
+Counting objects: 100% (11/11), done.
+Delta compression using up to 24 threads
+Compressing objects: 100% (6/6), done.
+Writing objects: 100% (6/6), 6.12 KiB | 6.12 MiB/s, done.
+Total 6 (delta 4), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (4/4), completed with 4 local objects.
+To https://github.com/alaric-kuo/Academic-Value-Hologram.git
+   58efa19..434fda4  main -> main
+✅ 推送完成！歷史已成功定錨。
+PS D:\Github Pool\Academic-Value-Hologram>                                     
