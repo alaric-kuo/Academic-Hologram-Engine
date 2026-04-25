@@ -14,7 +14,7 @@ from datetime import datetime
 import zhconv
 
 # ==============================================================================
-# AVH Genesis Engine (V59.0 探針多樣化微調版 - V55 主幹保留，八探針主題綁定與標題主題預篩)
+# AVH Genesis Engine (V60.0)
 # ==============================================================================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -38,7 +38,7 @@ REQUIRE_ABSTRACT_FOR_FINAL = True
 
 ABSTRACT_CACHE = {}
 
-print(f"🧠 [載入本地觀測核心] 啟動 V59.0 探針多樣化微調版 (引擎: {OLLAMA_MODEL_NAME})...")
+print(f"🧠 [載入本地觀測核心] 啟動 V60.0 (引擎: {OLLAMA_MODEL_NAME})...")
 
 if not os.path.exists(MANIFEST_PATH):
     print(f"⚠️ 遺失底層定義檔：{MANIFEST_PATH}，系統終止觀測。")
@@ -518,7 +518,8 @@ def evaluate_user_profile(raw_text):
     sys_prompt = f"""
 你是一台極度嚴謹的「學術本體論量化儀器」。
 你現在必須直接閱讀全文，不准只抓前段摘要，不准把後段實作內容忽略。
-請對全文做六維量化、輸出 8 句不同角度的英文核心論述，並保留實作/應用證據。只能回傳合法 JSON。
+請對全文做六維量化、依照規則輸出 8 句不同角度且主題句不重複的英文核心論述，並保留實作與應用證據。
+這 8 句核心論述輸出之前，要依照規則檢查句型，修正到確認沒有違背規則才能輸出，只能回傳合法 JSON。
 
 維度定義：
 {build_dimensions_prompt()}
@@ -531,7 +532,7 @@ def evaluate_user_profile(raw_text):
 5. primary_statement 必須是最能代表全文整體骨架的英文核心論述，不可只是口號。
 6. core_statements_8 必須是 8 句不同角度的英文探針。每句 <= 24 個英文單字，而且每句都必須保留 topic_anchor_en 的主題語義；不可以只剩機制、工具、數學或物理隱喻。
 7. 8 句探針必須至少覆蓋 4 種角度，例如：主題命題、核心對象、機制描述、驗證/輸出/應用。
-8. 不得有超過 2 句使用相同的開頭片語；不得只是同一句換尾巴。topic_anchor_en 可以放在句中，不必固定放在句首。每一句探針在輸出之前，必須與前一句確認無重複，才能輸出。
+8. 不得有超過 2 句使用相同的開頭片語；不得只是同一句換尾巴。topic_anchor_en 可以放在句中，不必固定放在句首。每一句探針在輸出之前，必須用前面規則檢查才能輸出。
 9. implementation_signals：列出文中出現的具體實作證據，例如引擎、Crossref、Cosine、Tensor、JSON、Ollama、md/html/tex、Git、自動化輸出等。
 10. application_signals：列出文中可被視為「應用實相」的證據。只要文本明確描述可執行流程、引擎、輸出資產、觀測日誌、HTML/LaTeX/Markdown 實體，就不能把 application 判為純理論停留。
 11. retrieval_signature_en：用 1 句英文寫出「拿去和外部文獻重新比對」時最穩定的全文簽名，不能空泛。
