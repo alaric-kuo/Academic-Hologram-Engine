@@ -3,13 +3,13 @@
 \usepackage{xeCJK}
 \title{README}
 \author{Alaric Kuo}
-\date{2026-04-25 10:37:53 Taipei Standard Time}
+\date{2026-04-25 20:24:31 Taipei Standard Time}
 \begin{document}
 \maketitle
 \begin{abstract}
 主題錨點：Academic Value Hologram, Knowledge Ontology Evolution
 
-核心論述：The Academic Value Hologram (AVH) proposes a multi-dimensional, topological framework to measure knowledge evolution and intellectual impact, moving beyond traditional citation metrics.
+核心論述：The Academic Value Hologram (AVH) proposes a multi-dimensional, topological framework to measure knowledge evolution potential, moving beyond traditional citation metrics.
 
 全文檢索簽名：Full-text observation, six-dimensional state tensor, and background field interference calculation.
 
@@ -21,11 +21,11 @@
 
 整體場域關係：高度同向（全域能勢大幅突破）
 
-整體相位角：16.9 度
+整體相位角：12.6 度
 
-整體語意相近度：56.8/100
+整體語意相近度：57.4/100
 
-標題殘影數：34
+標題殘影數：32
 \end{abstract}
 
 \section{學術價值全像儀：基於知識本體演化觀測協議}
@@ -84,7 +84,7 @@
   - **突破（Sin > 0）**：致力建立全域連續、場域驅動與系統演化法則的高維動態模型；不依賴傳統切割，追求完整涵蓋能量流動與相變過程的拓樸解析，展現離群視野。
   - **守成（Cos \$\textbackslash\{\}leq 0\$）**：善於運用明確的邊界切割、區塊精準劃分與局部擬合的靜態模型；此類合群的古典近似解能有效處理特定條件下的複雜問題，提供具體實用指南。
 
-\subsubsection{物理層（Physical Layer）}
+\subsubsection{實務層（Practical Layer）}
 
 理論擴張潛能與實體落地的最終丈量。
 
@@ -114,7 +114,7 @@
 
 在這一階段，系統要求模型直接根據全文生成 8 句不同角度的探針。這樣做的目的，是避免中文本體被壓縮成過度簡化的英文詞場，也避免讓單一句子在早期就主導整個外部場域。
 
-若系統發現 **應用實相（\$D\_6\$）** 被誤判為小於等於 0，但全文中其實已存在明確的實作證據，例如本地端引擎、Crossref 打撈、餘弦相似度計算、JSON 管線、觀測日誌、HTML 實體與 LaTeX 原始碼等，則會啟動一次專門的 **應用實相校正器**，重新判斷第六維，避免將已具體落地的方法論錯誤壓回「純概念停留」的守成狀態。
+若系統發現 **應用實相** (\$D\_6\$) 被誤判為小於等於 0，但全文中其實已存在明確的實作證據，例如本地端引擎、Crossref 打撈、餘弦相似度計算、JSON 管線、觀測日誌、HTML 實體與 LaTeX 原始碼等，則會啟動一次專門的 **應用實相校正器**，重新判斷第六維，避免將已具體落地的方法論錯誤壓回「純概念停留」的守成狀態。
 
 \subsubsection{第二階段：多視角外發、摘要補完與正式背景篩選}
 
@@ -132,22 +132,21 @@ N\_\{\textbackslash\{\}max\} = 8 \textbackslash\{\}times 8 = 64
 
 只有在三層外補都失敗時，系統才會將該文獻降格為 **Title-only Shadow Hit（標題殘影）**。這類節點只保留於觀測殘影區，用來提示「某些 probe 曾撞到可疑標題」，但不再被允許參與正式背景場、六維量化與全域干涉。
 
-在文獻重排時，系統不只看單一 probe 與文獻的相似度，還同時考慮全文檢索簽名與實作／應用 anchor 詞的重疊程度。對於每一篇候選文獻，其綜合命中分數定義為：
+在文獻重排時，系統不只看單一 probe 與文獻的相似度，還同時考慮全文檢索簽名、實作／應用 anchor 詞重疊，以及標題與主題錨點的對位程度。對於每一篇候選文獻，其綜合命中分數定義為：
 
-\$\$
-\textbackslash\{\}text\{Score\} = 0.45\textbackslash\{\},S\_\{\textbackslash\{\}text\{probe\}\} + 0.45\textbackslash\{\},S\_\{\textbackslash\{\}text\{signature\}\} + 0.10\textbackslash\{\},S\_\{\textbackslash\{\}text\{anchor\}\}
-\$\$
+\$\$\textbackslash\{\}text\{Score\}= 0.40 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{probe\}\}+ 0.40 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{signature\}\}+ 0.10 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{anchor\}\}+ 0.10 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{title-topic\}\}\$\$
 
 其中：
 
-- \$S\_\{\textbackslash\{\}text\{probe\}\}\$：該視角 probe 與文獻的餘弦相似度  
-- \$S\_\{\textbackslash\{\}text\{signature\}\}\$：全文檢索簽名與文獻的餘弦相似度  
+- \$S\_\{\textbackslash\{\}text\{probe\}\}\$：該視角 probe 與文獻文本的餘弦相似度  
+- \$S\_\{\textbackslash\{\}text\{signature\}\}\$：全文檢索簽名與文獻文本的餘弦相似度  
 - \$S\_\{\textbackslash\{\}text\{anchor\}\}\$：實作／應用證據詞與文獻文本的重疊比例  
+- \$S\_\{\textbackslash\{\}text\{title-topic\}\}\$：文獻標題與主題錨點／核心論述的對位分數  
 
-若文獻仍缺乏摘要、只能靠標題降維比對，系統會再施加一個懲罰係數：
+若文獻仍缺乏摘要、只能靠標題降維比對，系統會再施加一個緩衝係數：
 
 \$\$
-\textbackslash\{\}text\{Score\}\_\{\textbackslash\{\}text\{title-only\}\} = 0.88 \textbackslash\{\}times \textbackslash\{\}text\{Score\}
+\textbackslash\{\}text\{Score\}\_\{\textbackslash\{\}text\{title-only\}\} = 0.88 \textbackslash\{\}cdot \textbackslash\{\}text\{Score\}
 \$\$
 
 但在系統實作中，這個分數僅用於殘影記錄，不再作為正式背景池的入場券。只有同時滿足下列兩個條件的文獻，才被允許進入正式背景場：
@@ -166,7 +165,7 @@ N\_\{\textbackslash\{\}max\} = 8 \textbackslash\{\}times 8 = 64
 
 全域排序分數定義為：
 
-\$\$\textbackslash\{\}text\{GlobalScore\}=0.55\textbackslash\{\},S\_\{\textbackslash\{\}max\}+0.20\textbackslash\{\},S\_\{\textbackslash\{\}text\{avg\}\}+0.10\textbackslash\{\},S\_\{\textbackslash\{\}text\{sig-max\}\}+0.05\textbackslash\{\},S\_\{\textbackslash\{\}text\{probe-max\}\}+0.05\textbackslash\{\},\textbackslash\{\}min(n\_s,4)+0.03\textbackslash\{\},\textbackslash\{\}min(n\_h,4)+0.02\$\$
+\$\$\textbackslash\{\}begin\{aligned\}\textbackslash\{\}text\{Global Score\} =\{\}\& 0.52 \textbackslash\{\}cdot S\_\{\textbackslash\{\}max\}+ 0.18 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{avg\}\}+ 0.10 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{sig-max\}\} + 0.05 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{probe-max\}\}+ 0.07 \textbackslash\{\}cdot S\_\{\textbackslash\{\}text\{title-topic-max\}\} + 0.05 \textbackslash\{\}cdot \textbackslash\{\}min(n\_s, 4)+ 0.03 \textbackslash\{\}cdot \textbackslash\{\}min(n\_h, 4)\textbackslash\{\}end\{aligned\}\$\$
 
 其中：
 
@@ -174,10 +173,10 @@ N\_\{\textbackslash\{\}max\} = 8 \textbackslash\{\}times 8 = 64
 - \$S\_\{\textbackslash\{\}text\{avg\}\}\$：該文獻在所有命中視角中的平均綜合分數  
 - \$S\_\{\textbackslash\{\}text\{sig-max\}\}\$：全文檢索簽名的最高相似度  
 - \$S\_\{\textbackslash\{\}text\{probe-max\}\}\$：單一 probe 的最高相似度  
-- \$n\_s\$：命中該文獻的不同視角數  
-- \$n\_h\$：總命中次數  
+- \$S\_\{\textbackslash\{\}text\{title-topic-max\}\}\$：標題主題對位分數的最高值  
+- \$n\_s\$：命中該文獻的不同來源視角數（source\textbackslash\{\}\_count）  
+- \$n\_h\$：該文獻在正式背景池中的總命中次數（hit\textbackslash\{\}\_count）  
 
-最後的常數 \$0.02\$ 表示「摘要驗證加權」；由於正式背景池中的所有節點都已通過摘要可驗證門檻，因此這一項在系統中是固定保留的結構獎勵。
 
 系統接著執行 DOI 去重與標題近似去重，最終從正式背景池中顯化出 **Top 8 Abstract-backed Reference Nodes**。若最終只能形成少於 8 篇的摘要可驗證節點，系統會誠實標示為 **Sparse Reference Field**；若只有標題殘影、沒有任何摘要母體，則直接承認為 **Void**，不再用標題件把背景場硬湊滿。
 
@@ -193,7 +192,7 @@ N\_\{\textbackslash\{\}max\} = 8 \textbackslash\{\}times 8 = 64
 
 其中餘弦相似度由本體六維向量與背景六維向量計算而得。
 
-整體語意相近度（Global Semantic Proximity）則融合了角度懲罰與平均能勢差，定義為：
+整體語意相近度（Global Semantic Proximity）則融合了角度緩衝與平均能勢差，定義為：
 
 \$\$\textbackslash\{\}text\{Global Proximity\}=100-\textbackslash\{\}left(\textbackslash\{\}left(\textbackslash\{\}frac\{\textbackslash\{\}text\{Angle\}\}\{1.8\}\textbackslash\{\}right)\textbackslash\{\}times 0.4+\textbackslash\{\}text\{Global Mean Diff\}\textbackslash\{\}times 0.6\textbackslash\{\}right)\$\$
 
