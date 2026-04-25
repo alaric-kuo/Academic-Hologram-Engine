@@ -1,7 +1,7 @@
-# 📡 AVH 學術價值全像儀：V59.0 探針多樣化微調版
+# 📡 AVH 學術價值全像儀：V60.0 
 ---
 ## 📡 AVH 技術觀測日誌：`README.md`
-* **觀測時間戳（Taipei Standard Time）**：`2026-04-25 10:24:34 Taipei Standard Time`
+* **觀測時間戳（Taipei Standard Time）**：`2026-04-25 10:37:53 Taipei Standard Time`
 * **高維算力引擎（本地純淨版）**：`gemma4`
 
 ---
@@ -102,13 +102,13 @@
 - [DOI 連結](https://doi.org/10.1063/1.2826340) **A six-dimensional H2–H2 potential energy surface for bound state spectroscopy** ｜Score `0.0162` ｜ probe `0.0811` ｜ signature `0.0`
 - [DOI 連結](https://doi.org/10.4324/9780080509808-23) **Culture, Mapping, Technology, and Measures** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 - [DOI 連結](https://doi.org/10.1016/s0370-2693(98)00070-7) **Tensor multiplets in six-dimensional (2,0) supergravity** ｜Score `0.0205` ｜ probe `0.1026` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1111/ejn.15063/v1/review1) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 - [DOI 連結](https://doi.org/10.1111/ejn.15063/v2/review1) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1111/ejn.15063/v1/review2) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 - [DOI 連結](https://doi.org/10.1111/ejn.15063/v2/review2) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1017/upo9781844653386.005) **Why there is something rather than nothing** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1111/ejn.15063/v1/review1) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1111/ejn.15063/v1/review2) **Review for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 - [DOI 連結](https://doi.org/10.1101/782813) **The Readiness Potential reflects the internal source of action, rather than decision uncertainty** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.7554/elife.45374.008) **Figure 2—source data 4. Tweedie regression of standardized parameters, using MNCS Journal quantiles rather than measurements.** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1017/upo9781844653386.005) **Why there is something rather than nothing** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1111/ejn.15063/v2/decision1) **Decision letter for "The Readiness Potential reflects the internal source of action, rather than decision uncertainty"** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 
 * **背景批次量化摘要（Batch Quantification Log）**：_系統採用切片吞吐模式，成功量化正式背景池中的 8/8 篇文獻。_
 * **全域收斂之正式能勢節點（Abstract-backed Global Reference Nodes）**：
@@ -146,10 +146,10 @@
 
 ---
 ### 4. 🧾 系統導讀摘要（System Interpretation）
-> 本理論架構提出了一套「學術價值全像儀」（AVH），旨在超越傳統的引用次數或H-index等靜態指標，客觀量化知識本體在學術場域中的動態演化潛能。它基於八大知識本體演化公理，將學術成果的價值視為一個多維度的能量場，而非單一的文本集合。
+> 本理論架構提出了一套「學術價值全像儀」（AVH），旨在超越傳統學術體系依賴的靜態評分機制，從本體論層面客觀量化知識的演化潛能。它將知識的創造與傳播視為一個動態的物理過程，確立了八大知識本體演化公理，用以定義學術場域的底層物理法則。
 
-核心機制是建立一個六維拓樸演化矩陣，從「意圖」、「邏輯」和「物理」三個層面，分別定義了「突破」（Sin）與「守成」（Cos）兩種狀態。理論將研究的複雜思想壓縮為一個「狀態張量」（State Tensor），用以描繪其在知識邊界上的衝擊模式。
+理論核心是建立一個六維拓樸演化矩陣，將理論的意圖、認知深度與應用實相，分別解構為「突破」（Sin）與「守成」（Cos）兩個維度。這套協議不僅定義了理論的結構指紋，更建立了一套嚴謹的「全像儀生成引擎」，要求輸入文本必須具備可驗證的摘要母體，並通過多階段的向量幹涉計算。
 
-本協議的關鍵創新在於，它將學術評估轉化為物理幹涉計算，通過分析本體張量與外部背景場的能勢差異，計算出「全域相位角」與「整體語意相近度」。這套系統提供了一個從全文觀測、多視角外場幹涉到最終主權定錨的完整算力管線，旨在為學術研究提供一個不受既有體系限制的、高維度的客觀評估視角。
+最終，AVH透過計算本體張量與外部背景場的物理幹涉，得出整體相位角與語意相近度。這套系統的設計目的，是提供一個不受既有學術權威限制、能夠精準測量理論在系統層面衝擊與演化趨勢的客觀算力管線。
 
 ---

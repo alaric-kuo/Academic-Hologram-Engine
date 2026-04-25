@@ -463,7 +463,7 @@ def reconstruct_openalex_abstract(inv_idx):
 def fetch_crossref_abstract_by_doi(doi):
     try:
         url = f"https://api.crossref.org/works/{urllib.parse.quote(doi)}"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/59.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/60.0"}, timeout=20)
         r.raise_for_status()
         abstract = clean_crossref_abstract(r.json().get("message", {}).get("abstract", ""))
         return abstract, "crossref_doi" if abstract else ("", "")
@@ -474,7 +474,7 @@ def fetch_openalex_abstract_by_doi(doi):
     try:
         doi_url = f"https://doi.org/{doi}"
         url = f"https://api.openalex.org/works?filter=doi:{urllib.parse.quote(doi_url, safe=':/')}&per-page=1"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/59.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/60.0"}, timeout=20)
         r.raise_for_status()
         results = r.json().get("results", [])
         if not results:
@@ -487,7 +487,7 @@ def fetch_openalex_abstract_by_doi(doi):
 def fetch_semanticscholar_abstract_by_doi(doi):
     try:
         url = f"https://api.semanticscholar.org/graph/v1/paper/DOI:{urllib.parse.quote(doi)}?fields=title,abstract"
-        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/59.0"}, timeout=20)
+        r = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/60.0"}, timeout=20)
         r.raise_for_status()
         abstract = normalize_whitespace(r.json().get("abstract", ""))
         return abstract, "semanticscholar" if abstract else ("", "")
@@ -757,10 +757,10 @@ def multi_perspective_retrieval_and_rerank(statements, profile):
         )
 
         try:
-            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/59.0"}, timeout=20)
+            response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/60.0"}, timeout=20)
             if response.status_code == 429:
                 time.sleep(5)
-                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/59.0"}, timeout=20)
+                response = requests.get(url, headers={"User-Agent": "AVH-Hologram-Engine/60.0"}, timeout=20)
             response.raise_for_status()
         except Exception as e:
             print(f"      ⚠️ API 呼叫失敗 ({e})")
@@ -1481,7 +1481,7 @@ if __name__ == "__main__":
     success_count = 0
 
     with open(log_path, "w", encoding="utf-8") as log_file:
-        log_file.write("# 📡 AVH 學術價值全像儀：V59.0 探針多樣化微調版\n---\n")
+        log_file.write("# 📡 AVH 學術價值全像儀：V60.0 \n---\n")
 
         for i, source in enumerate(md_files):
             print(f"\n{'=' * 60}")
