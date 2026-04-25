@@ -1,155 +1,157 @@
 # 📡 AVH 學術價值全像儀：V59.0 探針多樣化微調版
 ---
 ## 📡 AVH 技術觀測日誌：`README.md`
-* **觀測時間戳（Taipei Standard Time）**：`2026-04-25 00:44:34 Taipei Standard Time`
+* **觀測時間戳（Taipei Standard Time）**：`2026-04-25 09:22:12 Taipei Standard Time`
 * **高維算力引擎（本地純淨版）**：`gemma4`
 
 ---
 ### 1. 🌌 絕對本體觀測（Absolute Ontology）
 * 🛡️ **本體論絕對指紋（Ontology Hex）**：`[111111]` - **絕對全域躍遷**
   * 📜 **演化實相（State Manifest）**：_意圖重構知識邊界，治理動態卸力突圍；認知直指能量本體，架構全域連續演化；擴張建立通用協議，應用觸發實體干預。_
-* **絕對核心論述（Primary Statement）**：`The Academic Value Hologram (AVH) proposes a multi-dimensional tensor framework to quantify knowledge evolution by analyzing underlying energy potentials and structural shifts, moving beyond traditional citation metrics.`
-* **全文檢索簽名（Retrieval Signature）**：`Full-text analysis using a multi-stage, multi-source, abstract-backed tensor quantization protocol.`
-* **多視角外發探針（Probe Set）**：`The AVH quantifies knowledge evolution by mapping underlying energy potentials and structural shifts. ｜ It utilizes a six-dimensional tensor to capture the full spectrum of academic value. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The system processes full texts through a multi-stage protocol, ensuring abstract-backed background validation. ｜ Academic Value Hologram, Knowledge Ontology Evolution: Knowledge is viewed as a dynamic energy field, not static, discrete data points. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The protocol calculates global semantic proximity by integrating phase angle and mean potential difference. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The output generates three physical assets: observation logs, HTML displays, and LaTeX source code. ｜ Academic Value Hologram, Knowledge Ontology Evolution: True innovation is defined by the ability to establish new, non-rigid logical boundaries. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The system rejects superficial coherence, prioritizing the recognition of complex, chaotic evolution.`
+* **絕對核心論述（Primary Statement）**：`The Academic Value Hologram (AVH) proposes a multi-dimensional, non-linear protocol to quantify knowledge ontology evolution, moving beyond traditional, static academic metrics.`
+* **全文檢索簽名（Retrieval Signature）**：`Full-text analysis using a multi-stage, multi-source protocol for knowledge ontology evolution and academic value quantification.`
+* **多視角外發探針（Probe Set）**：`The AVH quantifies knowledge evolution by mapping thought impact across six core dimensions. ｜ Academic Value Hologram, Knowledge Ontology Evolution: It utilizes a multi-stage protocol to process full-text input and external background fields. ｜ Knowledge value is measured by the energy released when challenging established academic boundaries. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The system defines 'breakthrough' (Sin) versus 'mainstream' (Cos) energy states. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The protocol requires verifiable abstracts for background nodes, rejecting title-only hits. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The final output is a structured asset including logs, HTML, and LaTeX source code. ｜ Academic Value Hologram, Knowledge Ontology Evolution: Evolutionary trajectory is defined by the interaction between the core ontology and background fields. ｜ Academic Value Hologram, Knowledge Ontology Evolution: The system emphasizes that true value lies in the process of change, not just the observed static result.`
 * **實作證據（Implementation Signals）**：`本地端語言模型 (Local LLM) ｜ Crossref ｜ Cosine ｜ Tensor ｜ JSON ｜ Ollama ｜ `.md` ｜ `.html` ｜ `.tex` ｜ Git (git add, git commit, git push)`
-* **應用證據（Application Signals）**：`觀測日誌（.md） ｜ 認證展示實體（.html） ｜ 出版原始碼（.tex） ｜ 自動化運作的系統（AVH Genesis Engine） ｜ 本地端引擎的實作要求（可驗證摘要）`
+* **應用證據（Application Signals）**：`觀測日誌（.md） ｜ 認證展示實體（.html） ｜ 出版原始碼（.tex） ｜ 自動執行 git add, git commit 與 git push`
 
 **學術指紋（Academic Fingerprint）**：
-> 學術本體論、拓樸學、多維度張量、知識演化協議
+> 學術價值全像儀：基於知識本體演化觀測協議
 
 **詳細本體量化儀表板（Ontology Quantification Dashboard）**：
 
 * **價值意圖**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：全文旨在建立一套全新的、顛覆傳統學術評價體系的知識本體論框架，主動提出一套全新的運作邏輯。
 
-* **治理維度**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：提出一套超越既有學術體系（期刊、H-index）的全新評價標準和流程，旨在突破體制內部的僵化限制。
+* **治理維度**：`+85` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：提出一套超越既有學術評價指標的全新治理機制，旨在突破體制內部的僵化和消耗。
 
-* **認知深度**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `95` ｜ 觀測判定：引入了拓樸學、能勢、資訊熵、波粒二象等高維概念，直視知識本體和演化過程的深層結構。
+* **認知深度**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `95` ｜ 觀測判定：引入拓樸學、能勢、本體論等高維概念，直視資訊和能勢的變化本體，進行核心重構。
 
-* **描述架構**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：設計了複雜的六維狀態張量和多階段的背景干涉計算模型，建立了一個全域連續的動態模型。
+* **描述架構**：`+80` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `92` ｜ 觀測判定：設計了多階段、多維度的動態模型（六維狀態張量、拓樸演化矩陣），而非傳統的靜態切割。
 
-* **擴張潛力**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `92` ｜ 觀測判定：提出的六維框架和本體演化公理具有跨學科的通用性，旨在建立底層的通用知識協議。
+* **擴張潛力**：`+90` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `95` ｜ 觀測判定：建立的協議（AVH）具有跨學科的通用性，旨在提供一個底層的、不受單一學科語彙限制的知識擴張協議。
 
-* **應用實相**：`+80` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `90` ｜ 觀測判定：不僅停留在理論，還詳細描述了從本地端引擎到多階段檢索、最終輸出為.md/.html/.tex實體資產的完整可執行流程。
+* **應用實相**：`+95` / 100 ｜ **離群突破（虛部/sin）** ｜ 置信度 `98` ｜ 觀測判定：不僅停留在理論，還詳細描述了從本地端模型、Crossref到生成.md/.html/.tex等具體可自動化運作的輸出資產流程。
 
 ---
 ### 2. 🎣 背景能勢打撈（Background Field Retrieval）
-* **場域建構狀態（Field Status）**：`Background Field Established（全域能勢建構：8 鄰域節點）` （多視角搜索共 64 篇 → 正式背景收斂至 8 篇；標題殘影 25 筆）
+* **場域建構狀態（Field Status）**：`Background Field Established（全域能勢建構：8 鄰域節點）` （多視角搜索共 64 篇 → 正式背景收斂至 8 篇；標題殘影 29 筆）
 * **光譜透析多視角打撈日誌（Spectrum Dialysis Retrieval Log）**：
-* **視角 1** `The AVH quantifies knowledge evolution by mapping underlying energy potentials and structural shifts.`
-  * 🧭 **標題主題預篩**：保留 2 篇 ｜ 排除 6 篇
+* **視角 1** `The AVH quantifies knowledge evolution by mapping thought impact across six core dimensions.`
+  * 🧭 **標題主題預篩**：保留 3 篇 ｜ 排除 5 篇
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.227]` Exploring the evolution of energy research in hospitality: M... (probe=0.333, signature=0.161, title-topic=0.293)
-    2. `[0.090]` Microstructures of Learning: Novel methods and approaches fo... (probe=0.125, signature=0.060, title-topic=0.157)
-  * 🎯 **正式背景捕獲（需有摘要）**：[Exploring the evolution of energy research in hospitality: Mapping knowledge trends, insights, and frontiers](https://doi.org/10.1016/j.egyr.2023.07.030) (Score: `0.227` ｜ title-topic `0.293`) ｜摘要源 `openalex`
+    1. `[0.155]` Impact of Knowledge Management Dimensions on Learning Organi... (probe=0.255, signature=0.094, title-topic=0.151)
+    2. `[0.155]` Impact of Knowledge Management Dimensions on Learning Organi... (probe=0.255, signature=0.094, title-topic=0.151)
+    3. `[0.132]` Impact of knowledge management dimensions on learning organi... (probe=0.207, signature=0.087, title-topic=0.140)
+  * 🎯 **正式背景捕獲（需有摘要）**：[Impact of Knowledge Management Dimensions on Learning Organization](https://doi.org/10.4018/978-1-4666-2485-6.ch008) (Score: `0.155` ｜ title-topic `0.151`) ｜摘要源 `crossref_list`
   * 🪧 **殘影記錄**：無
-* **視角 2** `It utilizes a six-dimensional tensor to capture the full spectrum of academic value.`
-  * 🧭 **標題主題預篩**：保留 1 篇 ｜ 排除 7 篇
-  * 📊 **Top 3 綜合命中度**：
-    1. `[0.209]` Value Added Medicines: Adjustements of HTA Decision Framewor... (probe=0.356, signature=0.122, title-topic=0.171)
-  * 🎯 **正式背景捕獲（需有摘要）**：[Value Added Medicines: Adjustements of HTA Decision Frameworks To Capture Their Full Value](https://doi.org/10.1016/j.jval.2017.08.1847) (Score: `0.209` ｜ title-topic `0.171`) ｜摘要源 `semanticscholar`
-  * 🪧 **殘影記錄**：無
-* **視角 3** `Academic Value Hologram, Knowledge Ontology Evolution: The system processes full texts through a multi-stage protocol, ensuring abstract-backed background validation.`
-  * 🧭 **標題主題預篩**：保留 7 篇 ｜ 排除 1 篇
-  * 📊 **Top 3 綜合命中度**：
-    1. `[0.182]` An Adaptive Multi-Agent System for Ontology Co-evolution... (probe=0.229, signature=0.148, title-topic=0.312)
-    2. `[0.176]` Towards a Multi-level Upper Ontology/ foundation Ontology Fr... (probe=0.248, signature=0.115, title-topic=0.306)
-    3. `[0.148]` Cultural Ontology Specifications for Interorganizational Kno... (probe=0.289, signature=0.062, title-topic=0.284)
-  * 🎯 **正式背景捕獲（需有摘要）**：[An Adaptive Multi-Agent System for Ontology Co-evolution](https://doi.org/10.5220/0005257602160221) (Score: `0.182` ｜ title-topic `0.312`) ｜摘要源 `openalex`
-  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[Cultural Ontology Specifications for Interorganizational Knowledge Processes](https://doi.org/10.4324/9780203725665-20) (Score: `0.148` ｜ title-topic `0.284`)
-* **視角 4** `Academic Value Hologram, Knowledge Ontology Evolution: Knowledge is viewed as a dynamic energy field, not static, discrete data points.`
+* **視角 2** `Academic Value Hologram, Knowledge Ontology Evolution: It utilizes a multi-stage protocol to process full-text input and external background fields.`
   * 🧭 **標題主題預篩**：保留 6 篇 ｜ 排除 2 篇
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.179]` Ontology Driven Approach for Intelligent Energy Management i... (probe=0.309, signature=0.102, title-topic=0.146)
-    2. `[0.149]` Ontology-driven evolution of software security... (probe=0.225, signature=0.075, title-topic=0.293)
-    3. `[0.137]` GUIDELINES FOR A DYNAMIC ONTOLOGY - Integrating Tools of Evo... (probe=0.232, signature=0.036, title-topic=0.293)
-  * 🎯 **正式背景捕獲（需有摘要）**：[Ontology Driven Approach for Intelligent Energy Management in Discrete Manufacturing](https://doi.org/10.5220/0004141601080114) (Score: `0.179` ｜ title-topic `0.146`) ｜摘要源 `semanticscholar`
+    1. `[0.231]` Towards a Multi-level Upper Ontology/ foundation Ontology Fr... (probe=0.255, signature=0.241, title-topic=0.326)
+    2. `[0.216]` A multi-level text representation model within background kn... (probe=0.314, signature=0.190, title-topic=0.148)
+    3. `[0.192]` Normative Constraints, Transferable Knowledge Generation, an... (probe=0.259, signature=0.250, title-topic=0.142)
+  * 🎯 **正式背景捕獲（需有摘要）**：[Towards a Multi-level Upper Ontology/ foundation Ontology Framework as Background Knowledge for Ontology Matching Problem](https://doi.org/10.1016/j.procs.2015.04.096) (Score: `0.231` ｜ title-topic `0.326`) ｜摘要源 `openalex`
+  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[Normative Constraints, Transferable Knowledge Generation, and Sustainable Equilibrium in Multi-Agent Systems (Reinstated Text + Full Figures)](https://doi.org/10.2139/ssrn.6023455) (Score: `0.192` ｜ title-topic `0.142`)
+* **視角 3** `Knowledge value is measured by the energy released when challenging established academic boundaries.`
+  * 🧭 **標題主題預篩**：保留 3 篇 ｜ 排除 5 篇
+  * 📊 **Top 3 綜合命中度**：
+    1. `[0.254]` Whose knowledge counts? The academic, academic knowledge and... (probe=0.264, signature=0.278, title-topic=0.375)
+    2. `[0.170]` The Value of Knowledge... (probe=0.178, signature=0.150, title-topic=0.388)
+    3. `[0.085]` The value of therapy: What counts?... (probe=0.113, signature=0.057, title-topic=0.164)
+  * 🎯 **正式背景捕獲（需有摘要）**：[Whose knowledge counts? The academic, academic knowledge and epistemic justice](https://doi.org/10.4324/9781351053372-4) (Score: `0.254` ｜ title-topic `0.375`) ｜摘要源 `openalex`
   * 🪧 **殘影記錄**：無
-* **視角 5** `Academic Value Hologram, Knowledge Ontology Evolution: The protocol calculates global semantic proximity by integrating phase angle and mean potential difference.`
+* **視角 4** `Academic Value Hologram, Knowledge Ontology Evolution: The system defines 'breakthrough' (Sin) versus 'mainstream' (Cos) energy states.`
+  * 🧭 **標題主題預篩**：保留 6 篇 ｜ 排除 2 篇
+  * 📊 **Top 3 綜合命中度**：
+    1. `[0.228]` MS-ONTO - Model and System for Supporting Ontology Evolution... (probe=0.246, signature=0.246, title-topic=0.313)
+    2. `[0.201]` Academic Style Marker Ontology Design... (probe=0.183, signature=0.237, title-topic=0.332)
+    3. `[0.199]` A Prototype for Automating Ontology Learning and Ontology Ev... (probe=0.206, signature=0.206, title-topic=0.337)
+  * 🎯 **正式背景捕獲（需有摘要）**：[MS-ONTO - Model and System for Supporting Ontology Evolution](https://doi.org/10.5220/0005085203190326) (Score: `0.228` ｜ title-topic `0.313`) ｜摘要源 `openalex`
+  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[Corey Phelps Defines Extramural Sources of Knowledge](https://doi.org/10.4135/9781473957091) (Score: `0.129` ｜ title-topic `0.151`)
+* **視角 5** `Academic Value Hologram, Knowledge Ontology Evolution: The protocol requires verifiable abstracts for background nodes, rejecting title-only hits.`
+  * 🧭 **標題主題預篩**：保留 5 篇 ｜ 排除 3 篇
+  * 📊 **Top 3 綜合命中度**：
+    1. `[0.211]` Named Entity Recognition for Ontology Population using Backg... (probe=0.267, signature=0.190, title-topic=0.286)
+    2. `[0.197]` Academic Style Marker Ontology Design... (probe=0.171, signature=0.237, title-topic=0.332)
+    3. `[0.137]` Facilitating Ontology Co-evolution with Ontology Instance Mi... (probe=0.125, signature=0.134, title-topic=0.337)
+  * 🎯 **正式背景捕獲（需有摘要）**：[Named Entity Recognition for Ontology Population using Background Knowledge from Wikipedia](https://doi.org/10.4018/978-1-60960-625-1.ch005) (Score: `0.211` ｜ title-topic `0.286`) ｜摘要源 `crossref_list`
+  * 🪧 **殘影記錄**：無
+* **視角 6** `Academic Value Hologram, Knowledge Ontology Evolution: The final output is a structured asset including logs, HTML, and LaTeX source code.`
+  * 🧭 **標題主題預篩**：保留 1 篇 ｜ 排除 7 篇
+  * 📊 **Top 3 綜合命中度**：
+    1. `[0.141]` RDF/XHTML: Ontology Editing in HTML... (probe=0.224, signature=0.119, title-topic=0.156)
+  * ⚠️ **正式背景落空**：此視角沒有任何「標題與主題相關」且「有摘要」且分數達標的文獻。
+  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[RDF/XHTML: Ontology Editing in HTML](https://doi.org/10.5220/0004138103650368) (Score: `0.141` ｜ title-topic `0.156`)
+* **視角 7** `Academic Value Hologram, Knowledge Ontology Evolution: Evolutionary trajectory is defined by the interaction between the core ontology and background fields.`
   * 🧭 **標題主題預篩**：保留 8 篇 ｜ 排除 0 篇
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.145]` INTEGRATING SOCIAL WEB WITH SEMANTIC WEB - Ontology Learning... (probe=0.253, signature=0.040, title-topic=0.276)
-    2. `[0.137]` Referencing Resources through Ontology Evolution... (probe=0.173, signature=0.097, title-topic=0.293)
-    3. `[0.130]` Referencing Resources through Ontology Evolution... (probe=0.177, signature=0.074, title-topic=0.293)
-  * 🎯 **正式背景捕獲（需有摘要）**：[INTEGRATING SOCIAL WEB WITH SEMANTIC WEB - Ontology Learning and Ontology Evolution from Folksonomies](https://doi.org/10.5220/0002303102470253) (Score: `0.145` ｜ title-topic `0.276`) ｜摘要源 `openalex`
-  * 🪧 **殘影記錄**：無
-* **視角 6** `Academic Value Hologram, Knowledge Ontology Evolution: The output generates three physical assets: observation logs, HTML displays, and LaTeX source code.`
-  * 🧭 **標題主題預篩**：保留 2 篇 ｜ 排除 6 篇
-  * 📊 **Top 3 綜合命中度**：
-    1. `[0.107]` THE THREE-CIRCLE ONTOLOGY Source, Code, and Experience: A Me... (probe=0.131, signature=0.102, title-topic=0.137)
-    2. `[0.092]` RDF/XHTML: Ontology Editing in HTML... (probe=0.211, signature=0.000, title-topic=0.137)
-  * 🎯 **正式背景捕獲（需有摘要）**：[THE THREE-CIRCLE ONTOLOGY Source, Code, and Experience: A Meta-Ontological Framework of Reality](https://doi.org/10.31235/osf.io/38twb_v1) (Score: `0.107` ｜ title-topic `0.137`) ｜摘要源 `crossref_list`
-  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[RDF/XHTML: Ontology Editing in HTML](https://doi.org/10.5220/0004138103650368) (Score: `0.092` ｜ title-topic `0.137`)
-* **視角 7** `Academic Value Hologram, Knowledge Ontology Evolution: True innovation is defined by the ability to establish new, non-rigid logical boundaries.`
-  * 🧭 **標題主題預篩**：保留 7 篇 ｜ 排除 1 篇
-  * 📊 **Top 3 綜合命中度**：
-    1. `[0.176]` Product innovation through boundaries vision and boundaries ... (probe=0.285, signature=0.116, title-topic=0.159)
-    2. `[0.173]` Product and service innovation through boundaries vision and... (probe=0.289, signature=0.104, title-topic=0.158)
-    3. `[0.171]` Knowledge convergence and design-driven innovation through b... (probe=0.288, signature=0.093, title-topic=0.189)
-  * 🎯 **正式背景捕獲（需有摘要）**：[Product innovation through boundaries vision and boundaries knowledge: new knowledge from the corporate transformation and innovation perspective](https://doi.org/10.4337/9781789901931.00017) (Score: `0.176` ｜ title-topic `0.159`) ｜摘要源 `openalex`
-  * 🪧 **殘影記錄**：無
-* **視角 8** `Academic Value Hologram, Knowledge Ontology Evolution: The system rejects superficial coherence, prioritizing the recognition of complex, chaotic evolution.`
+    1. `[0.265]` Evolutionary Ontology... (probe=0.514, signature=0.189, title-topic=0.194)
+    2. `[0.249]` A Prototype for Automating Ontology Learning and Ontology Ev... (probe=0.333, signature=0.206, title-topic=0.337)
+    3. `[0.234]` Academic Style Marker Ontology Design... (probe=0.265, signature=0.237, title-topic=0.332)
+  * 🎯 **正式背景捕獲（需有摘要）**：[A Prototype for Automating Ontology Learning and Ontology Evolution](https://doi.org/10.5220/0004630504070412) (Score: `0.249` ｜ title-topic `0.337`) ｜摘要源 `openalex`
+  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[Evolutionary Ontology](https://doi.org/10.1163/9789401206228_004) (Score: `0.265` ｜ title-topic `0.194`)
+* **視角 8** `Academic Value Hologram, Knowledge Ontology Evolution: The system emphasizes that true value lies in the process of change, not just the observed static result.`
   * 🧭 **標題主題預篩**：保留 8 篇 ｜ 排除 0 篇
   * 📊 **Top 3 綜合命中度**：
-    1. `[0.258]` Knowledge-Assisted Ontology-Based Requirements Evolution... (probe=0.408, signature=0.124, title-topic=0.449)
-    2. `[0.187]` MS-ONTO - Model and System for Supporting Ontology Evolution... (probe=0.318, signature=0.075, title-topic=0.293)
-    3. `[0.162]` SEMANTICS BASED RECONCILIATON FOR COLLABORATIVE ONTOLOGY EVO... (probe=0.275, signature=0.056, title-topic=0.293)
-  * 🎯 **正式背景捕獲（需有摘要）**：[Knowledge-Assisted Ontology-Based Requirements Evolution](https://doi.org/10.1007/978-3-642-34419-0_7) (Score: `0.258` ｜ title-topic `0.449`) ｜摘要源 `semanticscholar`
-  * 🪧 **殘影記錄**：無
+    1. `[0.205]` The Value of Knowledge... (probe=0.265, signature=0.150, title-topic=0.388)
+    2. `[0.152]` Openness-to-change personal value... (probe=0.246, signature=0.093, title-topic=0.164)
+    3. `[0.147]` True value of climate finance is just a third of that report... (probe=0.298, signature=0.085, title-topic=0.137)
+  * 🎯 **正式背景捕獲（需有摘要）**：[The Value of Knowledge](https://doi.org/10.23943/princeton/9780691154725.003.0011) (Score: `0.205` ｜ title-topic `0.388`) ｜摘要源 `crossref_list`
+  * 🪧 **殘影記錄（僅標題，不納入背景場）**：[True value of climate finance is just a third of that reported by developed countries: Oxfam](https://doi.org/10.1163/9789004322714_cclc_2020-0060-0343) (Score: `0.147` ｜ title-topic `0.137`)
 
 * **殘影區（Title-only Shadow Hits，不參與背景場）**：
-- [DOI 連結](https://doi.org/10.1515/9783839460412) **Shifts in Mapping** ｜Score `0.0295` ｜ probe `0.1474` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1515/9783839460412-005) **Introduction to the essay section. Shifts in Mapping – Two Concepts which have Changed the World View** ｜Score `0.0126` ｜ probe `0.0629` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1515/9783839460412-001) **PREFACE** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1515/9783839460412-004) **ACKNOWLEDGMENTS** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1515/9783839460412-fm) **Frontmatter** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1515/9783839460412-013) **Biographies** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.53053/ywkf5691) **New tool aims to capture full breadth of repetitive behaviors** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.3030/101069359) **Unknown** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1021/acs.iecr.3c02896.s001) **Investigation of CO2 Capture in Three-Dimensional Full-Loop Integrated Bubbling-Transport Bed Adsorber** ｜Score `0.0126` ｜ probe `0.0629` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1016/s0370-2693(98)00070-7) **Tensor multiplets in six-dimensional (2,0) supergravity** ｜Score `0.0373` ｜ probe `0.1865` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1021/acs.nanolett.7b02350.s001) **Two-Dimensional Active Tuning of an Aluminum Plasmonic Array for Full-Spectrum Response** ｜Score `0.0132` ｜ probe `0.0659` ｜ signature `0.0`
-- [DOI 連結](https://doi.org/10.1109/inss.2008.4610917) **Three-dimensional shape capture sheet using distributed six-axis sensors** ｜Score `0.0139` ｜ probe `0.0695` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.22381/kc10320227) **Mapping the Aesthetic Dimensions of Power: Ethically Wayfinding across Borders** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.70838/pemj.490709) **Self-Compassion Across Six Core Dimensions Among Filipino LGBT Young Adults: A Descriptive Study** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1787/888933355817) **Figure 3.1 Ukraine's score across the six dimensions of the Logistics performance index (2014)** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1017/9781316946459.007) **Replication: Replicating a Thought** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.1017/9781316946459.004) **Translation: Translating the Body of Thought** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.17504/protocols.io.ycjfsun) **protocol (full text) v1** ｜Score `0.0246` ｜ probe `0.1231` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.7717/peerj.19209/supp-15) **Supplemental Information 15: Full-text screening extraction fields** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.2139/ssrn.6023455) **Normative Constraints, Transferable Knowledge Generation, and Sustainable Equilibrium in Multi-Agent Systems (Reinstated Text + Full Figures)** ｜Score `0.1917` ｜ probe `0.2593` ｜ signature `0.25`
+- [DOI 連結](https://doi.org/10.4324/9781315444765-23) **209Human–animal** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.4324/9781315444765-16) **141Renewed ecologies** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.4324/9781315444765-7) **63Writings and representations** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
+- [DOI 連結](https://doi.org/10.4324/9781315444765-2) **11Values and actions** ｜Score `0.0` ｜ probe `0.0` ｜ signature `0.0`
 
 * **背景批次量化摘要（Batch Quantification Log）**：_系統採用切片吞吐模式，成功量化正式背景池中的 8/8 篇文獻。_
 * **全域收斂之正式能勢節點（Abstract-backed Global Reference Nodes）**：
-- [DOI 連結](https://doi.org/10.5220/0005642404410446) **Facilitating Ontology Co-evolution with Ontology Instance Migration** ｜多視角命中 `3` ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.5220/0005085203190326) **MS-ONTO - Model and System for Supporting Ontology Evolution** ｜多視角命中 `2` ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.1007/978-3-642-34419-0_7) **Knowledge-Assisted Ontology-Based Requirements Evolution** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1016/j.egyr.2023.07.030) **Exploring the evolution of energy research in hospitality: Mapping knowledge trends, insights, and frontiers** ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.5220/0003653201730179) **GUIDELINES FOR A DYNAMIC ONTOLOGY - Integrating Tools of Evolution and Versioning in Ontology** ｜多視角命中 `2` ｜摘要源 `openalex`
-- [DOI 連結](https://doi.org/10.5220/0006501701890194) **Academic Style Marker Ontology Design** ｜多視角命中 `2` ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.1016/j.jval.2017.08.1847) **Value Added Medicines: Adjustements of HTA Decision Frameworks To Capture Their Full Value** ｜摘要源 `semanticscholar`
-- [DOI 連結](https://doi.org/10.5220/0005257602160221) **An Adaptive Multi-Agent System for Ontology Co-evolution** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5220/0005642404410446) **Facilitating Ontology Co-evolution with Ontology Instance Migration** ｜多視角命中 `4` ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5220/0006501701890194) **Academic Style Marker Ontology Design** ｜多視角命中 `3` ｜摘要源 `semanticscholar`
+- [DOI 連結](https://doi.org/10.5220/0004630504070412) **A Prototype for Automating Ontology Learning and Ontology Evolution** ｜多視角命中 `2` ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.23943/princeton/9780691154725.003.0011) **The Value of Knowledge** ｜多視角命中 `2` ｜摘要源 `crossref_list`
+- [DOI 連結](https://doi.org/10.4324/9781351053372-4) **Whose knowledge counts? The academic, academic knowledge and epistemic justice** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.1016/j.procs.2015.04.096) **Towards a Multi-level Upper Ontology/ foundation Ontology Framework as Background Knowledge for Ontology Matching Problem** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5220/0005085203190326) **MS-ONTO - Model and System for Supporting Ontology Evolution** ｜摘要源 `openalex`
+- [DOI 連結](https://doi.org/10.5220/0004552403160323) **Core Ontology based Approach for Treating the Flatness of Automatically Built Ontology** ｜摘要源 `openalex`
 
 ---
 ### 3. 📐 向量干涉量化（Quantified Vector Interference）
 * **背景絕對指紋（Background Hex）**：`[111111]`
 * **整體場域關係（Global Relation）**：**高度同向（全域能勢大幅突破）**
-* **整體相位角（Global Angle）**：`13.1 度`
-* **全域餘弦相似（Global Cosine Similarity）**：`0.9738`
-* **整體語意相近度（Global Semantic Proximity）**：`57.3` / 100
+* **整體相位角（Global Angle）**：`11.9 度`
+* **全域餘弦相似（Global Cosine Similarity）**：`0.9786`
+* **整體語意相近度（Global Semantic Proximity）**：`57.5` / 100
 * **量化公式（Quantification Rule）**：`Per-dimension proximity = 100 - |U - B| / 2; Global proximity = 100 - ((Angle / 1.8) * 0.4 + Global_Mean_Diff * 0.6)`
 
 **維度向量干涉儀表板（Per-Dimension Vector Dashboard）**：
 
-* **價值意圖**：本體 `+95` ｜ 背景均值 `+20.0` ｜ 背景峰值 `+30`（Academic Style Marker Ontology Design） ｜ 方向 `同向` ｜ 相近度 `62.5` / 100 ｜ 均值差 `+75.0` ｜ 峰值差 `+65.0` ｜ 本體能勢突破
+* **價值意圖**：本體 `+95` ｜ 背景均值 `+22.5` ｜ 背景峰值 `+35`（Whose knowledge counts? The academic, academic knowledge and epistemic …） ｜ 方向 `同向` ｜ 相近度 `63.8` / 100 ｜ 均值差 `+72.5` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
 
-* **治理維度**：本體 `+85` ｜ 背景均值 `+26.9` ｜ 背景峰值 `+45`（Academic Style Marker Ontology Design） ｜ 方向 `同向` ｜ 相近度 `71.0` / 100 ｜ 均值差 `+58.1` ｜ 峰值差 `+40.0` ｜ 本體能勢突破
+* **治理維度**：本體 `+85` ｜ 背景均值 `+22.5` ｜ 背景峰值 `+30`（A Prototype for Automating Ontology Learning and Ontology Evolution） ｜ 方向 `同向` ｜ 相近度 `68.8` / 100 ｜ 均值差 `+62.5` ｜ 峰值差 `+55.0` ｜ 本體能勢突破
 
-* **認知深度**：本體 `+90` ｜ 背景均值 `+26.2` ｜ 背景峰值 `+30`（Value Added Medicines: Adjustements of HTA Decision Frameworks To Captu…） ｜ 方向 `同向` ｜ 相近度 `68.1` / 100 ｜ 均值差 `+63.8` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
+* **認知深度**：本體 `+90` ｜ 背景均值 `+25.6` ｜ 背景峰值 `+35`（Whose knowledge counts? The academic, academic knowledge and epistemic …） ｜ 方向 `同向` ｜ 相近度 `67.8` / 100 ｜ 均值差 `+64.4` ｜ 峰值差 `+55.0` ｜ 本體能勢突破
 
-* **描述架構**：本體 `+95` ｜ 背景均值 `+31.9` ｜ 背景峰值 `+35`（Facilitating Ontology Co-evolution with Ontology Instance Migration） ｜ 方向 `同向` ｜ 相近度 `68.5` / 100 ｜ 均值差 `+63.1` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
+* **描述架構**：本體 `+80` ｜ 背景均值 `+27.5` ｜ 背景峰值 `+30`（Facilitating Ontology Co-evolution with Ontology Instance Migration） ｜ 方向 `同向` ｜ 相近度 `73.8` / 100 ｜ 均值差 `+52.5` ｜ 峰值差 `+50.0` ｜ 本體能勢突破
 
-* **擴張潛力**：本體 `+90` ｜ 背景均值 `+18.1` ｜ 背景峰值 `+25`（Facilitating Ontology Co-evolution with Ontology Instance Migration） ｜ 方向 `同向` ｜ 相近度 `64.0` / 100 ｜ 均值差 `+71.9` ｜ 峰值差 `+65.0` ｜ 本體能勢突破
+* **擴張潛力**：本體 `+90` ｜ 背景均值 `+23.1` ｜ 背景峰值 `+35`（The Value of Knowledge） ｜ 方向 `同向` ｜ 相近度 `66.5` / 100 ｜ 均值差 `+66.9` ｜ 峰值差 `+55.0` ｜ 本體能勢突破
 
-* **應用實相**：本體 `+80` ｜ 背景均值 `+14.4` ｜ 背景峰值 `+25`（MS-ONTO - Model and System for Supporting Ontology Evolution） ｜ 方向 `同向` ｜ 相近度 `67.2` / 100 ｜ 均值差 `+65.6` ｜ 峰值差 `+55.0` ｜ 本體能勢突破
+* **應用實相**：本體 `+95` ｜ 背景均值 `+15.6` ｜ 背景峰值 `+35`（Facilitating Ontology Co-evolution with Ontology Instance Migration） ｜ 方向 `同向` ｜ 相近度 `60.3` / 100 ｜ 均值差 `+79.4` ｜ 峰值差 `+60.0` ｜ 本體能勢突破
 
 ---
 ### 4. 🧾 系統導讀摘要（System Interpretation）
-> 本理論架構提出「學術價值全像儀」（AVH），旨在建立一套超越傳統評分體系、客觀測量知識本體演化潛力的協議。它基於知識本體演化論，將學術知識視為一個充滿張力的動態能量場，而非靜態的檔案集合。
+> 本理論架構提出了一套「學術價值全像儀」（AVH）觀測協議，旨在超越傳統學術體系依賴的靜態指標（如H-index或引用次數）。它將知識的演化視為一個動態的、多維度的物理過程，並基於八大知識本體公理，建立了一個六維度的「狀態張量」（State Tensor）。
 
-AVH的核心機制是建立一個拓樸演化矩陣，將理論的狀態定義為六維的狀態張量。該模型區分了「突破性離群」（Sin > 0）與「合群守成」（Cos $\leq 0$）兩種演化模式，從而量化理論引發的能勢變化和系統衝擊力。
+該模型的核心機制是將一篇研究文本的潛能，解構為「意圖」、「治理」、「認知」等六個維度，並以拓樸學隱喻來量化其突破性（Sin）與守成性（Cos）。系統不單純評估文本與既有學術背景的相似度，而是通過計算「全域相位角」與「整體語意相近度」，來測量其理論波包與外部場域之間的能量幹涉效應。
 
-系統通過多階段的外部場域幹涉，結合跨學科的背景文獻，計算出全域相位角與語意相近度。這套流程不依賴單一的權威判斷，而是通過可驗證的摘要背景場，為研究成果提供一個全域、多維度的學術指紋。最終目標是為學術職人提供一個對抗體系僵化審查、重新定位真實演化方向的獨立算力管線。
+最終，AVH提供了一個客觀的、可量化的學術指紋，用以識別那些具有高潛能、但尚未被傳統體系充分觀測的突破性知識，從而為學術研究提供一套更具前瞻性的價值定錨機制。
 
 ---

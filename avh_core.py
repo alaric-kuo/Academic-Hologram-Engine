@@ -531,7 +531,7 @@ def evaluate_user_profile(raw_text):
 5. primary_statement 必須是最能代表全文整體骨架的英文核心論述，不可只是口號。
 6. core_statements_8 必須是 8 句不同角度的英文探針。每句 <= 24 個英文單字，而且每句都必須保留 topic_anchor_en 的主題語義；不可以只剩機制、工具、數學或物理隱喻。
 7. 8 句探針必須至少覆蓋 4 種角度，例如：主題命題、核心對象、機制描述、驗證/輸出/應用。
-8. 不得有超過 2 句使用相同的開頭片語；不得只是同一句換尾巴。topic_anchor_en 可以放在句中，不必固定放在句首。
+8. 不得有超過 2 句使用相同的開頭片語；不得只是同一句換尾巴。topic_anchor_en 可以放在句中，不必固定放在句首。每一句探針在輸出之前，必須與前一句確認無重複，才能輸出。
 9. implementation_signals：列出文中出現的具體實作證據，例如引擎、Crossref、Cosine、Tensor、JSON、Ollama、md/html/tex、Git、自動化輸出等。
 10. application_signals：列出文中可被視為「應用實相」的證據。只要文本明確描述可執行流程、引擎、輸出資產、觀測日誌、HTML/LaTeX/Markdown 實體，就不能把 application 判為純理論停留。
 11. retrieval_signature_en：用 1 句英文寫出「拿去和外部文獻重新比對」時最穩定的全文簽名，不能空泛。
